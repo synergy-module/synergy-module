@@ -130,7 +130,7 @@ Discord authentication uses an OAuth2 application and the signed-in member's ser
 1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications), then open **OAuth2**.
 2. Register this exact local redirect URI: `http://127.0.0.1:3000/auth/discord/callback`. Register the deployment's HTTPS callback separately before hosting. If you change the local host or port, update both this registration and `DISCORD_REDIRECT_URI` to match.
 3. Copy the application's client ID and client secret into the matching `.env` entries. Never commit the populated `.env` file.
-4. In Discord, enable **User Settings → Advanced → Developer Mode**. Right-click the target server and each access role to copy their IDs into `DISCORD_GUILD_ID` and the five `DISCORD_ROLE_*_ID` entries. Configuration uses IDs, not editable role names.
+4. In Discord, enable **User Settings → Advanced → Developer Mode**. Right-click the server and roles to copy their IDs. With `DISCORD_ACCESS_POLICY=site-roles`, set `DISCORD_GUILD_ID`, `DISCORD_REQUIRED_ROLE_ID` for membership, and `DISCORD_ROLE_ADMIN_ID` for administration. Configuration uses IDs, not editable role names; the membership and administrator IDs must differ.
 5. Generate a long, random `SESSION_SECRET`, for example with `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`, and store it in the ignored local `.env` or deployment's secret configuration.
 6. Keep `AUTH_MODE=discord` and restart the application.
 
@@ -144,9 +144,13 @@ Users authorize only the `identify` and `guilds.members.read` OAuth2 scopes. Syn
 
 To require one specific role before any permission mapping, set `DISCORD_REQUIRED_ROLE_ID`. Developer and Admin roles cannot bypass this requirement. Existing sessions without a matching guild/role/policy grant must sign in again. Role checks still fail closed when Discord is unavailable.
 
-The Synergy Module beta deployment uses `DISCORD_ACCESS_POLICY=beta-role`, `DISCORD_GUILD_ID=1554634103997861889`, `DISCORD_REQUIRED_ROLE_ID=1554903899343814857`, and `DISCORD_ROLE_REFRESH_MINUTES=1`. This admits only SynergyModule role holders in that server, preserving the existing beta workspace permissions. The policy requires `APP_ENVIRONMENT=beta` and a nonblank role ID; missing configuration stops startup. Role removal is enforced on the next protected request after the one-minute snapshot expires. Login, OAuth callbacks, static assets, and the minimal readiness endpoint remain public so sign-in and deployment can work; workspace pages and APIs require admission.
+The Synergy Module deployment uses `DISCORD_ACCESS_POLICY=site-roles`, `DISCORD_GUILD_ID=1554634103997861889`, `DISCORD_REQUIRED_ROLE_ID=1554903899343814857` (SynergyModule), `DISCORD_ROLE_ADMIN_ID=1557751441693736991` (SMA*), and `DISCORD_ROLE_REFRESH_MINUTES=1`. SynergyModule grants the regular workspace, including Journal and Indicators; SMA* additionally maps to the site's `Admin` role. SMA* alone cannot bypass required membership or a site ban. Other Discord roles and legacy Developer mappings do not confer administration under this policy. Missing or identical membership/admin role IDs stop startup.
 
-Role behavior is modular:
+Administrators see **Administration** in the sidebar and can ban/unban accounts and terminate sessions. A ban blocks subsequent sign-in and invalidates current sessions. All existing and future administrative endpoints must use `requireCapability(CAPABILITIES.ADMIN)` after authentication and role refresh; mutations must also enforce CSRF. The `Admin` role inherits all capabilities from the central `CAPABILITIES` registry, so additional administrative functions should reuse this permission instead of creating separate Discord role checks.
+
+Role changes take effect on the next protected request after the one-minute snapshot expires. Switching the membership policy, guild, required role, or administrator role invalidates prior admission grants, so old preview privileges cannot survive the change. Login, OAuth callbacks, static assets, and the minimal readiness endpoint remain public so sign-in and deployment can work; workspace pages and APIs require admission.
+
+The legacy `roles` policy remains modular:
 
 - `Developer` and `Admin` grant base access, Indicators, Journal, and Admin capabilities.
 - `OS` grants base site access.

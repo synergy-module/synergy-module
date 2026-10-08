@@ -13,15 +13,15 @@ APP_ALLOW_MIGRATIONS=false
 # The connection supplies DATABASE_URL; do not overwrite its managed value.
 
 # Only SynergyModule role holders in the SynergyModule server can enter.
-# beta-role preserves beta workspace permissions and requires the role below.
-DISCORD_ACCESS_POLICY=beta-role
+# SMA* additionally grants administration. Membership alone never grants Admin.
+DISCORD_ACCESS_POLICY=site-roles
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 DISCORD_GUILD_ID=1554634103997861889
 DISCORD_REQUIRED_ROLE_ID=1554903899343814857
 DISCORD_REDIRECT_URI=https://synergymodule.dev/auth/discord/callback
 DISCORD_ROLE_DEVELOPER_ID=
-DISCORD_ROLE_ADMIN_ID=
+DISCORD_ROLE_ADMIN_ID=1557751441693736991
 DISCORD_ROLE_OS_ID=
 DISCORD_ROLE_INDICATORS_ID=
 DISCORD_ROLE_JOURNAL_ID=

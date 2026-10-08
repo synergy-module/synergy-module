@@ -16,12 +16,14 @@ secrets and database at runtime, before publishing it.
    callback URI. The default `roles` admission policy also requires the five role
    IDs. Preserve an existing beta deployment's `beta-guild` policy only with
    `APP_ENVIRONMENT=beta`.
-   The Synergy Module beta site now requires `DISCORD_ACCESS_POLICY=beta-role`,
+   The Synergy Module site now requires `DISCORD_ACCESS_POLICY=site-roles`,
    `DISCORD_GUILD_ID=1554634103997861889`,
-   `DISCORD_REQUIRED_ROLE_ID=1554903899343814857`, and
+   `DISCORD_REQUIRED_ROLE_ID=1554903899343814857`,
+   `DISCORD_ROLE_ADMIN_ID=1557751441693736991`, and
    `DISCORD_ROLE_REFRESH_MINUTES=1`. This requires the SynergyModule role in the
-   SynergyModule server before granting the existing beta workspace permissions.
-   All existing sessions must verify the new gate by signing in again.
+   SynergyModule server for workspace access. The SMA* role additionally grants
+   administration, including bans and session termination. Existing preview
+   sessions must sign in again; ordinary members no longer inherit Admin.
 3. Register the exact `DISCORD_REDIRECT_URI` on the Discord OAuth application.
    For the beta domain, use
    `https://synergymodule.dev/auth/discord/callback`; production uses

@@ -103,6 +103,7 @@ export function createApp({
     discordAccessPolicy: resolvedAuthConfig.discord?.accessPolicy ?? "roles",
     discordGuildId: resolvedAuthConfig.discord.guildId,
     requiredDiscordRoleId: resolvedAuthConfig.discord.requiredRoleId,
+    adminDiscordRoleId: resolvedAuthConfig.discord.roleIds.Admin,
     rolePolicy: createRolePolicy({ roleIds: resolvedAuthConfig.discord?.roleIds ?? {} }),
     userRepository,
     banRepository,

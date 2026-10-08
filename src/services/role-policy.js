@@ -15,12 +15,12 @@ function normalizeRoleNames(names) {
 
 function capabilitiesFor(roles) {
   const isPrivileged = roles.includes(ROLES.DEVELOPER) || roles.includes(ROLES.ADMIN);
+  if (isPrivileged) return Object.values(CAPABILITIES);
   const capabilities = new Set();
 
-  if (isPrivileged || roles.includes(ROLES.OS)) capabilities.add(CAPABILITIES.BASE);
-  if (isPrivileged || roles.includes(ROLES.INDICATORS)) capabilities.add(CAPABILITIES.INDICATORS);
-  if (isPrivileged || roles.includes(ROLES.JOURNAL)) capabilities.add(CAPABILITIES.JOURNAL);
-  if (isPrivileged) capabilities.add(CAPABILITIES.ADMIN);
+  if (roles.includes(ROLES.OS)) capabilities.add(CAPABILITIES.BASE);
+  if (roles.includes(ROLES.INDICATORS)) capabilities.add(CAPABILITIES.INDICATORS);
+  if (roles.includes(ROLES.JOURNAL)) capabilities.add(CAPABILITIES.JOURNAL);
 
   return [...capabilities];
 }

@@ -1,9 +1,9 @@
 <aside class="sidebar" data-sidebar>
   <a class="cortex-brand workspace-brand" href="/home" data-nav-link aria-label="Synergy Module home"><img class="cortex-brand-mark" src="<%= assetPath('/assets/synergy-module-mark.svg') %>" alt="" width="40" height="40"><b class="cortex-brand-name">SYNERGY</b><span>MODULE</span><small>AGENTIC TRADING</small></a>
   <nav aria-label="Workspace navigation">
-    <% const labels = {home: 'Overview', brain: 'Brain', research: 'Research', accounts: 'Accounts', journal: 'Journal', settings: 'Settings'}; %>
-    <% page.navigation.forEach((item, index) => { const active = item.key === page.route.key || (item.key === 'journal' && ['journal-new', 'journal-public'].includes(page.route.key)) || (item.key === 'research' && page.route.key === 'market-news') || (item.key === 'settings' && page.route.key === 'admin'); %>
-      <a class="navitem<%= active ? ' active' : '' %>" href="<%= item.path %>" data-nav-link data-nav-key="<%= item.key %>" data-required-capability="<%= item.capability %>"<% if (active) { %> aria-current="page"<% } %>><span class="cortex-nav-index" aria-hidden="true"><%= ['⌂','◈','⌕','▣','▤','⚙'][index] %></span><span><%= labels[item.key] %></span></a>
+    <% const labels = {home: 'Overview', brain: 'Brain', research: 'Research', accounts: 'Accounts', journal: 'Journal', settings: 'Settings', admin: 'Administration'}; %>
+    <% page.navigation.forEach((item, index) => { const active = item.key === page.route.key || (item.key === 'journal' && ['journal-new', 'journal-public'].includes(page.route.key)) || (item.key === 'research' && page.route.key === 'market-news'); %>
+      <a class="navitem<%= active ? ' active' : '' %>" href="<%= item.path %>" data-nav-link data-nav-key="<%= item.key %>" data-required-capability="<%= item.capability %>"<% if (active) { %> aria-current="page"<% } %>><span class="cortex-nav-index" aria-hidden="true"><%= ['⌂','◈','⌕','▣','▤','⚙','◆'][index] %></span><span><%= labels[item.key] %></span></a>
     <% }) %>
   </nav>
   <div class="sidebar-foot">

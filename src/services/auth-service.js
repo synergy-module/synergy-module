@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ACCESS_ERRORS } from "../models/access.js";
+import { ACCESS_ERRORS, ROLES } from "../models/access.js";
 import { createRolePolicy } from "./role-policy.js";
 
 function createAuthError(code, message) {
@@ -26,6 +26,7 @@ export function createAuthService({
   discordAccessPolicy = "roles",
   discordGuildId,
   requiredDiscordRoleId,
+  adminDiscordRoleId,
   rolePolicy = createRolePolicy({ roleIds: {} }),
   userRepository = { upsert: (record) => record },
   banRepository = { isBanned: () => false },
@@ -35,8 +36,11 @@ export function createAuthService({
     throw new Error("Discord authentication is required; AUTH_MODE must be discord");
   }
   if (requiredDiscordRoleId && !discordGuildId) throw new Error("A required Discord role needs a guild ID");
-  if (discordAccessPolicy === "beta-role" && !requiredDiscordRoleId) throw new Error("The beta-role policy requires a Discord role ID");
-  const requiredRoleGrant = requiredDiscordRoleId ? `${discordGuildId}:${requiredDiscordRoleId}:${discordAccessPolicy}` : null;
+  if (["beta-role", "site-roles"].includes(discordAccessPolicy) && !requiredDiscordRoleId) throw new Error("The selected access policy requires a Discord role ID");
+  if (discordAccessPolicy === "site-roles" && (!adminDiscordRoleId || adminDiscordRoleId === requiredDiscordRoleId)) throw new Error("The site-roles policy requires a distinct administrator role ID");
+  const requiredRoleGrant = requiredDiscordRoleId
+    ? `${discordGuildId}:${requiredDiscordRoleId}:${discordAccessPolicy}${discordAccessPolicy === "site-roles" ? `:${adminDiscordRoleId}` : ""}`
+    : null;
   function buildOperator({ identity, authMode, roles, capabilities, discordAuth, rolesSyncedAt, lastSignedInAt }) {
     return {
       id: identity.id,
@@ -88,6 +92,13 @@ export function createAuthService({
     // This gate precedes every permission mapping, including beta preview and Admin.
     if (requiredDiscordRoleId && (!Array.isArray(member?.roles) || !member.roles.includes(requiredDiscordRoleId))) {
       throw createAuthError("ACCESS_REVOKED", "The required Discord role is not present");
+    }
+    if (discordAccessPolicy === "site-roles") {
+      // Membership keeps the regular workspace available. Only the configured
+      // administrator role can elevate it; legacy Developer mappings are ignored.
+      return rolePolicy.fromRoleNames(member.roles.includes(adminDiscordRoleId)
+        ? [ROLES.ADMIN]
+        : [ROLES.OS, ROLES.INDICATORS, ROLES.JOURNAL]);
     }
     // This opt-in beta policy preserves the former gateway's full guild preview.
     // Only call it after Discord's live member endpoint confirms membership.

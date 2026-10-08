@@ -35,7 +35,7 @@ test("injected Discord configuration requires the same credentials and role IDs 
   }), /DISCORD_ROLE_DEVELOPER_ID.*DISCORD_ROLE_JOURNAL_ID/);
   assert.throws(() => createApp({
     environment: "test", authConfig: createDiscordAuthConfig({ accessPolicy: "public" }),
-  }), /DISCORD_ACCESS_POLICY must be roles, beta-guild, or beta-role/);
+  }), /DISCORD_ACCESS_POLICY must be roles, site-roles, beta-guild, or beta-role/);
 });
 
 test("injected beta guild policy requires explicit beta context and still requires Discord credentials", () => {

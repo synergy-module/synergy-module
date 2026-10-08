@@ -139,3 +139,16 @@ test("role-gated beta requires a valid role and retains it through programmatic 
   }
   assert.throws(() => readAuthConfig({ env: { ...env, APP_ENVIRONMENT: "production" } }), /only allowed with APP_ENVIRONMENT=beta/);
 });
+
+test("site roles require distinct membership and administrator IDs without legacy role mappings", () => {
+  const env = { ...discordEnvironment, DISCORD_ACCESS_POLICY: "site-roles", APP_ENVIRONMENT: "production",
+    DISCORD_REQUIRED_ROLE_ID: "1554903899343814857", DISCORD_ROLE_ADMIN_ID: "1557751441693736991",
+    DISCORD_ROLE_DEVELOPER_ID: "", DISCORD_ROLE_OS_ID: "", DISCORD_ROLE_INDICATORS_ID: "", DISCORD_ROLE_JOURNAL_ID: "" };
+  const config = readAuthConfig({ env, nodeEnvironment: "production" });
+  assert.equal(config.discord.roleIds.Admin, "1557751441693736991");
+  assert.deepEqual(normalizeAuthConfig(config, { nodeEnvironment: "production", appEnvironment: "production" }), config);
+  for (const invalid of ["", "SMA*", env.DISCORD_REQUIRED_ROLE_ID]) {
+    assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_ROLE_ADMIN_ID: invalid } }), /DISCORD_ROLE_ADMIN_ID|administrator role must differ/);
+  }
+  assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_REQUIRED_ROLE_ID: "" } }), /DISCORD_REQUIRED_ROLE_ID/);
+});

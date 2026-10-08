@@ -32,14 +32,19 @@ function readDiscordConfig(env) {
     throw new Error("DISCORD_REQUIRED_ROLE_ID must be a Discord role ID");
   }
   const accessPolicy = readValue(env, "DISCORD_ACCESS_POLICY") || "roles";
-  if (!["roles", "beta-guild", "beta-role"].includes(accessPolicy)) {
-    throw new Error("DISCORD_ACCESS_POLICY must be roles, beta-guild, or beta-role");
+  if (!["roles", "site-roles", "beta-guild", "beta-role"].includes(accessPolicy)) {
+    throw new Error("DISCORD_ACCESS_POLICY must be roles, site-roles, beta-guild, or beta-role");
   }
   if (accessPolicy.startsWith("beta-") && readValue(env, "APP_ENVIRONMENT") !== "beta") {
     throw new Error(`DISCORD_ACCESS_POLICY=${accessPolicy} is only allowed with APP_ENVIRONMENT=beta`);
   }
-  if (accessPolicy === "beta-role" && !requiredRoleId) {
-    throw new Error("DISCORD_REQUIRED_ROLE_ID is required for DISCORD_ACCESS_POLICY=beta-role");
+  if (["beta-role", "site-roles"].includes(accessPolicy) && !requiredRoleId) {
+    throw new Error(`DISCORD_REQUIRED_ROLE_ID is required for DISCORD_ACCESS_POLICY=${accessPolicy}`);
+  }
+  if (accessPolicy === "site-roles") {
+    const adminRoleId = readValue(env, "DISCORD_ROLE_ADMIN_ID");
+    if (!/^\d{17,20}$/.test(adminRoleId)) throw new Error("DISCORD_ROLE_ADMIN_ID must be a Discord role ID for site-roles");
+    if (adminRoleId === requiredRoleId) throw new Error("The site administrator role must differ from the required membership role");
   }
   const requiredKeys = accessPolicy === "roles" ? [...DISCORD_KEYS, ...DISCORD_ROLE_KEYS] : DISCORD_KEYS;
   const missingKeys = requiredKeys.filter((key) => !readValue(env, key));
