@@ -8,7 +8,7 @@ export async function inspectDatabase(env = process.env) {
   const config = readDatabaseConfig({ env, nodeEnvironment: "production" });
   const pool = new pg.Pool({ connectionString: config.connectionString, max: 1,
     ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
-    application_name: "omensite-diagnostics", connectionTimeoutMillis: 5000, statement_timeout: 5000 });
+    application_name: "synergy-module-diagnostics", connectionTimeoutMillis: 5000, statement_timeout: 5000 });
   try {
     const settings = (await pool.query(`SELECT current_setting('server_version') AS version,
       current_setting('fsync') AS fsync, current_setting('synchronous_commit') AS synchronous_commit,

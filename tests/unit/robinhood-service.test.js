@@ -11,8 +11,8 @@ import { robinhoodToolKind } from "../../src/brokers/robinhood-catalog.js";
 import { robinhoodHarness, sampleOrder, orderInput } from "../helpers/robinhood-test-helpers.js";
 
 test("Robinhood configuration preserves live lock and validates callback/encryption setup", () => {
-  const env = { ROBINHOOD_TOKEN_ENCRYPTION_KEY: "ab".repeat(32), DISCORD_REDIRECT_URI: "https://beta.omensite.com/auth/discord/callback", NODE_ENV: "production" };
-  assert.equal(readRobinhoodConfig(env).redirectUri, "https://beta.omensite.com/auth/robinhood/callback");
+  const env = { ROBINHOOD_TOKEN_ENCRYPTION_KEY: "ab".repeat(32), DISCORD_REDIRECT_URI: "https://synergymodule.dev/auth/discord/callback", NODE_ENV: "production" };
+  assert.equal(readRobinhoodConfig(env).redirectUri, "https://synergymodule.dev/auth/robinhood/callback");
   assert.equal(readRobinhoodConfig(env).configured, true);
   assert.equal(readRobinhoodConfig(env).liveEnabled, false);
   assert.equal(readRobinhoodConfig({ ...env, ROBINHOOD_CLIENT_ID: " approved-fixture-client " }).clientId, "approved-fixture-client");
@@ -21,7 +21,7 @@ test("Robinhood configuration preserves live lock and validates callback/encrypt
     assert.equal(config.configured, false);
     assert.deepEqual(config.missing, ["ROBINHOOD_CLIENT_ID"]);
   }
-  for (const url of ["http://beta.omensite.com/auth/robinhood/callback", "https://u:p@example.com/auth/robinhood/callback", "https://example.com/other", "https://example.com/auth/robinhood/callback#token"]) assert.equal(readRobinhoodConfig({ ...env, ROBINHOOD_REDIRECT_URI: url }).configured, false);
+  for (const url of ["http://synergymodule.dev/auth/robinhood/callback", "https://u:p@example.com/auth/robinhood/callback", "https://example.com/other", "https://example.com/auth/robinhood/callback#token"]) assert.equal(readRobinhoodConfig({ ...env, ROBINHOOD_REDIRECT_URI: url }).configured, false);
 });
 
 test("encrypted credentials cannot be moved between users or decrypted after tampering", () => {
@@ -38,7 +38,7 @@ test("public OAuth client registers the requested scope and binds PKCE, redirect
     calls.push({ url, ...options });
     return new Response(JSON.stringify(url.endsWith("register") ? { client_id: "fixture-client" } : { access_token: "token", refresh_token: "refresh", token_type: "Bearer", expires_in: 3600 }));
   } });
-  const { pending, authorizationUrl } = await client.begin("https://omensite.test/auth/robinhood/callback");
+  const { pending, authorizationUrl } = await client.begin("https://synergy-module.test/auth/robinhood/callback");
   const url = new URL(authorizationUrl);
   const registration = JSON.parse(calls[0].body);
   assert.equal(registration.scope, "internal");
@@ -67,7 +67,7 @@ test("public OAuth client registers the requested scope and binds PKCE, redirect
 test("configured public client skips registration and retains its identity through authorization, exchange, and refresh", async () => {
   const h = robinhoodHarness();
   const config = readRobinhoodConfig({ ROBINHOOD_TOKEN_ENCRYPTION_KEY: "ab".repeat(32),
-    ROBINHOOD_REDIRECT_URI: "https://beta.omensite.com/auth/robinhood/callback", ROBINHOOD_CLIENT_ID: "approved-fixture-client", NODE_ENV: "production" });
+    ROBINHOOD_REDIRECT_URI: "https://synergymodule.dev/auth/robinhood/callback", ROBINHOOD_CLIENT_ID: "approved-fixture-client", NODE_ENV: "production" });
   const calls = [];
   const client = createRobinhoodClient({ fetchImpl: async (url, options) => {
     assert.equal(url, "https://api.robinhood.com/oauth2/token/");
@@ -132,7 +132,7 @@ for (const asset of ["equity", "option", "crypto"]) test(`${asset} requests use 
 });
 
 test("broker requests and encrypted connection survive a fresh SQLite repository", async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "omen-robinhood-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "synergy-module-robinhood-"));
   const filename = path.join(directory, "broker.sqlite"), repo = createSqliteBrokerRepository(filename);
   const h = robinhoodHarness({ repository: repo }); await h.connect();
   const action = await h.service.propose("owner", sampleOrder());

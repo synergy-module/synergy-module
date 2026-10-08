@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import request from "supertest";
 import { createTestApp, loginTestOperator } from "../helpers/auth-test-helpers.js";
 
 const marketNewsService = {
@@ -21,7 +22,7 @@ test("protected clean routes render full documents and fragments", async () => {
   assert.match(response.text, /data-main/);
   assert.match(response.text, /SYNERGY/);
   assert.match(response.text, /DISCORD SSO/);
-  assert.doesNotMatch(response.text, /root@omensite:~\$|SESSION 01 \/ AUTHORIZED/);
+  assert.doesNotMatch(response.text, /root@synergy-module:~\$|SESSION 01 \/ AUTHORIZED/);
 
   const cases = [
     ["/home", "home"],
@@ -35,11 +36,11 @@ test("protected clean routes render full documents and fragments", async () => {
   ];
 
   for (const [path, identity] of cases) {
-    await agent.get(path).expect(200).expect(/data-app-shell/).expect("X-Omensite-Key", identity);
-    await agent.get(path).set("X-Omensite-Fragment", "1").expect(200)
+    await agent.get(path).expect(200).expect(/data-app-shell/).expect("X-Synergy-Module-Key", identity);
+    await agent.get(path).set("X-Synergy-Module-Fragment", "1").expect(200)
       .expect(/data-route-view/).expect((response) => {
         assert.doesNotMatch(response.text, /data-app-shell/);
-        assert.equal(response.headers["x-omensite-path"], path);
+        assert.equal(response.headers["x-synergy-module-path"], path);
       });
   }
 });
@@ -81,8 +82,20 @@ test("server-rendered Cortex shell exposes semantic navigation, page heading, an
 test("public journal fragments expose the concrete request path", async () => {
   const agent = await loginTestOperator(createTestApp());
 
-  await agent.get("/journal/entry-42").set("X-Omensite-Fragment", "1")
+  await agent.get("/journal/entry-42").set("X-Synergy-Module-Fragment", "1")
     .expect(200)
-    .expect("X-Omensite-Path", "/journal/entry-42")
-    .expect("X-Omensite-Key", "journal-public");
+    .expect("X-Synergy-Module-Path", "/journal/entry-42")
+    .expect("X-Synergy-Module-Key", "journal-public");
+});
+
+test("tabs opened before the rename retain fragment navigation and authentication failures", async () => {
+  const app = createTestApp();
+  await request(app).get("/brain").set("X-Omensite-Fragment", "1").expect(401)
+    .expect({ error: "AUTH_REQUIRED", loginUrl: "/login" });
+  const agent = await loginTestOperator(app);
+  await agent.get("/brain").set("X-Omensite-Fragment", "1").expect(200)
+    .expect("X-Omensite-Key", "brain").expect("X-Omensite-Path", "/brain")
+    .expect(({ text }) => assert.doesNotMatch(text, /data-app-shell/));
+  await agent.get("/brain").set("X-Synergy-Module-Fragment", "1").expect(200)
+    .expect("X-Synergy-Module-Key", "brain");
 });

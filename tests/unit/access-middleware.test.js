@@ -73,8 +73,8 @@ test("every protected request checks live operator admission before refresh", as
 
 test("requireCapability returns a structured 403 for denied fragments and APIs", () => {
   for (const requestShape of [
-    { isOmensiteFragment: true, path: "/indicators" },
-    { isOmensiteFragment: false, path: "/api/indicator-access/requests" },
+    { isSynergyModuleFragment: true, path: "/indicators" },
+    { isSynergyModuleFragment: false, path: "/api/indicator-access/requests" },
   ]) {
     const response = createResponseHarness();
     requireCapability(CAPABILITIES.INDICATORS)(
@@ -184,7 +184,7 @@ test("refresh failures unregister and destroy stale sessions before returning lo
     const response = createResponseHarness();
 
     await middleware(
-      { path: scenario.path, isOmensiteFragment: scenario.fragment, sessionID: "sid-42", session },
+      { path: scenario.path, isSynergyModuleFragment: scenario.fragment, sessionID: "sid-42", session },
       response,
       () => { nextCalls += 1; },
     );
@@ -225,7 +225,7 @@ test("refresh destruction failure keeps the SID retryable, clears the cookie, an
   const response = createResponseHarness();
 
   await middleware(
-    { path: "/journal", isOmensiteFragment: true, sessionID: "sid-42", session },
+    { path: "/journal", isSynergyModuleFragment: true, sessionID: "sid-42", session },
     response,
     () => assert.fail("revoked session continued"),
   );

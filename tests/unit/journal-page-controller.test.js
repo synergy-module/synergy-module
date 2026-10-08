@@ -139,7 +139,7 @@ test("journal rows and semantic journal buttons retain their terminal visual tre
   initializeJournalPage(root, {
     list: () => [{ id: "entry-9", direction: "long", entryTime: "09/01", confluences: ["FVG"], pl: "+1.00" }],
   });
-  const stylesheet = await readFile(new URL("../../public/css/omensite.css", import.meta.url), "utf8");
+  const stylesheet = await readFile(new URL("../../public/css/synergy-module.css", import.meta.url), "utf8");
   const style = dom.window.document.createElement("style");
   style.textContent = stylesheet;
   dom.window.document.head.append(style);

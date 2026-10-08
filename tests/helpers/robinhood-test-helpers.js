@@ -9,7 +9,7 @@ export function robinhoodHarness({ repository, liveEnabled = false, now = () => 
   repository ??= createMemoryBrokerRepository();
   // The fixture opts into auth with an isolated store; runtime memory repositories do not.
   if (repository.getStorageStatus().kind === "memory") repository.getStorageStatus = () => ({ kind: "fixture", persistent: true });
-  const invocations = [], config = { configured: true, encryptionKey: "ab".repeat(32), redirectUri: "https://omensite.test/auth/robinhood/callback", liveEnabled, missing: [] };
+  const invocations = [], config = { configured: true, encryptionKey: "ab".repeat(32), redirectUri: "https://synergy-module.test/auth/robinhood/callback", liveEnabled, missing: [] };
   let catalog = tools ?? [
     { name: "get_accounts", inputSchema: emptyInput },
     { name: "get_equity_quotes", inputSchema: { type: "object", required: ["symbols"], properties: { symbols: { type: "array", items: { type: "string" } } }, additionalProperties: false } },

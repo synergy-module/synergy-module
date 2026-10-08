@@ -1,4 +1,6 @@
-# OMENSITE
+# Synergy Module
+
+Repository: [omensite/synergy-module](https://github.com/omensite/synergy-module). The GitHub organization remains `omensite`; the application and package are named **Synergy Module** and `synergy-module` respectively.
 
 **Version v0.1.2 — Early Development Preview**
 
@@ -6,9 +8,9 @@
 
 ## Overview
 
-OMENSITE is designed to help discretionary traders convert market activity into a disciplined, repeatable learning process. The platform brings trade records, post-execution analysis, research tools, educational material, and market intelligence into a single operational workspace.
+Synergy Module is designed to help discretionary traders convert market activity into a disciplined, repeatable learning process. The platform brings trade records, post-execution analysis, research tools, educational material, and market intelligence into a single operational workspace.
 
-The long-term objective is to use AI to examine trade executions alongside the trader's thesis, risk plan, confluences, and outcome. Rather than merely reporting profit and loss, OMENSITE aims to identify recurring behaviors, highlight strengths and weaknesses, and produce practical feedback that can improve future decision-making.
+The long-term objective is to use AI to examine trade executions alongside the trader's thesis, risk plan, confluences, and outcome. Rather than merely reporting profit and loss, Synergy Module aims to identify recurring behaviors, highlight strengths and weaknesses, and produce practical feedback that can improve future decision-making.
 
 ## Product direction
 
@@ -20,7 +22,7 @@ The long-term objective is to use AI to examine trade executions alongside the t
 
 ## What v0.1.2 includes
 
-This release establishes OMENSITE's application architecture and core user experience:
+This release establishes Synergy Module's application architecture and core user experience:
 
 - An Express 5 and EJS Model-View-Controller application.
 - Clean, refreshable routes with progressive fragment navigation.
@@ -52,13 +54,15 @@ The application renders complete pages on direct requests. Internal navigation r
 
 ### Windows launcher
 
-Double-click `start-omensite.bat` from the project root. The launcher installs missing dependencies and opens the server at:
+Double-click `start-synergy-module.bat` from the project root. The launcher installs missing dependencies and opens the server at:
 
 ```text
 http://127.0.0.1:3000
 ```
 
 Press `Ctrl+C` in the terminal window to stop the server.
+
+Set `SYNERGY_MODULE_SKIP_BROWSER=1` when starting the launcher without opening a browser.
 
 The launcher calls the existing `npm start` command. That command reads the local `.env` file automatically; the launcher never prints authentication secrets.
 
@@ -79,9 +83,9 @@ npm run dev
 
 ### Live market calendar
 
-Market News is officially powered by Economicium's public JSON API. OMENSITE retrieves the calendar directly from this public endpoint, so no account, API key, or environment configuration is required.
+Market News is officially powered by Economicium's public JSON API. Synergy Module retrieves the calendar directly from this public endpoint, so no account, API key, or environment configuration is required.
 
-OMENSITE keeps only high- and medium-impact economic releases, maps each country to its affected currency, converts release times to the workstation's timezone, and groups the results by day. The server caches a successful response for 24 hours; the terminal's refresh control can request an immediate update. If the source is temporarily unavailable, the last successful in-memory result remains visible as stale data.
+Synergy Module keeps only high- and medium-impact economic releases, maps each country to its affected currency, converts release times to the workstation's timezone, and groups the results by day. The server caches a successful response for 24 hours; the terminal's refresh control can request an immediate update. If the source is temporarily unavailable, the last successful in-memory result remains visible as stale data.
 
 The source provides release schedules and impact classifications derived from official public or openly licensed sources. It deliberately does not provide proprietary consensus forecasts, actual releases, or previous values. See the [Economicium calendar](https://www.economicium.com/economic-calendar/) and its [public JSON endpoint](https://www.economicium.com/api/calendar).
 
@@ -101,7 +105,7 @@ Provider credentials are optional during offline setup. When needed later, store
 | OpenAI | `OPENAI_API_KEY` | `OPENAI_MODEL` |
 | Claude | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` |
 
-`TRADER_AI_PROVIDER` sets the initial selection (`gemini`, `openai`, or `claude`). Only the selected provider receives a run; there is no automatic fallback to another provider. Keys stay on the server. The Compose configuration forwards these optional settings to the web service. An absent key leaves that provider unavailable while the rest of OMENSITE continues to work.
+`TRADER_AI_PROVIDER` sets the initial selection (`gemini`, `openai`, or `claude`). Only the selected provider receives a run; there is no automatic fallback to another provider. Keys stay on the server. The Compose configuration forwards these optional settings to the web service. An absent key leaves that provider unavailable while the rest of Synergy Module continues to work.
 
 Only an explicit server-side `TRADER_PAID_AI_ENABLED=true` followed by a server restart enables billable requests. There is no browser control or request parameter that can activate them. Leave this disabled until setup has been reviewed and paid usage is explicitly authorized.
 
@@ -134,7 +138,7 @@ The retro terminal opens Discord sign-in in a separate popup. After Discord conf
 
 Popup completion is checked through the server session with an attempt identifier; no access tokens, refresh tokens, or OAuth codes are sent between browser windows. The regular `/auth/discord` redirect and `/auth/discord/callback` remain available, so the registered callback URL does not change.
 
-Users authorize only the `identify` and `guilds.members.read` OAuth2 scopes. OMENSITE rechecks the member's roles every five minutes by default. If Discord cannot confirm membership during a required refresh, access fails closed until the identity can be verified again.
+Users authorize only the `identify` and `guilds.members.read` OAuth2 scopes. Synergy Module rechecks the member's roles every five minutes by default. If Discord cannot confirm membership during a required refresh, access fails closed until the identity can be verified again.
 
 `DISCORD_ACCESS_POLICY=roles` is the default and requires the five role IDs. An existing beta deployment that admits every guild member can explicitly select `DISCORD_ACCESS_POLICY=beta-guild` with `APP_ENVIRONMENT=beta`. This preserves the former gateway's full preview access, including Admin, after a successful live Discord membership check; no role IDs are needed. Membership is rechecked at least every five minutes, and removed members or failed Discord checks lose access. This policy is rejected outside the beta environment.
 
@@ -152,7 +156,7 @@ Every primary navigation item remains visible. When a user selects a module they
 
 When `DATABASE_URL` is configured, user snapshots, bans, indicator requests and decisions, login sessions and revocations, journal entries, and Brain records are saved in PostgreSQL. Admin displays `POSTGRESQL CONNECTED` only when all its repositories use persistent storage. Development without a database still displays `TEMPORARY MEMORY MODE` for its in-memory Admin repositories. Valid sessions from before the storage migration populate their user snapshot on the next protected request.
 
-OMENSITE records a request for all active invite-only indicators, including the member's TradingView username and explicit consent. An authorized administrator must still open TradingView's **Manage Access** interface, grant or deny access manually, and then record the matching decision in OMENSITE. The application does not call an undocumented TradingView endpoint or grant access automatically.
+Synergy Module records a request for all active invite-only indicators, including the member's TradingView username and explicit consent. An authorized administrator must still open TradingView's **Manage Access** interface, grant or deny access manually, and then record the matching decision in Synergy Module. The application does not call an undocumented TradingView endpoint or grant access automatically.
 
 ## Application routes
 
@@ -194,6 +198,12 @@ See the [project evolution roadmap](docs/project-roadmap.md) for the visual rede
 
 ## Production considerations
 
+The planned application domains are `synergymodule.dev` for development/beta and `synergymodule.app` for production; register each exact OAuth callback, including any subdomain, with the relevant provider. The example files do not change deployed DNS, routing, or provider registrations. Robinhood callback support remains subject to the issue documented in [Robinhood setup](docs/robinhood.md).
+
+Branding upgrades preserve saved data: keep existing database URLs, data directories/volumes, session secrets, and credential-encryption keys. The hosting template intentionally retains the existing external network names `omen_edge` and `omen_data`. Legacy identifiers remain only where required for upgrade compatibility or external resources such as the GitHub organization and the installed Omensite Harness. Existing browser preferences and saved journal data remain readable; previously encrypted credentials retain their decryption compatibility.
+
+Saved provider credentials use a versioned format: this release reads existing v1 records and writes v2 when an API key is saved or replaced. Upgrade every application instance sharing the database before saving keys. Earlier releases cannot read v2 records, so a rollback must retain the compatible credential reader. No database schema migration is needed for this rename.
+
 Production startup requires `AUTH_MODE=discord` with complete Discord application/guild configuration, the role IDs when using the default roles policy, `SESSION_SECRET`, and a durable `express-session` store. The in-memory store is reserved for local development and automated tests. Authentik proxy authentication has been removed; forwarded identity headers cannot create a session, and existing sessions from the former authentication mode must sign in again. The explicit beta-guild policy preserves existing beta guild preview access; other deployments use Discord roles.
 
 The hosted runtime supplies PostgreSQL for sessions, Admin records, journals, and Brain runs, documents, memory, and cache. Beta and production must receive the same `DATABASE_URL` and separate `SESSION_SECRET` values. Records belong to Discord identities, so shared-database deployments also share journal records, bans, and indicator decisions once both run this version. Revoked session IDs remain recorded to prevent a late concurrent session save from restoring access.
@@ -202,7 +212,7 @@ This repository includes `Dockerfile`, `compose.hosting.yml`, and `environment.h
 
 The hosting Compose file fixes `AUTH_MODE=discord` and attaches only the existing `security-headers@file,compression@file` Traefik middleware. Old Portainer `AUTH_MODE=proxy` and `APP_AUTH_MIDDLEWARE` values no longer control this app. Host rules, domains, networks, and HTTPS routing are unchanged.
 
-To switch an existing beta stack, populate the Discord client ID, client secret, guild ID, and redirect URI in Portainer before redeploying the updated `dev` revision. For `beta.omensite.com`, register `https://beta.omensite.com/auth/discord/callback` on the Discord application. Use `DISCORD_ACCESS_POLICY=beta-guild` to preserve membership-based full preview, or supply all five role IDs for the default roles policy. Missing required settings stop deployment instead of admitting anonymous users. If an additional Authentik gate is configured outside this app's router (for example on a shared entrypoint), remove that gate for this app as part of the hosting rollout.
+To switch an existing beta stack, populate the Discord client ID, client secret, guild ID, and redirect URI in Portainer before redeploying the updated `dev` revision. For `synergymodule.dev`, register `https://synergymodule.dev/auth/discord/callback` on the Discord application. Use `DISCORD_ACCESS_POLICY=beta-guild` to preserve membership-based full preview, or supply all five role IDs for the default roles policy. Missing required settings stop deployment instead of admitting anonymous users. If an additional Authentik gate is configured outside this app's router (for example on a shared entrypoint), remove that gate for this app as part of the hosting rollout.
 
 Deployments must use HTTPS, either directly in Node.js or through a trusted reverse proxy, because production session cookies are marked `Secure`. `createApp` trusts one proxy hop by default in production; deployments with a different topology must provide the appropriate `trustProxy` value.
 
@@ -212,4 +222,4 @@ The accepted static prototype is preserved in `reference/static-original/` for d
 
 ## Disclaimer
 
-OMENSITE is trading-analysis and educational software. It does not provide financial advice, guarantee trading performance, or replace independent research and risk management.
+Synergy Module is trading-analysis and educational software. It does not provide financial advice, guarantee trading performance, or replace independent research and risk management.

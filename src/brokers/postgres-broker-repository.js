@@ -34,7 +34,7 @@ function workspaceFromRow(row, empty) {
 
 // Reuse parsing/plans on each pooled connection without caching mutable broker
 // state or its storage mode. Every execution still gets a fresh MVCC snapshot.
-const prepared = (client, name, text, values) => client.query({ name: `omensite-broker-${name}-v2`, text, values });
+const prepared = (client, name, text, values) => client.query({ name: `synergy-module-broker-${name}-v2`, text, values });
 
 function splitWorkspace(state) {
   const metadata = { ...state }, workingSet = {}, records = {};

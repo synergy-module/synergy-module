@@ -25,7 +25,7 @@ export function buildBrainNetworkData(state = {}) {
   const run = state.selectedRun ?? runs[0] ?? null;
   const toolDefinitions = safeArray(state.toolDefinitions);
   const tools = [...new Map(toolDefinitions.filter((tool) => typeof tool?.name === "string").map((tool) => [tool.name, tool])).values()];
-  const nodes = [{ id: "omen", kind: "core", name: "SYNERGY", detail: "Agent orchestration", position: [0, 0, 0], status: active(run?.status) ? "running" : "idle" }];
+  const nodes = [{ id: "synergy-module", kind: "core", name: "SYNERGY MODULE", detail: "Agent orchestration", position: [0, 0, 0], status: active(run?.status) ? "running" : "idle" }];
   for (const role of ROLES) {
     const graph = safeArray(run?.graph?.nodes).filter((node) => node.role === role.id);
     const providerId = run?.input?.routes?.[role.id] || run?.input?.provider || state.defaultProvider;
@@ -39,10 +39,10 @@ export function buildBrainNetworkData(state = {}) {
       else if (events.some((event) => event.type === "step")) status = active(run?.status) ? "running" : run?.status ?? "idle";
     }
     if (active(status) && ["failed", "cancelled"].includes(run?.status)) status = run.status;
-    nodes.push({ ...role, id: `agent:${role.id}`, role: role.id, kind: "agent", status, parent: "omen", detail: role.description,
+    nodes.push({ ...role, id: `agent:${role.id}`, role: role.id, kind: "agent", status, parent: "synergy-module", detail: role.description,
       provider: run?.input?.mode === "demo" ? "Offline demo · no model calls" : provider ? `${provider.label ?? provider.id}${provider.model ? ` / ${provider.model}` : " · Not configured"}${run ? "" : " · default route"}` : "Assigned when a mission starts", panel: "mission" });
   }
-  for (const module of MODULES) nodes.push({ ...module, id: `module:${module.id}`, kind: "module", parent: "omen", position: [0, 0, 0], status: module.id === "robinhood" ? !state.brokerState ? "not checked" : state.brokerState.connected === true ? "connected" : "not connected" : "available" });
+  for (const module of MODULES) nodes.push({ ...module, id: `module:${module.id}`, kind: "module", parent: "synergy-module", position: [0, 0, 0], status: module.id === "robinhood" ? !state.brokerState ? "not checked" : state.brokerState.connected === true ? "connected" : "not connected" : "available" });
   tools.slice(0, 12).forEach((tool, index) => {
     const events = safeArray(run?.trace).filter((event) => event.details?.tool === tool.name);
     const observedRole = events.findLast((event) => ROLES.some((role) => role.id === event.agent))?.agent;
@@ -58,7 +58,7 @@ export function buildBrainNetworkData(state = {}) {
       status: "saved", parent: `tool:${document.kind === "memory" ? "memory.search" : "knowledge.search"}`,
       position: [Math.cos(angle) * .42, Math.sin(angle) * .52, -.26], panel: "knowledge" });
   });
-  if (run) nodes.push({ id: `run:${run.id}`, name: `${run.input?.symbol || "CURRENT"} MISSION`, kind: "run", status: run.status, detail: run.input?.objective || "Inspect the saved mission, proposal and human review checkpoint.", position: [0, .48, .4], parent: "omen", panel: "mission" });
+  if (run) nodes.push({ id: `run:${run.id}`, name: `${run.input?.symbol || "CURRENT"} MISSION`, kind: "run", status: run.status, detail: run.input?.objective || "Inspect the saved mission, proposal and human review checkpoint.", position: [0, .48, .4], parent: "synergy-module", panel: "mission" });
   const ids = new Set(nodes.map((node) => node.id));
   for (const node of nodes) if (node.parent && !ids.has(node.parent)) node.parent = "agent:researcher";
   return { nodes, run, runs, providers, brokerState: state.brokerState, counts: { agents: ROLES.length, tools: tools.length, documents: documents.length, memories: documents.filter((document) => document.kind === "memory").length, runs: runs.length }, paidCallsEnabled: state.paidCallsEnabled === true };
@@ -91,7 +91,7 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
   const renderCanvas = context ? createBrainNetworkRenderer(context, canvasColors) : null;
   const grid = el('div', undefined, 'brain-network-grid'); grid.setAttribute('aria-hidden', 'true');
   const labels = el('div', undefined, 'brain-network-labels'); labels.setAttribute('role', 'group'); labels.setAttribute('aria-label', 'Explore network regions');
-  const coordinate = el('span', 'SYNERGY / NEURAL NETWORK', 'brain-network-coordinate');
+  const coordinate = el('span', 'SYNERGY MODULE / NEURAL NETWORK', 'brain-network-coordinate');
   const mode = el('span', 'IDLE', 'brain-network-mode');
   const controls = el('div', undefined, 'brain-network-controls'); controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'Network view controls');
   const rotate = button('Rotate', undefined, 'Rotate network'), move = button('Move', undefined, 'Move network');
@@ -252,7 +252,7 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
   });
   listen(document, 'visibilitychange', () => { if (document.hidden) { endDrag(); stopAnimation(); } else startAnimation(); });
   listen(window, 'resize', refresh); listen(motionQuery, 'change', (event) => setMotion(event.matches));
-  listen(document, 'omensite:themechange', () => { canvasColors = palette(); renderCanvas?.setColors(canvasColors); draw(); });
+  listen(document, 'synergy-module:themechange', () => { canvasColors = palette(); renderCanvas?.setColors(canvasColors); draw(); });
   const resizeObserver = typeof window?.ResizeObserver === 'function' ? new window.ResizeObserver(refresh) : null; resizeObserver?.observe(stage);
   const intersectionObserver = typeof window?.IntersectionObserver === 'function' ? new window.IntersectionObserver((entries) => { intersecting = entries.some((entry) => entry.isIntersecting); if (intersecting) refresh(); else stopAnimation(); }) : null; intersectionObserver?.observe(stage);
   function update(state = {}) {

@@ -1,10 +1,10 @@
-# Omensite / Redline Cortex UI
+# Synergy Module / Redline Cortex UI
 
-The `dev2` interface adapts the user-supplied `tests/redline-cortex.zip`. The original archive stays local; the required design tokens, artwork and adapted renderer are committed as ordinary application assets. The application remains EJS and browser JavaScript.
+The interface on `dev` adapts the user-supplied `tests/redline-cortex.zip`. The original archive stays local; the required design tokens, artwork and adapted renderer are committed as ordinary application assets. The application remains EJS and browser JavaScript.
 
 ## Design mapping
 
-| Reference element | Omensite implementation |
+| Reference element | Synergy Module implementation |
 | --- | --- |
 | Core and Daylight tokens | `public/css/redline-tokens.css`; shared aliases and shell in `redline.css` |
 | Chakra Petch / IBM Plex Sans / JetBrains Mono | Display headings / reading text / numerical and technical values |
@@ -14,11 +14,11 @@ The `dev2` interface adapts the user-supplied `tests/redline-cortex.zip`. The or
 | KPI tiles and market cards | Saved mission usage lives in Research; equal stocks/options/crypto entry points live in Accounts |
 | Cover art | Supplied block-and-binary SVG adapted for Discord sign-in |
 
-The source demo's account balances, performance charts, eight simulated agents, random market values and pretend connection flows are not application data. Those demos are replaced by existing server state and honest empty states. Omensite remains the product name. The app's persistent navigation and real forms are retained.
+The source demo's account balances, performance charts, eight simulated agents, random market values and pretend connection flows are not application data. Those demos are replaced by existing server state and honest empty states. Synergy Module is the product name. The app's persistent navigation and real forms are retained.
 
 ## Behavior
 
-- Core is the default. Daylight is a user preference stored under `omensite-theme`; it contains no account information. The canvas updates when the theme changes.
+- Core is the default. Daylight is a user preference stored under `synergy-module-theme`; earlier installations retain their selection through the legacy-key migration. It contains no account information. The canvas updates when the theme changes.
 - Brain animation is decorative and uses no model tokens. Its orientation stays fixed until you rotate it; individual binary glyphs shift, flicker and brighten in sporadic bursts. It runs at a capped 30 fps, stops when hidden, supports manual pause and reduced motion, and disposes its observers and handlers when leaving the route.
 - Region controls remain keyboard accessible without canvas support. Arrow keys rotate; Shift-arrow keys move the view. The camera survives in-app navigation and resets on refresh.
 - Smaller screens use a navigation drawer and a full neural canvas. Selecting a region opens a dismissible detail panel. Connections and defaults live in Settings; missions and knowledge live in Research.

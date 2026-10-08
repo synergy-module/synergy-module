@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SYNERGY Login</title>
-    <meta name="description" content="Synergy — agentic research, connected accounts, reviewed trading decisions, and a persistent trade journal.">
+    <title>SYNERGY MODULE Login</title>
+    <meta name="description" content="Synergy Module — agentic research, connected accounts, reviewed trading decisions, and a persistent trade journal.">
     <%- include("../partials/redline-head") %>
   </head>
   <body>
 
     <main id="app" aria-live="polite">
       <section class="login" data-login-root>
-        <div class="cortex-login-intro"><a class="cortex-brand" href="/login" aria-label="Synergy">SYN<span>ERGY</span></a><div class="cortex-login-copy"><span class="cortex-eyebrow">AGENTIC TRADING WORKSPACE</span><h1>INTELLIGENCE.<br>WITH INTENT.</h1><p>Your research, reasoning, and execution.<br>One connected command center.</p><img class="cortex-login-art" src="<%= assetPath('/assets/redline-signal.svg') %>" alt="" width="480" height="300"><div class="cortex-login-markets">STOCKS &amp; ETFs <span>◆</span> OPTIONS <span>◆</span> CRYPTO</div></div><span class="cortex-login-footer">SYNERGY / POWERED BY YOUR PROCESS</span></div>
+        <div class="cortex-login-intro"><a class="cortex-brand" href="/login" aria-label="Synergy Module">SYNERGY<span>MODULE</span></a><div class="cortex-login-copy"><span class="cortex-eyebrow">AGENTIC TRADING WORKSPACE</span><h1>INTELLIGENCE.<br>WITH INTENT.</h1><p>Your research, reasoning, and execution.<br>One connected command center.</p><img class="cortex-login-art" src="<%= assetPath('/assets/redline-signal.svg') %>" alt="" width="480" height="300"><div class="cortex-login-markets">STOCKS &amp; ETFs <span>◆</span> OPTIONS <span>◆</span> CRYPTO</div></div><span class="cortex-login-footer">SYNERGY MODULE / POWERED BY YOUR PROCESS</span></div>
         <div class="login-card">
-          <div class="cortex-theme" role="group" aria-label="Color theme"><button type="button" data-color-theme="core" aria-pressed="true">CORE</button><button type="button" data-color-theme="daylight" aria-pressed="false">DAYLIGHT</button></div><span class="cortex-eyebrow">OPERATOR ACCESS</span><h2>ENTER THE<br>WORKSPACE.</h2><p class="login-sub">Sign in with Discord to access your Synergy tools and permissions.</p><% if (typeof designPreview !== 'undefined' && designPreview) { %><p class="cortex-preview">DESIGN PREVIEW · ISOLATED DATA</p><% } %>
+          <div class="cortex-theme" role="group" aria-label="Color theme"><button type="button" data-color-theme="core" aria-pressed="true">CORE</button><button type="button" data-color-theme="daylight" aria-pressed="false">DAYLIGHT</button></div><span class="cortex-eyebrow">OPERATOR ACCESS</span><h2>ENTER THE<br>WORKSPACE.</h2><p class="login-sub">Sign in with Discord to access your Synergy Module tools and permissions.</p><% if (typeof designPreview !== 'undefined' && designPreview) { %><p class="cortex-preview">DESIGN PREVIEW · ISOLATED DATA</p><% } %>
           <% if (typeof popupResult !== "undefined") { %>
             <div class="login-form" data-discord-popup-result>
               <div class="login-prompt">&gt; <%= popupResult === "complete" ? "identity confirmed" : "authentication interrupted" %></div>
@@ -37,7 +37,7 @@
       </section>
     </main>
 
-    <noscript><div class="noscript"><strong>SYNERGY</strong><p>Enable JavaScript to use the trading workspace.</p></div></noscript>
+    <noscript><div class="noscript"><strong>SYNERGY MODULE</strong><p>Enable JavaScript to use the trading workspace.</p></div></noscript>
 
     <script type="module" src="<%= assetPath('/js/login-controller.js') %>"></script>
   </body>

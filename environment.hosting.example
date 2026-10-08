@@ -1,8 +1,9 @@
-APP_SLUG=example
+APP_SLUG=synergy-module
+# Development/beta example; production uses synergymodule.app.
 APP_ENVIRONMENT=beta
-APP_DOMAIN=beta.example.com
+APP_DOMAIN=synergymodule.dev
 APP_ADDITIONAL_DOMAINS=
-APP_HOST_RULE=Host(`beta.example.com`)
+APP_HOST_RULE=Host(`synergymodule.dev`)
 APP_CPUS=1.0
 APP_MEMORY=1g
 APP_PIDS_LIMIT=128
@@ -17,7 +18,7 @@ DISCORD_ACCESS_POLICY=roles
 # beta-guild is rejected unless APP_ENVIRONMENT=beta; it does not require role IDs.
 DISCORD_CLIENT_ID=stored-in-portainer-not-this-file
 DISCORD_CLIENT_SECRET=stored-in-portainer-not-this-file
-DISCORD_REDIRECT_URI=https://beta.example.com/auth/discord/callback
+DISCORD_REDIRECT_URI=https://synergymodule.dev/auth/discord/callback
 DISCORD_GUILD_ID=stored-in-portainer-not-this-file
 DISCORD_ROLE_DEVELOPER_ID=stored-in-portainer-not-this-file
 DISCORD_ROLE_ADMIN_ID=stored-in-portainer-not-this-file
@@ -33,6 +34,8 @@ TRADER_AI_PROVIDER=gemini
 TRADER_PAID_AI_ENABLED=false
 ROBINHOOD_TOKEN_ENCRYPTION_KEY=
 ROBINHOOD_REDIRECT_URI=
+# Optional public client supplied or approved by Robinhood for this exact callback.
+ROBINHOOD_CLIENT_ID=
 ROBINHOOD_LIVE_TRADING_ENABLED=false
 GEMINI_API_KEY=
 OPENAI_API_KEY=

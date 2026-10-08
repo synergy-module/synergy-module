@@ -6,16 +6,16 @@ import { migrate } from "../../scripts/migrate.js";
 import { createPostgresBrokerRepository } from "../../src/brokers/broker-repository.js";
 import { readBenchmarkConfig, summarizeMeasurements, measureStage, runDatabaseBenchmark } from "../../scripts/benchmark-database.js";
 
-const fixtureUrl = "postgresql://fixture:never-printed@127.0.0.1:5433/omensite_benchmark";
+const fixtureUrl = "postgresql://fixture:never-printed@127.0.0.1:5433/synergy_module_benchmark";
 
 test("database benchmark refuses application, remote, unnamed, and override targets", () => {
   assert.throws(() => readBenchmarkConfig({ DATABASE_URL: fixtureUrl }), /DATABASE_URL is not accepted/);
   assert.throws(() => readBenchmarkConfig({ BENCHMARK_DATABASE_URL: fixtureUrl, DATABASE_URL: fixtureUrl.replace("127.0.0.1", "localhost").replace("never-printed", "other") }), /matches the application's/);
   assert.throws(() => readBenchmarkConfig({ TEST_DATABASE_URL: fixtureUrl.replace("127.0.0.1", "database.example.com") }), /loopback/);
-  assert.throws(() => readBenchmarkConfig({ TEST_DATABASE_URL: fixtureUrl.replace("omensite_benchmark", "omensite") }), /dedicated database name/);
+  assert.throws(() => readBenchmarkConfig({ TEST_DATABASE_URL: fixtureUrl.replace("synergy_module_benchmark", "synergy-module") }), /dedicated database name/);
   assert.throws(() => readBenchmarkConfig({ TEST_DATABASE_URL: `${fixtureUrl}?host=database.example.com` }), /override parameters/);
   const config = readBenchmarkConfig({ TEST_DATABASE_URL: fixtureUrl });
-  assert.equal(config.target.database, "omensite_benchmark");
+  assert.equal(config.target.database, "synergy_module_benchmark");
   assert.equal(JSON.stringify(config.target).includes("never-printed"), false);
 });
 

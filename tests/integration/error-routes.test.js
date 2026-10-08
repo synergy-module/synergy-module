@@ -14,7 +14,7 @@ test("unknown full requests return the terminal 404 page", async () => {
 
 test("unknown fragment requests return only a safe 404 fragment", async () => {
   const agent = await loginTestOperator(createTestApp());
-  const response = await agent.get("/missing-terminal-route").set("X-Omensite-Fragment", "1").expect(404);
+  const response = await agent.get("/missing-terminal-route").set("X-Synergy-Module-Fragment", "1").expect(404);
   assert.match(response.text, /404 :: ROUTE NOT FOUND/);
   assert.doesNotMatch(response.text, /<!doctype html>|data-app-shell/i);
 });

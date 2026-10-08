@@ -65,7 +65,7 @@ test("server honors HOST and logs the full listening address", async () => {
   });
 
   try {
-    const output = await waitForOutput(child, /SYNERGY listening/);
+    const output = await waitForOutput(child, /Synergy Module listening/);
     assert.match(output, new RegExp(`http://${host}:${port}`));
     const response = await fetch(`http://${host}:${port}/login`);
     assert.equal(response.status, 200);
@@ -90,10 +90,10 @@ test("server exits before listening when Discord configuration is missing or dem
       windowsHide: true,
     });
     try {
-      await assert.rejects(waitForOutput(child, /SYNERGY listening/), (error) => {
+      await assert.rejects(waitForOutput(child, /Synergy Module listening/), (error) => {
         assert.match(error.message, /server exited 1/);
         assert.match(error.message, expected);
-        assert.doesNotMatch(error.message, /SYNERGY listening|test-client-secret/);
+        assert.doesNotMatch(error.message, /Synergy Module listening|test-client-secret/);
         return true;
       });
     } finally {
@@ -104,7 +104,7 @@ test("server exits before listening when Discord configuration is missing or dem
 
 if (process.platform === "win32") {
   test("Windows launcher reports safe configuration and invokes npm start", async () => {
-    const fakeBin = await mkdtemp(path.join(os.tmpdir(), "omensite-launcher-"));
+    const fakeBin = await mkdtemp(path.join(os.tmpdir(), "synergy-module-launcher-"));
     const nodeShim = path.join(fakeBin, "node.cmd");
     const npmShim = path.join(fakeBin, "npm.cmd");
     await writeFile(nodeShim, "@exit /b 0\r\n", "utf8");
@@ -115,15 +115,15 @@ if (process.platform === "win32") {
       "",
     ].join("\r\n"), "utf8");
 
-    const launcher = fileURLToPath(new URL("../../start-omensite.bat", import.meta.url));
+    const launcher = fileURLToPath(new URL("../../start-synergy-module.bat", import.meta.url));
     const childEnv = {
       ...process.env,
       PATH: `${fakeBin};${process.env.PATH}`,
-      OMENSITE_SKIP_BROWSER: "1",
+      SYNERGY_MODULE_SKIP_BROWSER: "1",
     };
     delete childEnv.HOST;
     delete childEnv.PORT;
-    const child = spawn("cmd.exe", ["/d", "/c", "start-omensite.bat"], {
+    const child = spawn("cmd.exe", ["/d", "/c", "start-synergy-module.bat"], {
       cwd: path.dirname(launcher),
       env: childEnv,
       stdio: ["ignore", "pipe", "pipe"],
@@ -137,6 +137,7 @@ if (process.platform === "win32") {
       const exitCode = await new Promise((resolve) => child.once("exit", resolve));
 
       assert.equal(exitCode, 0, output);
+      assert.match(output, /\[Synergy Module\] Starting the MVC app/);
       assert.match(output, /Authentication configuration: npm start loads \.env when present/);
       assert.match(output, /Browser launch skipped/);
       assert.match(output, /\[TEST npm\] start/);

@@ -1,4 +1,5 @@
 import { ACCESS_ERRORS, MAX_ROLE_SNAPSHOT_AGE_MS } from "../models/access.js";
+import { isFragmentRequest } from "./fragment-request.js";
 
 function currentTime(now) {
   const value = now();
@@ -28,9 +29,7 @@ function accessError(code) {
 }
 
 function expectsStructuredResponse(req) {
-  return req.isOmensiteFragment === true
-    || req.get?.("X-Omensite-Fragment") === "1"
-    || req.path?.startsWith("/api/");
+  return isFragmentRequest(req) || req.path?.startsWith("/api/");
 }
 
 export function createRefreshRoles({

@@ -6,14 +6,14 @@ The integration uses the capabilities published in Robinhood's [agentic trading 
 
 ## Setup
 
-1. Keep Discord SSO configured. Discord identifies the Synergy operator; Robinhood authorization separately grants access to that operator's brokerage data.
+1. Keep Discord SSO configured. Discord identifies the Synergy Module operator; Robinhood authorization separately grants access to that operator's brokerage data.
 2. Back up PostgreSQL and run the guarded migration command to apply `004_robinhood.sql` with the existing migrations before deploying. The new `broker_workspaces` table is required by `/health`. Local development without PostgreSQL creates `data/robinhood.sqlite`; memory-only storage cannot connect to a brokerage account.
 3. Configure these values in the hosting vault, publish the environment, and restart the beta app:
 
    | Variable | Value |
    | --- | --- |
    | `ROBINHOOD_TOKEN_ENCRYPTION_KEY` | A durable, random 32-byte key encoded as 64 hexadecimal characters. Generate securely, retain in the vault, and back it up separately from the database. Never put it in Git or a client bundle. |
-   | `ROBINHOOD_REDIRECT_URI` | `https://beta.omensite.com/auth/robinhood/callback` for beta. Use the matching HTTPS application origin for another deployment. If omitted, the app derives the callback origin from `DISCORD_REDIRECT_URI`. |
+   | `ROBINHOOD_REDIRECT_URI` | Planned examples: `https://synergymodule.dev/auth/robinhood/callback` for development/beta and `https://synergymodule.app/auth/robinhood/callback` for production. Use the exact callback accepted by Robinhood for the deployment; these examples do not establish approval. If omitted, the app derives the callback origin from `DISCORD_REDIRECT_URI`. |
    | `ROBINHOOD_CLIENT_ID` | Optional public OAuth client ID issued or explicitly approved by Robinhood for this application and its exact callback. When set, the app skips dynamic registration and uses this client with PKCE S256 and no client secret. Leave unset until Robinhood supplies or approves an appropriate client. Setting an ID does not grant callback approval. |
    | `ROBINHOOD_LIVE_TRADING_ENABLED` | `false` during setup. This is independent of the AI billing flag. |
    | `TRADER_PAID_AI_ENABLED` | Keep `false` until paid model validation is authorized. |
@@ -21,24 +21,24 @@ The integration uses the capabilities published in Robinhood's [agentic trading 
    Deployments sharing the same broker workspace database must retain the same Robinhood encryption key. A lost or replaced key makes existing credentials unreadable and requires reconnection; it must not silently fall back to plaintext. Production and beta already share identity-owned application records, so plan broker data and key sharing before promoting this integration to production.
 
 4. In **Settings → Connections**, choose **Connect Robinhood**. The server uses the configured public client ID or requests dynamic registration when no ID is configured. Both paths use state validation and PKCE S256. Complete sign-in and review authorization on Robinhood. Any account opening, agreements, funding, and options permissions are completed by the account holder on Robinhood. Robinhood must accept the application's callback before this connection can finish; see the hosted callback issue below.
-5. Once returned to Synergy, open **Accounts**, sync the tool catalog, and fetch accounts, positions, quotes, and order history for the desired markets. Each result is saved with its retrieval time. Check any observation timestamp inside the result too: retrieval time does not establish quote freshness.
+5. Once returned to Synergy Module, open **Accounts**, sync the tool catalog, and fetch accounts, positions, quotes, and order history for the desired markets. Each result is saved with its retrieval time. Check any observation timestamp inside the result too: retrieval time does not establish quote freshness.
 6. Prepare an order for review to validate the real broker preview. Keep live submissions locked while validating field compatibility, account selection, product permissions, and returned warnings. An unsupported or changed schema blocks the request and needs a reviewed adapter update.
 
 ## Hosted callback rejection
 
-On September 24, 2026, Robinhood rejected the beta connection after verification, before returning to Synergy, with this response from its authorization endpoint:
+On September 24, 2026, Robinhood rejected the beta connection after verification, before returning to Synergy Module, with this response from its authorization endpoint. The previous beta hostname is sanitized as `<legacy-beta-host>` below; this historical result is not a test of the planned domains:
 
 ```json
-{"detail":"Mismatching Redirect URI: https://beta.omensite.com/auth/robinhood/callback"}
+{"detail":"Mismatching Redirect URI: https://<legacy-beta-host>/auth/robinhood/callback"}
 ```
 
 The configured callback, dynamic registration request, and authorization URL contain the identical URI. In bounded public registration checks, Robinhood returned HTTP 200 and echoed each of two requested callback URIs, but returned the same client ID for both. The response named the client `Robinhood Trading`. Those responses did not establish that Robinhood's authorization server had approved either callback. They also do not reveal its complete callback allowlist or prove that every registration request receives a static client.
 
 The confirmed failure is Robinhood's rejection of this callback for the issued client. It occurs before token exchange and database storage. Changing Discord SSO, the database, or the URL's encoding does not address that rejection. Registration and authorization also request the same `internal` scope; scope consistency does not resolve an unapproved callback.
 
-Ask Robinhood Support to confirm whether this custom hosted MCP integration is supported and how to obtain a public OAuth client approved for `https://beta.omensite.com/auth/robinhood/callback`. A [support request draft](robinhood-support-request.md) includes the necessary technical details. If Robinhood provides or approves a suitable public client, set `ROBINHOOD_CLIENT_ID`, retain the exact approved redirect URI, and restart the app. This app's configured-client path uses `token_endpoint_auth_method=none` and PKCE S256; it does not accept a client secret. A configured ID alone does not guarantee authorization will succeed. Do not substitute another application's client identity or callback.
+Ask Robinhood Support to confirm whether this custom hosted MCP integration is supported and whether a registration or approval process exists for the planned `synergymodule.dev` and `synergymodule.app` callbacks, including any separately registered subdomains. The [support request and submission record](robinhood-support-request.md) include the necessary technical details. If Robinhood provides or approves a suitable public client, set `ROBINHOOD_CLIENT_ID`, retain the exact approved redirect URI, and restart the app. This app's configured-client path uses `token_endpoint_auth_method=none` and PKCE S256; it does not accept a client secret. A configured ID alone does not guarantee authorization will succeed. Do not substitute another application's client identity or callback.
 
-Robinhood's [official overview](https://robinhood.com/us/en/support/articles/agentic-trading-overview/) documents MCP setup and directs Robinhood-side errors to Support, but does not publish a self-service procedure for approving custom HTTPS callbacks. [Cursor's support forum](https://forum.cursor.com/t/cursor-cli-robinhood-mcp-oauth-fails/162865/13) separately documents the same error when Robinhood rejected a changed callback for Cursor's client; that corroborates callback restrictions without establishing which callbacks Synergy may use.
+Robinhood's [official overview](https://robinhood.com/us/en/support/articles/agentic-trading-overview/) documents MCP setup and directs Robinhood-side errors to Support, but does not publish a self-service procedure for approving custom HTTPS callbacks. [Cursor's support forum](https://forum.cursor.com/t/cursor-cli-robinhood-mcp-oauth-fails/162865/13) separately documents the same error when Robinhood rejected a changed callback for Cursor's client; that corroborates callback restrictions without establishing which callbacks Synergy Module may use.
 
 ## Operator and Brain flow
 

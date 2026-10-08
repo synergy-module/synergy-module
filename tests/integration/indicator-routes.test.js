@@ -10,7 +10,7 @@ test("retired Indicators and alert destinations are unavailable to every signed-
     const agent = await loginTestOperator(createTestApp({ roles }));
     for (const route of ["/indicators", "/alerts/ict", "/alerts/support-resistance"]) {
       await agent.get(route).expect(404);
-      await agent.get(route).set("X-Omensite-Fragment", "1").expect(404);
+      await agent.get(route).set("X-Synergy-Module-Fragment", "1").expect(404);
     }
     const home = await agent.get("/home").expect(200);
     const dom = new JSDOM(home.text);

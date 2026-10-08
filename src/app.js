@@ -196,7 +196,8 @@ export function createApp({
   app.use(express.static(publicDirectory, { setHeaders: (res) => res.setHeader("Cache-Control", "no-cache") }));
   app.use(session({
     store: resolvedSessionStore,
-    secret: secret ?? "omensite-local-development-secret",
+    // Verify existing local cookies during the rename; deployments use SESSION_SECRET.
+    secret: secret ?? ["synergy-module-local-development-secret", "omensite-local-development-secret"],
     resave: false,
     rolling: true,
     saveUninitialized: false,
@@ -284,7 +285,7 @@ export function createApp({
   app.use(createJournalRoutes({ journalRepository }));
 
   app.use((req, res) => res.status(404).render("pages/error", {
-    fragment: req.isOmensiteFragment, status: 404, heading: "ROUTE NOT FOUND",
+    fragment: req.isSynergyModuleFragment, status: 404, heading: "ROUTE NOT FOUND",
     message: "REQUESTED COORDINATE DOES NOT EXIST",
   }));
   app.use((error, req, res, next) => {
@@ -296,7 +297,7 @@ export function createApp({
       return res.status(500).json({ error: "BRAIN_UNAVAILABLE", message: "The agent brain is unavailable. Try again." });
     }
     res.status(500).render("pages/error", {
-      fragment: req.isOmensiteFragment, status: 500, heading: "INTERNAL TERMINAL ERROR",
+      fragment: req.isSynergyModuleFragment, status: 500, heading: "INTERNAL TERMINAL ERROR",
       message: "SERVER FAULT CONTAINED :: TRY AGAIN",
     });
   });

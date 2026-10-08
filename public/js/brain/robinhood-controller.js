@@ -132,7 +132,7 @@ export function initializeRobinhood(root, { request, windowRef, onEvidence }) {
     if (url.origin !== "https://robinhood.com" || url.pathname !== "/oauth") throw new Error("Unexpected Robinhood authorization destination.");
     windowRef.location.assign(url.href);
   }));
-  on(find("disconnect"), "click", () => void task(async () => { await request("/api/robinhood/disconnect", {}); selectedSnapshot = null; find("data").replaceChildren(); find("use").hidden = true; await refresh(); message("Disconnected. New broker calls are stopped. You can also revoke Synergy access in Robinhood."); }));
+  on(find("disconnect"), "click", () => void task(async () => { await request("/api/robinhood/disconnect", {}); selectedSnapshot = null; find("data").replaceChildren(); find("use").hidden = true; await refresh(); message("Disconnected. New broker calls are stopped. You can also revoke Synergy Module access in Robinhood."); }));
   on(find("pause"), "click", () => void task(async () => { await request("/api/robinhood/pause", { paused: !state.paused }); await refresh(); message(state.paused ? "New broker submissions are paused. Existing orders remain in Robinhood." : "Reviewed submissions enabled. Every change still requires confirmation."); }));
   on(find("discover"), "click", () => void task(async () => { await request("/api/robinhood/discover", {}); await refresh(); message("Available Robinhood tools and fields refreshed."); }));
   on(group, "change", renderTools); on(select, "change", renderFields); on(form, "input", () => { requestId = null; });

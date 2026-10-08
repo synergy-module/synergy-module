@@ -1,11 +1,10 @@
 import { ACCESS_ERRORS } from "../models/access.js";
+import { isFragmentRequest } from "./fragment-request.js";
 
 export const ACCESS_DENIED_MESSAGE = "ACCESS FAILED :: INSUFFICIENT PERMISSIONS";
 
 function expectsStructuredResponse(req) {
-  return req.isOmensiteFragment === true
-    || req.get?.("X-Omensite-Fragment") === "1"
-    || req.path?.startsWith("/api/");
+  return isFragmentRequest(req) || req.path?.startsWith("/api/");
 }
 
 export function requireCapability(capability) {

@@ -1,4 +1,4 @@
-# OMENSITE project evolution roadmap
+# Synergy Module project evolution roadmap
 
 Updated: September 24, 2026
 

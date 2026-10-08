@@ -1,4 +1,4 @@
-# OMENSITE Market News Calendar Implementation Plan
+# Synergy Module Market News Calendar Implementation Plan
 
 > Source amendment (2026-09-02): the paid Trading Economics adapter described below was subsequently replaced with Economicium's public, keyless JSON calendar at the user's direction. The plan remains as an implementation record; current behavior is documented in the design specification and README.
 
@@ -6,7 +6,7 @@
 
 **Goal:** Replace the empty Market News screen with a live, full-width, terminal-styled current-week economic calendar containing only medium- and high-impact events.
 
-**Architecture:** A Trading Economics provider adapter performs the licensed external request, and a market-news service normalizes, filters, sorts, and caches provider data. A dedicated MVC controller server-renders the first result and exposes a normalized JSON refresh endpoint; a route-scoped browser controller handles local time, filtering, refreshes, and teardown without interfering with OMENSITE's fragment-navigation glitch transition.
+**Architecture:** A Trading Economics provider adapter performs the licensed external request, and a market-news service normalizes, filters, sorts, and caches provider data. A dedicated MVC controller server-renders the first result and exposes a normalized JSON refresh endpoint; a route-scoped browser controller handles local time, filtering, refreshes, and teardown without interfering with Synergy Module's fragment-navigation glitch transition.
 
 **Tech Stack:** Node.js 24+, Express 5, EJS, native Fetch API, vanilla ES modules, CSS, Node test runner, Supertest, JSDOM
 
@@ -21,7 +21,7 @@
 - Render only importance `2` (medium/orange) and `3` (high/red).
 - Support market filters `USD`, `EUR`, `GBP`, `JPY`, `CAD`, `AUD`, `NZD`, `CHF`, and `CNY`.
 - Preserve full-page rendering, fragment rendering, and the existing glitch-transition behavior.
-- Keep all calendar content, controls, loading, empty, stale, and error states inside OMENSITE's native terminal design.
+- Keep all calendar content, controls, loading, empty, stale, and error states inside Synergy Module's native terminal design.
 - Display event times in the workstation's local timezone.
 - Automated tests must use injected fakes and must not require a real API key or network access.
 - No database, Discord SSO, journal, alerts, or social-feed changes are in scope.
@@ -38,7 +38,7 @@
 - Create `public/js/market-news/market-news-controller.js`: local-time hydration, grouping, filters, refresh, and disposal.
 - Modify `public/js/app-shell.js`: mount and dispose the route-specific calendar controller.
 - Modify `public/js/page-interactions.js`: remove the obsolete demonstration news-chip behavior.
-- Modify `public/css/omensite.css`: full-width calendar styling and mobile cards.
+- Modify `public/css/synergy-module.css`: full-width calendar styling and mobile cards.
 - Create `tests/unit/trading-economics-calendar-provider.test.js`: provider boundary tests.
 - Create `tests/unit/market-news-service.test.js`: normalization and cache tests.
 - Create `tests/unit/market-news-controller.test.js`: browser interaction and lifecycle tests.
@@ -425,7 +425,7 @@ git commit -m "feat: normalize and cache market news"
 - Consumes: `marketNewsService.getCurrentWeek({ force }): Promise<CalendarResult>`.
 - Produces: authenticated `GET /market-news` full documents and fragments with `page.data.calendar`.
 - Produces: authenticated `GET /api/market-news/events`, returning `{ ok: true, calendar: CalendarResult }` or status 503 with `{ ok: false, calendar: { state: "offline", events: [], updatedAt: null, range: null } }`.
-- Preserves: `X-Omensite-Path`, `X-Omensite-Title`, and `X-Omensite-Key` response headers through `renderPage`.
+- Preserves: `X-Synergy-Module-Path`, `X-Synergy-Module-Title`, and `X-Synergy-Module-Key` response headers through `renderPage`.
 
 - [ ] **Step 1: Write failing route and endpoint integration tests**
 
@@ -465,7 +465,7 @@ test("market news renders provider data in full and fragment responses", async (
   const agent = await authenticatedAgent(service);
 
   await agent.get("/market-news").expect(200).expect(/data-app-shell/).expect(/Non Farm Payrolls/);
-  await agent.get("/market-news").set("X-Omensite-Fragment", "1").expect(200)
+  await agent.get("/market-news").set("X-Synergy-Module-Fragment", "1").expect(200)
     .expect(/data-market-news/).expect((response) => assert.doesNotMatch(response.text, /data-app-shell/));
 });
 
@@ -592,7 +592,7 @@ git commit -m "feat: add market news MVC routes"
 **Files:**
 - Modify: `views/pages/market-news.ejs`
 - Create: `views/partials/market-news-event.ejs`
-- Modify: `public/css/omensite.css`
+- Modify: `public/css/synergy-module.css`
 - Modify: `tests/integration/fidelity-markup.test.js`
 - Modify: `tests/integration/market-news-routes.test.js`
 
@@ -763,7 +763,7 @@ Expected: both suites PASS; the response contains native terminal markup and no 
 - [ ] **Step 7: Commit the terminal view**
 
 ```powershell
-git add views/pages/market-news.ejs views/partials/market-news-event.ejs public/css/omensite.css tests/integration/market-news-routes.test.js tests/integration/fidelity-markup.test.js
+git add views/pages/market-news.ejs views/partials/market-news-event.ejs public/css/synergy-module.css tests/integration/market-news-routes.test.js tests/integration/fidelity-markup.test.js
 git commit -m "feat: render terminal market calendar"
 ```
 
@@ -1140,7 +1140,7 @@ Expected: all tests PASS with zero failures, cancellations, or skipped tests.
 
 - [ ] **Step 6: Perform local UI verification**
 
-Start the application with `start-omensite.bat`, sign in with any non-empty demo credentials, and inspect `http://127.0.0.1:4173/market-news`.
+Start the application with `start-synergy-module.bat`, sign in with any non-empty demo credentials, and inspect `http://127.0.0.1:4173/market-news`.
 
 Verify:
 

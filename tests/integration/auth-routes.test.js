@@ -116,12 +116,12 @@ test("Discord completion performs final admission and returns a stable banned re
 });
 
 test("fragment requests receive 401 instead of a redirect", async () => {
-  await request(createTestApp()).get("/home").set("X-Omensite-Fragment", "1").expect(401).expect({ error: "AUTH_REQUIRED", loginUrl: "/login" });
+  await request(createTestApp()).get("/home").set("X-Synergy-Module-Fragment", "1").expect(401).expect({ error: "AUTH_REQUIRED", loginUrl: "/login" });
 });
 
-test("login identifies Synergy and its Discord single sign-on entry", async () => {
+test("login identifies Synergy Module and its Discord single sign-on entry", async () => {
   await request(createTestApp()).get("/login").expect(200)
-    .expect(/aria-label="Synergy"/).expect(/DISCORD SINGLE SIGN-ON/).expect(/data-discord-login/);
+    .expect(/aria-label="Synergy Module"/).expect(/DISCORD SINGLE SIGN-ON/).expect(/data-discord-login/);
 });
 
 test("login renders only allowlisted authentication failures with fixed messages", async () => {
@@ -365,7 +365,7 @@ test("logout destruction failure retains a revoked registry entry and clears the
   const response = await agent.post("/auth/logout")
     .set("X-CSRF-Token", csrfToken)
     .expect(500)
-    .expect((result) => assert.doesNotMatch(result.text, /OMENSITE OVERVIEW|private store failure/));
+    .expect((result) => assert.doesNotMatch(result.text, /SYNERGY MODULE OVERVIEW|private store failure/));
 
   assert.match(response.headers["set-cookie"]?.join(";") ?? "", /connect\.sid=;/);
   assert.deepEqual(sessionRegistry.listSessionIds("discord:retryable-logout"), [sessionId]);

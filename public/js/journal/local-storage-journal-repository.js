@@ -1,4 +1,5 @@
-const DEFAULT_KEY = "omensite.journal.v1";
+const DEFAULT_KEY = "synergy-module.journal.v1";
+const LEGACY_KEY = "omensite.journal.v1";
 
 function safeString(value, fallback) {
   return typeof value === "string" ? value : fallback;
@@ -33,9 +34,16 @@ export class LocalStorageJournalRepository {
   list() {
     if (!this.persistenceAvailable) return this.entries;
     try {
-      const raw = this.storage.getItem(this.key);
+      let raw = this.storage.getItem(this.key);
+      const migrate = raw == null && this.key === DEFAULT_KEY;
+      if (migrate) raw = this.storage.getItem(LEGACY_KEY);
       const entries = raw ? JSON.parse(raw) : [];
       this.entries = Array.isArray(entries) ? entries.map(normalizeJournalEntry).filter(Boolean) : [];
+      if (migrate && raw != null) {
+        // Copy before removing the legacy value so denied writes cannot lose saved trades.
+        this.storage.setItem(this.key, raw);
+        this.storage.removeItem(LEGACY_KEY);
+      }
       return this.entries;
     } catch {
       this.persistenceAvailable = false;
@@ -61,6 +69,7 @@ export class LocalStorageJournalRepository {
   clear() {
     this.entries = [];
     try {
+      if (this.key === DEFAULT_KEY) this.storage.removeItem(LEGACY_KEY);
       this.storage.removeItem(this.key);
     } catch {
       this.persistenceAvailable = false;

@@ -31,9 +31,9 @@ test("the former trader page redirects to the unified Research workspace and its
   assert.match(full.text, /data-app-shell/);
   assert.match(full.text, /data-brain-form/);
   assert.match(full.text, /\/css\/trader.css/);
-  await client.get("/trader").set("X-Omensite-Fragment", "1").expect(302).expect("Location", "/research");
-  const fragment = await client.get("/research").set("X-Omensite-Fragment", "1")
-    .expect(200).expect("X-Omensite-Key", "research").expect("X-Omensite-Path", "/research");
+  await client.get("/trader").set("X-Synergy-Module-Fragment", "1").expect(302).expect("Location", "/research");
+  const fragment = await client.get("/research").set("X-Synergy-Module-Fragment", "1")
+    .expect(200).expect("X-Synergy-Module-Key", "research").expect("X-Synergy-Module-Path", "/research");
   assert.doesNotMatch(fragment.text, /data-app-shell/);
   const state = await client.get("/api/trader/state").expect(200).expect("Cache-Control", "no-store");
   assert.equal(state.body.defaultProvider, "gemini");

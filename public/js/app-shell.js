@@ -148,7 +148,7 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     setActiveNavigation(documentRef, key);
     initializeShellPage(initialRoute, {
       path: `${windowRef.location.pathname}${windowRef.location.search}`,
-      title: documentRef.title.replace(/^(?:SYNERGY|OMENSITE) ::\s*/, ""),
+      title: documentRef.title.replace(/^SYNERGY MODULE ::\s*/, ""),
       key,
     });
   }

@@ -111,7 +111,7 @@ test("exact response cache survives gateway recreation and reports zero new usag
 });
 
 test("exact model cache survives closing and reopening the durable SQLite repository", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "omensite-brain-gateway-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "synergy-module-brain-gateway-"));
   const f = fixture();
   let repository;
   try {
@@ -131,7 +131,7 @@ test("exact model cache survives closing and reopening the durable SQLite reposi
     await repository?.close();
     const resolved = path.resolve(directory);
     assert.ok(resolved.startsWith(`${path.resolve(tmpdir())}${path.sep}`));
-    assert.ok(path.basename(resolved).startsWith("omensite-brain-gateway-"));
+    assert.ok(path.basename(resolved).startsWith("synergy-module-brain-gateway-"));
     await rm(resolved, { recursive: true, force: true });
   }
 });

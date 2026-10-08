@@ -95,7 +95,7 @@ export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocu
         if (!disposed) windowRef.location.assign(url.href);
       } else {
         await request("/api/robinhood/disconnect", {}); renderConnection(await request("/api/robinhood/state"));
-        say("connection-feedback", "Disconnected. You can also revoke Synergy access in Robinhood.");
+        say("connection-feedback", "Disconnected. You can also revoke Synergy Module access in Robinhood.");
       }
     } catch (error) { say("connection-feedback", error.message); }
     finally { connectionBusy = false; if (connection && !disposed) renderConnection(connection); }

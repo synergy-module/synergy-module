@@ -11,7 +11,7 @@ test("Admin can open every module while OS receives structured 403 responses for
 
   for (const path of ["/journal", "/admin"]) {
     await admin.get(path).expect(200);
-    await os.get(path).set("X-Omensite-Fragment", "1").expect(403).expect(({ body }) => {
+    await os.get(path).set("X-Synergy-Module-Fragment", "1").expect(403).expect(({ body }) => {
       assert.deepEqual(body, { error: "INSUFFICIENT_PERMISSIONS", message: DENIED_MESSAGE });
     });
   }

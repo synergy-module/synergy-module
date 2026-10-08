@@ -11,7 +11,7 @@ import { createPostgresRuntime } from "../../src/runtime/postgres-runtime.js";
 test("PostgreSQL migration ledger adopts old schemas, serializes upgrades, and rejects drift", {
   skip: !process.env.TEST_DATABASE_URL,
 }, async (t) => {
-  const name = `omensite_migration_${randomUUID().replaceAll("-", "")}`;
+  const name = `synergy_module_migration_${randomUUID().replaceAll("-", "")}`;
   const admin = new pg.Pool({ connectionString: process.env.TEST_DATABASE_URL, max: 1 });
   await admin.query(`CREATE DATABASE "${name}"`);
   const url = new URL(process.env.TEST_DATABASE_URL);
@@ -21,7 +21,7 @@ test("PostgreSQL migration ledger adopts old schemas, serializes upgrades, and r
   const env = { DATABASE_URL: databaseUrl, APP_ENVIRONMENT: "production", APP_ALLOW_MIGRATIONS: "true" };
   t.after(async () => {
     await control.end();
-    assert.match(name, /^omensite_migration_[a-f0-9]{32}$/);
+    assert.match(name, /^synergy_module_migration_[a-f0-9]{32}$/);
     await admin.query(`DROP DATABASE "${name}" WITH (FORCE)`);
     await admin.end();
   });

@@ -158,7 +158,7 @@ export async function runDatabaseBenchmark({ env = process.env, options = {},
   assert.ok(owners.every((owner) => owner.startsWith(prefix)), "Cleanup must only target this run's exact owners");
   const pool = new pg.Pool({ connectionString, ssl: false, max: Math.min(settings.concurrency, 16),
     connectionTimeoutMillis: 5_000, idleTimeoutMillis: 5_000, statement_timeout: 10_000, lock_timeout: 5_000,
-    application_name: "omensite-database-benchmark" });
+    application_name: "synergy-module-database-benchmark" });
   const poolErrors = [];
   pool.on("error", (error) => { poolErrors.push(safeCode(error)); });
   const historyQuery = {}, brokerQuery = {};
@@ -174,7 +174,7 @@ export async function runDatabaseBenchmark({ env = process.env, options = {},
     const metadata = await pool.query("SELECT current_database() AS name, current_setting('server_version') AS version");
     assert.equal(metadata.rows[0].name, target.database, "Connected database must match the validated disposable target");
     await migrate({ DATABASE_URL: connectionString, APP_ENVIRONMENT: "production", APP_ALLOW_MIGRATIONS: "true" }, {
-      createPool: (config) => new pg.Pool({ ...config, connectionTimeoutMillis: 5_000, statement_timeout: 15_000, lock_timeout: 5_000, application_name: "omensite-benchmark-migration" }),
+      createPool: (config) => new pg.Pool({ ...config, connectionTimeoutMillis: 5_000, statement_timeout: 15_000, lock_timeout: 5_000, application_name: "synergy-module-benchmark-migration" }),
     });
     seeded = true;
     const brokerStorageMode = (await pool.query("SELECT mode FROM broker_storage_control WHERE singleton=true")).rows[0].mode;
@@ -282,7 +282,7 @@ function cliOptions(args) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv.includes("--help")) {
-    console.log(`Set BENCHMARK_DATABASE_URL (or TEST_DATABASE_URL) to an isolated loopback database such as omensite_benchmark, then run node scripts/benchmark-database.js. Optional arguments: ${Object.keys(FLAGS).map((flag) => `--${flag}=${DEFAULTS[FLAGS[flag]]}`).join(" ")}. Never use the application's database. The existing broker storage mode is reported and remains unchanged. A JSON report is printed; fixtures are cleaned up automatically.`);
+    console.log(`Set BENCHMARK_DATABASE_URL (or TEST_DATABASE_URL) to an isolated loopback database such as synergy_module_benchmark, then run node scripts/benchmark-database.js. Optional arguments: ${Object.keys(FLAGS).map((flag) => `--${flag}=${DEFAULTS[FLAGS[flag]]}`).join(" ")}. Never use the application's database. The existing broker storage mode is reported and remains unchanged. A JSON report is printed; fixtures are cleaned up automatically.`);
   } else {
     Promise.resolve().then(() => runDatabaseBenchmark({ options: cliOptions(process.argv.slice(2)) })).then((report) => {
       console.log(JSON.stringify(report, null, 2));

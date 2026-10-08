@@ -26,7 +26,7 @@ const indicatorFragment = `
     <output data-indicator-request-status>NOT REQUESTED</output>
     <form data-indicator-request-form>
       <input name="_csrf" value="csrf-token">
-      <input name="tradingViewUsername" value="omen_tv">
+      <input name="tradingViewUsername" value="synergy_module_tv">
       <input name="consent" type="checkbox" value="true" checked>
       <button type="submit" data-indicator-submit>REQUEST</button>
     </form>
@@ -57,9 +57,9 @@ test("home journal count hydrates from the shared journal service after full and
     fetchImpl: async () => new Response(homeFragment, {
       status: 200,
       headers: {
-        "X-Omensite-Path": "/home",
-        "X-Omensite-Title": "DASHBOARD",
-        "X-Omensite-Key": "home",
+        "X-Synergy-Module-Path": "/home",
+        "X-Synergy-Module-Title": "DASHBOARD",
+        "X-Synergy-Module-Key": "home",
       },
     }),
     journalService: { list: () => entries },
@@ -120,9 +120,9 @@ test("navigating away from Market News clears its scheduled refresh", async (t) 
     fetchImpl: async () => new Response(homeFragment, {
       status: 200,
       headers: {
-        "X-Omensite-Path": "/home",
-        "X-Omensite-Title": "DASHBOARD",
-        "X-Omensite-Key": "home",
+        "X-Synergy-Module-Path": "/home",
+        "X-Synergy-Module-Title": "DASHBOARD",
+        "X-Synergy-Module-Key": "home",
       },
     }),
   });

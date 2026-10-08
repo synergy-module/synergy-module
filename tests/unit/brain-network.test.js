@@ -199,10 +199,10 @@ test('theme changes repaint paused canvas with the current palette', (t) => {
   const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, harness.install);
   app.dom.window.document.documentElement.dataset.theme = 'daylight';
   app.host.style.setProperty('--red', '#cf0f22'); app.host.style.setProperty('--red-glow', '#e0303f');
-  app.dom.window.document.dispatchEvent(new app.dom.window.Event('omensite:themechange'));
+  app.dom.window.document.dispatchEvent(new app.dom.window.Event('synergy-module:themechange'));
   assert.match(harness.snapshot(), /#cf0f22/); assert.doesNotMatch(harness.snapshot(), /"lighter"/); assert.equal(harness.frames.size, 0);
   const paints = harness.paints; app.instance.dispose();
-  app.dom.window.document.dispatchEvent(new app.dom.window.Event('omensite:themechange')); assert.equal(harness.paints, paints);
+  app.dom.window.document.dispatchEvent(new app.dom.window.Event('synergy-module:themechange')); assert.equal(harness.paints, paints);
 });
 
 test('idle binary activity changes at bounded paint rate without moving the network; pause preserves its exact phase', (t) => {

@@ -8,7 +8,7 @@ import { createAssetManifest } from "../../src/runtime/asset-manifest.js";
 import { createTestApp, loginTestOperator } from "../helpers/auth-test-helpers.js";
 
 test("changing a nested module versions the entire asset graph", (t) => {
-  const directory = mkdtempSync(path.join(tmpdir(), "omen-assets-"));
+  const directory = mkdtempSync(path.join(tmpdir(), "synergy-module-assets-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   mkdirSync(path.join(directory, "js"));
   writeFileSync(path.join(directory, "js", "app.js"), 'import "./tool.js";');

@@ -48,7 +48,7 @@ test("market news renders provider data in full and fragment responses", async (
   assert.match(response.text, /href="https:\/\/www\.economicium\.com\/economic-calendar\/"/);
   assert.doesNotMatch(response.text, /ACTUAL ::|FORECAST ::|PREVIOUS ::/);
   assert.doesNotMatch(response.text, /iframe|financialjuice|twitter-timeline|x\\.com/i);
-  await agent.get("/market-news").set("X-Omensite-Fragment", "1").expect(200)
+  await agent.get("/market-news").set("X-Synergy-Module-Fragment", "1").expect(200)
     .expect(/data-market-news/).expect((response) => assert.doesNotMatch(response.text, /data-app-shell/));
 });
 

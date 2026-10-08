@@ -8,9 +8,9 @@ function fragment(body, headers = {}) {
   return new Response(body, {
     status: 200,
     headers: {
-      "X-Omensite-Path": "/market-news",
-      "X-Omensite-Title": "MARKET NEWS",
-      "X-Omensite-Key": "market-news",
+      "X-Synergy-Module-Path": "/market-news",
+      "X-Synergy-Module-Title": "MARKET NEWS",
+      "X-Synergy-Module-Key": "market-news",
       ...headers,
     },
   });
@@ -47,7 +47,7 @@ test("navigate swaps the fragment and pushes clean history", async () => {
 
   await controller.navigate("/market-news");
 
-  assert.equal(calls[0].headers["X-Omensite-Fragment"], "1");
+  assert.equal(calls[0].headers["X-Synergy-Module-Fragment"], "1");
   assert.match(dom.window.document.querySelector("[data-main]").textContent, /MARKET NEWS/);
   assert.equal(dom.window.location.pathname, "/market-news");
   assert.equal(initialized[0].details.key, "market-news");
@@ -89,8 +89,8 @@ test("fragment metadata replaces immediate routing feedback with exact nontrivia
   const navigation = controller.navigate("/alerts/support-resistance");
   assert.deepEqual(calls, ["ROUTING"]);
   resolveFragment(fragment("<section data-route-view>ALERTS</section>", {
-    "X-Omensite-Title": "ALERTS :: S&R",
-    "X-Omensite-Key": "alerts-sr",
+    "X-Synergy-Module-Title": "ALERTS :: S&R",
+    "X-Synergy-Module-Key": "alerts-sr",
   }));
   await navigation;
 
@@ -107,7 +107,7 @@ test("fragment metadata preserves exact titles for new and public journal routes
     documentRef: dom.window.document,
     windowRef: dom.window,
     fetchImpl: async () => fragment("<section data-route-view>JOURNAL</section>", {
-      "X-Omensite-Title": titles[call++],
+      "X-Synergy-Module-Title": titles[call++],
     }),
     transition: { show: (title) => shownTitles.push(title), hide() {}, fail() {} },
     initializePage() {},
@@ -256,7 +256,7 @@ test("real transition controller receives metadata through setTitle without crea
     documentRef: dom.window.document,
     windowRef: dom.window,
     fetchImpl: async () => fragment("<section data-route-view>NEWS</section>", {
-      "X-Omensite-Title": "MARKET <img src=x onerror=alert(1)>",
+      "X-Synergy-Module-Title": "MARKET <img src=x onerror=alert(1)>",
     }),
     transition,
     initializePage() {},
@@ -299,9 +299,9 @@ test("a newer navigation aborts the stale request and only mounts the latest fra
       requests.push({ url: String(url), signal: options.signal });
       if (requests.length === 1) return new Promise((resolve) => { resolveFirst = resolve; });
       return Promise.resolve(fragment("<section data-route-view>JOURNAL</section>", {
-        "X-Omensite-Path": "/journal",
-        "X-Omensite-Title": "JOURNAL",
-        "X-Omensite-Key": "journal",
+        "X-Synergy-Module-Path": "/journal",
+        "X-Synergy-Module-Title": "JOURNAL",
+        "X-Synergy-Module-Key": "journal",
       }));
     },
   });

@@ -1,8 +1,8 @@
-# OMENSITE Express MVC Rebuild Implementation Plan
+# Synergy Module Express MVC Rebuild Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rebuild the static OMENSITE terminal as a progressively enhanced Express MVC application with clean URLs while preserving its visual design, cinematic login, matrix effect, and seamless glitch navigation.
+**Goal:** Rebuild the static Synergy Module terminal as a progressively enhanced Express MVC application with clean URLs while preserving its visual design, cinematic login, matrix effect, and seamless glitch navigation.
 
 **Architecture:** Express controllers render either complete EJS documents or page fragments from the same view models. A persistent browser shell intercepts internal links, plays the route transition, fetches the fragment, swaps the route region, and updates browser history. Demo authentication uses a replaceable server service and session; journal persistence remains behind a browser-side local-storage repository until the later PostgreSQL phase.
 
@@ -16,7 +16,7 @@
 - Use clean server URLs; hash routes must not remain the primary router.
 - Full requests and fragment requests must be rendered from the same controller view model.
 - Keep demo authentication behind `AuthService` so Discord OAuth can replace it later.
-- Keep `omensite.journal.v1` readable through a repository interface so a later HTTP/PostgreSQL adapter can replace it.
+- Keep `synergy-module.journal.v1` readable through a repository interface so a later HTTP/PostgreSQL adapter can replace it.
 - Do not add Discord OAuth, PostgreSQL, real feeds, alert persistence, indicator provisioning, or webhook delivery.
 - Respect `prefers-reduced-motion` and preserve keyboard access.
 - The folder is not currently a Git repository. Run commit steps only if Git is initialized by the user before execution.
@@ -49,7 +49,7 @@ Use this package shape, letting npm record resolved versions in `package-lock.js
 
 ```json
 {
-  "name": "omensite-mvc",
+  "name": "synergy-module",
   "version": "0.1.2",
   "private": true,
   "type": "module",
@@ -140,7 +140,7 @@ test("login establishes and logout removes the operator session", async () => {
 test("fragment requests receive 401 instead of a redirect", async () => {
   await request(createApp({ sessionSecret: "test-secret" }))
     .get("/home")
-    .set("X-Omensite-Fragment", "1")
+    .set("X-Synergy-Module-Fragment", "1")
     .expect(401)
     .expect({ error: "AUTH_REQUIRED", loginUrl: "/login" });
 });
@@ -206,7 +206,7 @@ git commit -m "feat: scaffold express mvc authentication"
 **Interfaces:**
 - Produces: `NAVIGATION`, `ROUTE_BY_KEY`, and `getRouteByPath(pathname)`.
 - Produces: route records `{ key, title, path, uri, description, view }`.
-- Produces: `fragmentRequest(req, res, next)` setting `req.isOmensiteFragment` from `X-Omensite-Fragment: 1`.
+- Produces: `fragmentRequest(req, res, next)` setting `req.isSynergyModuleFragment` from `X-Synergy-Module-Fragment: 1`.
 - Produces: `renderPage(req, res, page)` returning either `layouts/app` or `pages/<view>`.
 
 - [ ] **Step 1: Write failing navigation model tests**
@@ -260,21 +260,21 @@ For each clean route, log in once and assert that a full request contains `data-
 
 ```js
 const cases = [
-  ["/home", "omensite://home"],
-  ["/indicators", "omensite://indicators"],
-  ["/market-news", "omensite://market-news"],
-  ["/alerts/ict", "omensite://alerts/ict"],
-  ["/alerts/support-resistance", "omensite://alerts/support-resistance"],
-  ["/journal", "omensite://journal"],
-  ["/journal/new", "omensite://journal/new"],
+  ["/home", "synergy-module://home"],
+  ["/indicators", "synergy-module://indicators"],
+  ["/market-news", "synergy-module://market-news"],
+  ["/alerts/ict", "synergy-module://alerts/ict"],
+  ["/alerts/support-resistance", "synergy-module://alerts/support-resistance"],
+  ["/journal", "synergy-module://journal"],
+  ["/journal/new", "synergy-module://journal/new"],
 ];
 
 for (const [path, identity] of cases) {
   await agent.get(path).expect(200).expect(/data-app-shell/).expect(new RegExp(identity));
-  await agent.get(path).set("X-Omensite-Fragment", "1").expect(200)
+  await agent.get(path).set("X-Synergy-Module-Fragment", "1").expect(200)
     .expect(/data-route-view/).expect((response) => {
       assert.doesNotMatch(response.text, /data-app-shell/);
-      assert.equal(response.headers["x-omensite-path"], path);
+      assert.equal(response.headers["x-synergy-module-path"], path);
     });
 }
 ```
@@ -287,7 +287,7 @@ Expected: FAIL because the page routes and views are not implemented.
 
 - [ ] **Step 7: Implement dual rendering and route registration**
 
-`renderPage` must set `X-Omensite-Path`, `X-Omensite-Title`, and `X-Omensite-Key`. Fragment requests render `pages/${page.route.view}`. Full requests render `layouts/app` with `pageView` and the same `page` object. Register specific `/journal/new` before `/journal/:id`.
+`renderPage` must set `X-Synergy-Module-Path`, `X-Synergy-Module-Title`, and `X-Synergy-Module-Key`. Fragment requests render `pages/${page.route.view}`. Full requests render `layouts/app` with `pageView` and the same `page` object. Register specific `/journal/new` before `/journal/:id`.
 
 - [ ] **Step 8: Implement semantic page EJS templates using the existing copy**
 
@@ -332,7 +332,7 @@ git commit -m "feat: add clean mvc page routes"
 - Create: `views/partials/sidebar.ejs`
 - Create: `views/partials/route-head.ejs`
 - Create: `views/partials/empty-state.ejs`
-- Create: `public/css/omensite.css`
+- Create: `public/css/synergy-module.css`
 - Create: `public/favicon.ico`
 - Modify: `views/layouts/app.ejs`
 - Modify: `views/layouts/login.ejs`
@@ -351,8 +351,8 @@ const response = await agent.get("/home").expect(200);
 assert.match(response.text, /data-statusbar/);
 assert.match(response.text, /data-sidebar/);
 assert.match(response.text, /data-main/);
-assert.match(response.text, /OMENSITE/);
-assert.match(response.text, /root@omensite:~\$/);
+assert.match(response.text, /Synergy Module/);
+assert.match(response.text, /root@synergy-module:~\$/);
 assert.match(response.text, /SESSION 01 \/ AUTHORIZED/);
 ```
 
@@ -368,14 +368,14 @@ Move document metadata, font links, scan line, vignette, and `noscript` content 
 
 - [ ] **Step 4: Copy the accepted CSS and favicon into public assets**
 
-Copy `styles.css` byte-for-byte to `public/css/omensite.css` first. Copy `favicon.ico` to `public/favicon.ico`. Change selectors only where required to replace generated wrapper assumptions with EJS data hooks. Preserve all values in `:root`, breakpoints, and keyframes.
+Copy `styles.css` byte-for-byte to `public/css/synergy-module.css` first. Copy `favicon.ico` to `public/favicon.ico`. Change selectors only where required to replace generated wrapper assumptions with EJS data hooks. Preserve all values in `:root`, breakpoints, and keyframes.
 
 - [ ] **Step 5: Wire public assets and module entry points**
 
 The layouts load:
 
 ```html
-<link rel="stylesheet" href="/css/omensite.css">
+<link rel="stylesheet" href="/css/synergy-module.css">
 <script type="module" src="/js/app-shell.js"></script>
 ```
 
@@ -410,8 +410,8 @@ git commit -m "feat: restore terminal shell and visual system"
 **Interfaces:**
 - Produces: `createTransitionController({ documentRef, reducedMotion }) -> { show(title), hide(), fail(message) }`.
 - Produces: `createNavigationController({ documentRef, windowRef, fetchImpl, transition, initializePage }) -> { navigate(url, options), dispose() }`.
-- Fragment request header: `X-Omensite-Fragment: 1`.
-- Fragment response headers: `X-Omensite-Path`, `X-Omensite-Title`, `X-Omensite-Key`.
+- Fragment request header: `X-Synergy-Module-Fragment: 1`.
+- Fragment response headers: `X-Synergy-Module-Path`, `X-Synergy-Module-Title`, `X-Synergy-Module-Key`.
 
 - [ ] **Step 1: Write failing transition tests with JSDOM**
 
@@ -455,14 +455,14 @@ test("navigate swaps the fragment and pushes clean history", async () => {
       calls.push({ url: String(url), headers: options.headers });
       return new Response('<section data-route-view>MARKET NEWS</section>', {
         status: 200,
-        headers: { "X-Omensite-Path": "/market-news", "X-Omensite-Title": "MARKET NEWS", "X-Omensite-Key": "market-news" },
+        headers: { "X-Synergy-Module-Path": "/market-news", "X-Synergy-Module-Title": "MARKET NEWS", "X-Synergy-Module-Key": "market-news" },
       });
     },
     transition: { show() {}, hide() {}, fail() {} },
     initializePage() {},
   });
   await controller.navigate("/market-news");
-  assert.equal(calls[0].headers["X-Omensite-Fragment"], "1");
+  assert.equal(calls[0].headers["X-Synergy-Module-Fragment"], "1");
   assert.match(dom.window.document.querySelector("[data-main]").textContent, /MARKET NEWS/);
   assert.equal(dom.window.location.pathname, "/market-news");
 });
@@ -586,7 +586,7 @@ git commit -m "feat: preserve cinematic login flow"
 **Interfaces:**
 - Produces: `calculateProfitLoss({ direction, entryPrice, exitPrice }) -> string`.
 - Produces: `createJournalEntry(input, { id, createdAt }) -> JournalEntry`.
-- Produces: `LocalStorageJournalRepository(storage, key = "omensite.journal.v1")` with `list()`, `find(id)`, `create(entry)`, and `clear()`.
+- Produces: `LocalStorageJournalRepository(storage, key = "synergy-module.journal.v1")` with `list()`, `find(id)`, `create(entry)`, and `clear()`.
 - Produces: `createJournalService(repository, clock, idFactory)` with `list()`, `find(id)`, and `create(input)`.
 - Produces: `initializeJournalPage(root, service)` called after full or fragment render.
 
@@ -627,7 +627,7 @@ Use a fake storage object. Assert newest-first insertion, lookup by string ID, p
 
 ```js
 test("malformed persisted data falls back to an empty journal", () => {
-  const storage = fakeStorage({ "omensite.journal.v1": "{" });
+  const storage = fakeStorage({ "synergy-module.journal.v1": "{" });
   const repository = new LocalStorageJournalRepository(storage);
   assert.deepEqual(repository.list(), []);
 });
@@ -763,5 +763,5 @@ Confirm the server listens on `http://127.0.0.1:4173`, then rerun the login, rou
 
 ```powershell
 git add .
-git commit -m "feat: complete omensite express mvc rebuild"
+git commit -m "feat: complete synergy-module express mvc rebuild"
 ```

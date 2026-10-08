@@ -72,7 +72,7 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
 
     try {
       const response = await fetchImpl(`${destination.pathname}${destination.search}`, {
-        headers: { "X-Omensite-Fragment": "1" },
+        headers: { "X-Synergy-Module-Fragment": "1" },
         signal: controller.signal,
       });
 
@@ -102,9 +102,9 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
       if (!routeView) throw new Error("Fragment response does not contain [data-route-view]");
       if (currentRequest !== requestId || disposed) return;
 
-      const path = response.headers.get("X-Omensite-Path") || `${destination.pathname}${destination.search}`;
-      const title = response.headers.get("X-Omensite-Title") || initialTitle;
-      const key = response.headers.get("X-Omensite-Key") || routeView.dataset.routeKey || "";
+      const path = response.headers.get("X-Synergy-Module-Path") || `${destination.pathname}${destination.search}`;
+      const title = response.headers.get("X-Synergy-Module-Title") || initialTitle;
+      const key = response.headers.get("X-Synergy-Module-Key") || routeView.dataset.routeKey || "";
       if (typeof transition.setTitle === "function") transition.setTitle(title);
       else if (title !== initialTitle) transition.show(title);
       const elapsed = Date.now() - startedAt;
@@ -116,8 +116,8 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
       if (previousRoute) previousRoute.replaceWith(routeView);
       else main?.prepend(routeView);
       if (main) main.scrollTop = 0;
-      documentRef.title = `SYNERGY :: ${title}`;
-      if (history === "push") windowRef.history.pushState({ omensitePath: path }, "", path);
+      documentRef.title = `SYNERGY MODULE :: ${title}`;
+      if (history === "push") windowRef.history.pushState({ synergyModulePath: path }, "", path);
       initializePage(routeView, { path, title, key });
 
       const remaining = Math.max(0, hideAfter - (Date.now() - startedAt));

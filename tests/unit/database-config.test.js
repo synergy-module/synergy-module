@@ -5,10 +5,10 @@ import { readDatabaseConfig } from "../../src/config/database-config.js";
 test("production database configuration is required and redacts its connection string", () => {
   assert.throws(() => readDatabaseConfig({ env: {}, nodeEnvironment: "production" }), /DATABASE_URL is required/);
   const config = readDatabaseConfig({
-    env: { DATABASE_URL: "postgres://omen:super-secret@omen-postgres:5432/omensite" },
+    env: { DATABASE_URL: "postgres://synergy:super-secret@synergy-module-postgres:5432/synergy-module" },
     nodeEnvironment: "production",
   });
-  assert.equal(config.connectionString, "postgres://omen:super-secret@omen-postgres:5432/omensite");
+  assert.equal(config.connectionString, "postgres://synergy:super-secret@synergy-module-postgres:5432/synergy-module");
   assert.equal(JSON.stringify(config), '{"configured":true,"ssl":false}');
 });
 

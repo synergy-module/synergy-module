@@ -126,6 +126,8 @@ services:
         max-file: "3"
 
 networks:
+  # Existing shared infrastructure names are stable across product rebranding.
+  # Renaming these external networks requires a separate hosting migration.
   omen_edge:
     name: omen_edge
     external: true

@@ -88,8 +88,8 @@ test("base members receive full and fragment brain pages and sanitized provider 
   const page = await client.get("/brain").expect(200).expect("Cache-Control", "no-store");
   assert.match(page.text, /data-app-shell/);
   assert.match(page.text, /data-brain/);
-  const fragment = await client.get("/brain").set("X-Omensite-Fragment", "1")
-    .expect(200).expect("X-Omensite-Key", "brain").expect("X-Omensite-Path", "/brain");
+  const fragment = await client.get("/brain").set("X-Synergy-Module-Fragment", "1")
+    .expect(200).expect("X-Synergy-Module-Key", "brain").expect("X-Synergy-Module-Path", "/brain");
   assert.doesNotMatch(fragment.text, /data-app-shell/);
   const state = await client.get("/api/brain/state").expect(200).expect("Cache-Control", "no-store");
   assert.equal(state.body.defaultProvider, "gemini");
@@ -190,7 +190,7 @@ test("cancelling a research checkpoint persists its terminal state", async (t) =
 });
 
 test("a durable run remains reviewable after app and repository recreation", async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "omensite-brain-http-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "synergy-module-brain-http-"));
   const filename = path.join(directory, "brain.sqlite");
   const firstRepository = createSqliteBrainRepository({ filename });
   const firstApp = createTestApp({ traderAIProvider: noKeys, brainRepository: firstRepository });
@@ -202,7 +202,7 @@ test("a durable run remains reviewable after app and repository recreation", asy
     await secondApp?.locals.brainService.close();
     await secondRepository?.close();
     assert.equal(path.dirname(path.resolve(directory)), path.resolve(tmpdir()));
-    assert.ok(path.basename(directory).startsWith("omensite-brain-http-"));
+    assert.ok(path.basename(directory).startsWith("synergy-module-brain-http-"));
     await rm(directory, { recursive: true, force: true });
   });
   const first = await loginTestOperator(firstApp);

@@ -27,7 +27,7 @@ export function readDatabaseConfig({ env = process.env, nodeEnvironment = proces
     connectionTimeoutMs: boundedInteger(env, "DATABASE_CONNECT_TIMEOUT_MS", 5000, 100, 30000),
     statementTimeoutMs: boundedInteger(env, "DATABASE_STATEMENT_TIMEOUT_MS", 10000, 100, 120000),
     lockTimeoutMs: boundedInteger(env, "DATABASE_LOCK_TIMEOUT_MS", 3000, 100, 30000),
-    applicationName: `omensite-${readValue(env, "APP_ENVIRONMENT") || "app"}`.slice(0, 63),
+    applicationName: `synergy-module-${readValue(env, "APP_ENVIRONMENT") || "app"}`.slice(0, 63),
     toJSON() { return { configured: Boolean(connectionString), ssl: sslMode === "require" }; },
   };
 }

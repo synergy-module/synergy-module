@@ -4,6 +4,13 @@ import { createMemoryWorkspaceRepository } from "./workspace-repository.js";
 const PROVIDERS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude" });
 const ROLES = ["planner", "researcher", "strategist", "critic"];
 const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"];
+const CREDENTIAL_VERSION = 2;
+const CREDENTIAL_CONTEXTS = Object.freeze({
+  // Persisted v1 records must keep their original key derivation and authenticated data.
+  1: "omensite-workspace-v1",
+  2: "synergy-module-workspace-v2",
+});
+const DEVELOPMENT_SECRETS = new Set(["synergy-module-local-development-secret", "omensite-local-development-secret"]);
 const DEFAULTS = Object.freeze({
   provider: "gemini", symbol: "SPY", timeframe: "15m", accountSize: 50000, riskPercent: 0.5, pointValue: 1, minRewardRisk: 2,
   routes: {}, limits: { maxSteps: 12, maxModelCalls: 10, maxTokens: 64000, maxDurationMs: 120000, maxCostUsd: null },
@@ -65,23 +72,24 @@ function validateDraft(name, fields) {
 export function createWorkspaceSettingsService({ repository = createMemoryWorkspaceRepository(), aiProvider, encryptionSecret, now = () => new Date() } = {}) {
   // The caller must supply a stable deployment secret. Refuse the application's
   // public development fallback instead of creating secrets nobody can retain.
-  const key = typeof encryptionSecret === "string" && encryptionSecret.length >= 16 && encryptionSecret !== "omensite-local-development-secret"
-    ? Buffer.from(hkdfSync("sha256", encryptionSecret, "omensite-workspace-v1", "provider-api-credentials", 32)) : null;
+  const credentialKeys = typeof encryptionSecret === "string" && encryptionSecret.length >= 16 && !DEVELOPMENT_SECRETS.has(encryptionSecret)
+    ? Object.fromEntries(Object.entries(CREDENTIAL_CONTEXTS).map(([version, context]) =>
+      [version, Buffer.from(hkdfSync("sha256", encryptionSecret, context, "provider-api-credentials", 32))])) : null;
   const baseStatus = () => aiProvider?.getStatus?.() ?? { defaultProvider: "gemini", paidCallsEnabled: false, providers: [] };
   const seal = (owner, provider, apiKey) => {
-    if (!key) throw failure("SETTINGS_ENCRYPTION_UNAVAILABLE", 503, "Configure a stable integration encryption key before saving API credentials.");
+    if (!credentialKeys) throw failure("SETTINGS_ENCRYPTION_UNAVAILABLE", 503, "Configure a stable integration encryption key before saving API credentials.");
     const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", key, iv);
-    cipher.setAAD(Buffer.from(JSON.stringify(["omensite-workspace-v1", owner, provider])));
+    const cipher = createCipheriv("aes-256-gcm", credentialKeys[CREDENTIAL_VERSION], iv);
+    cipher.setAAD(Buffer.from(JSON.stringify([CREDENTIAL_CONTEXTS[CREDENTIAL_VERSION], owner, provider])));
     const ciphertext = Buffer.concat([cipher.update(apiKey, "utf8"), cipher.final()]);
-    return { version: 1, iv: iv.toString("base64url"), tag: cipher.getAuthTag().toString("base64url"), ciphertext: ciphertext.toString("base64url") };
+    return { version: CREDENTIAL_VERSION, iv: iv.toString("base64url"), tag: cipher.getAuthTag().toString("base64url"), ciphertext: ciphertext.toString("base64url") };
   };
   const open = (owner, provider, sealed) => {
-    if (!key) throw failure("SETTINGS_ENCRYPTION_UNAVAILABLE", 503, "Saved API credentials are unavailable. Check the integration encryption key.");
+    if (!credentialKeys) throw failure("SETTINGS_ENCRYPTION_UNAVAILABLE", 503, "Saved API credentials are unavailable. Check the integration encryption key.");
     try {
-      if (sealed?.version !== 1) throw new Error("Unsupported credential version");
-      const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(sealed.iv, "base64url"));
-      decipher.setAAD(Buffer.from(JSON.stringify(["omensite-workspace-v1", owner, provider])));
+      if (![1, CREDENTIAL_VERSION].includes(sealed?.version)) throw new Error("Unsupported credential version");
+      const decipher = createDecipheriv("aes-256-gcm", credentialKeys[sealed.version], Buffer.from(sealed.iv, "base64url"));
+      decipher.setAAD(Buffer.from(JSON.stringify([CREDENTIAL_CONTEXTS[sealed.version], owner, provider])));
       decipher.setAuthTag(Buffer.from(sealed.tag, "base64url"));
       return Buffer.concat([decipher.update(Buffer.from(sealed.ciphertext, "base64url")), decipher.final()]).toString("utf8");
     } catch { throw failure("SETTINGS_CREDENTIAL_UNAVAILABLE", 503, "A saved API credential could not be read. Restore the integration encryption key or replace this credential."); }
@@ -94,7 +102,7 @@ export function createWorkspaceSettingsService({ repository = createMemoryWorksp
       const state = await repository.read(validOwner(owner));
       const status = baseStatus();
       return {
-        storage: repository.getStorageStatus(), credentialStorageAvailable: Boolean(key), paidCallsEnabled: status.paidCallsEnabled === true,
+        storage: repository.getStorageStatus(), credentialStorageAvailable: Boolean(credentialKeys), paidCallsEnabled: status.paidCallsEnabled === true,
         providers: Object.entries(PROVIDERS).map(([id, label]) => {
           const server = status.providers?.find((entry) => entry.id === id);
           const saved = state.providers[id];

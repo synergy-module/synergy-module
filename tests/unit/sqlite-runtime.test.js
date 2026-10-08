@@ -10,7 +10,7 @@ const storeCall = (store, method, ...args) => new Promise((resolve, reject) => {
 });
 
 async function fixture(t, options = {}) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "omensite-session-test-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "synergy-module-session-test-"));
   const filename = path.join(directory, "workspace.sqlite");
   const runtimes = [];
   const open = () => {

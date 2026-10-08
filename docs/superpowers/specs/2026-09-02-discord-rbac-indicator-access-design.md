@@ -1,4 +1,4 @@
-# OMENSITE Discord RBAC and Indicator Access Design
+# Synergy Module Discord RBAC and Indicator Access Design
 
 **Date:** 2026-09-02
 **Target version:** v0.1.2
@@ -73,7 +73,7 @@ The Discord provider will implement the OAuth2 authorization-code flow directly 
 1. `GET /auth/discord` generates a cryptographically random OAuth state value, stores it in the server session, and redirects to Discord with `identify` and `guilds.members.read` scopes.
 2. `GET /auth/discord/callback` requires an exact, single-use state match and exchanges the returned code server-side.
 3. The provider retrieves `/users/@me` and `/users/@me/guilds/{guild.id}/member` with the user access token.
-4. The role policy maps returned role IDs to named OMENSITE roles and capabilities.
+4. The role policy maps returned role IDs to named Synergy Module roles and capabilities.
 5. Authentication succeeds only when at least one base role—`Developer`, `Admin`, or `OS`—is present.
 6. The session is regenerated before saving the operator identity, role snapshot, capability snapshot, Discord access/refresh tokens, token expiry, and role-sync time.
 
@@ -157,7 +157,7 @@ Request states are:
 
 Members may correct their TradingView username by resubmitting; this returns the request to `PENDING` and records the new request time. A granted state displays configured script links and instructions for locating invite-only scripts in TradingView.
 
-OMENSITE does not claim to grant access automatically. An Admin or Developer must use TradingView's Manage Access interface, then mark the OMENSITE request `GRANTED`. This preserves TradingView's supported request and author-managed access process.
+Synergy Module does not claim to grant access automatically. An Admin or Developer must use TradingView's Manage Access interface, then mark the Synergy Module request `GRANTED`. This preserves TradingView's supported request and author-managed access process.
 
 ## Temporary Repositories
 
@@ -186,7 +186,7 @@ The user table shows people seen since process start with:
 
 Actions:
 
-- `SIGN OUT`: destroys every active OMENSITE session for the selected user but permits a future login.
+- `SIGN OUT`: destroys every active Synergy Module session for the selected user but permits a future login.
 - `BAN`: records an in-memory ban, then destroys every active session for the selected user.
 - `UNBAN`: removes the in-memory ban and permits authentication again.
 

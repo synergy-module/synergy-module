@@ -82,7 +82,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const config = readDatabaseConfig({ nodeEnvironment: "production" });
     const pool = new pg.Pool({ connectionString: config.connectionString,
       ssl: config.ssl ? { rejectUnauthorized: true } : undefined, max: 1, connectionTimeoutMillis: 5000,
-      application_name: "omensite-broker-cutover" });
+      application_name: "synergy-module-broker-cutover" });
     try { console.log(JSON.stringify(await setBrokerStorageMode(pool, process.argv[2]))); }
     finally { await pool.end(); }
   } catch (error) { console.error(`Broker storage mode failed: ${error.message}`); process.exitCode = 1; }

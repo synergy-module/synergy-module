@@ -147,10 +147,10 @@ for (const [name, create] of [
 }
 
 test("sqlite persists after reopening and independent connections cannot both claim a revision", async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "omensite-brain-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "synergy-module-brain-"));
   t.after(() => {
     assert.equal(path.dirname(path.resolve(directory)), path.resolve(tmpdir()));
-    assert.ok(path.basename(directory).startsWith("omensite-brain-"));
+    assert.ok(path.basename(directory).startsWith("synergy-module-brain-"));
     return rm(directory, { recursive: true, force: true });
   });
   const filename = path.join(directory, "nested", "brain.sqlite");

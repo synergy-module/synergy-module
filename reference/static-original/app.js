@@ -1,5 +1,5 @@
 /* ============================================================
-   OMENSITE // retro-terminal trading platform
+   SYNERGY MODULE // retro-terminal trading platform
    Vanilla single-page build. No framework, no build step.
 
    Scope of this build: full route scaffold, cinematic auth
@@ -16,11 +16,8 @@
   /* --------------------------------------------------------
      Constants
      -------------------------------------------------------- */
-  const OMEN_ASCII = ` ___  __  __ _____ _  _  ____ ___ _____ _____
-/ _ \\|  \\/  || ____|| \\| |/ ___||_   _|_   _|| ____|
-| | | | |\\/| || _|  | .  |\\___ \\  | |   | |  |  _|
-| |_| | |  | || |___ | |\\ | ___) | | |   | |  | |___
-\\___/|_|  |_||_____||_| \\_||____/  |_|   |_|  |_____|`;
+  const SYNERGY_MODULE_ASCII = `SYNERGY MODULE
+AGENTIC TRADING TERMINAL`;
 
   const AUTH_LINES = [
     "HANDSHAKE........OK",
@@ -73,8 +70,8 @@
     "FEED SOCKET :: CLOSED",
   ];
 
-  const JOURNAL_KEY = "omensite.journal.v1";
-  const AUTH_KEY = "omensite.auth";
+  const JOURNAL_KEY = "synergy-module.journal.v1";
+  const AUTH_KEY = "synergy-module.auth";
 
   /* --------------------------------------------------------
      State
@@ -181,7 +178,7 @@
       for (let t = 0; t <= 110; t++) plotBody((t / 110) * Math.PI * 2, phi);
     }
 
-    const WORD = "OMENSITE";
+    const WORD = "SYNERGY MODULE";
     const cyi = Math.round(cy);
     const beltHalfRows = Math.max(1, Math.round(rows * 0.1));
     for (let r = cyi - beltHalfRows; r <= cyi + beltHalfRows; r++) {
@@ -216,7 +213,7 @@
     const ctx = canvas.getContext("2d");
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
-    const chars = "01\u30a2\u30ab\u30b5\u30bf\u30ca\u30cf\u30de\u30e4\u30e9\u30efOMENSITE";
+    const chars = "01\u30a2\u30ab\u30b5\u30bf\u30ca\u30cf\u30de\u30e4\u30e9\u30efSYNERGYMODULE";
     const cols = Math.max(1, Math.floor(canvas.width / 14));
     const drops = new Array(cols).fill(0);
     const draw = () => {
@@ -242,9 +239,19 @@
   /* --------------------------------------------------------
      Storage
      -------------------------------------------------------- */
+  function readMigratedStorage(storage, key, legacyKey) {
+    const current = storage.getItem(key);
+    if (current != null) return current;
+    const legacy = storage.getItem(legacyKey);
+    if (legacy != null) {
+      try { storage.setItem(key, legacy); storage.removeItem(legacyKey); } catch (_) {}
+    }
+    return legacy;
+  }
+
   function loadJournal() {
     try {
-      const raw = localStorage.getItem(JOURNAL_KEY);
+      const raw = readMigratedStorage(localStorage, JOURNAL_KEY, "omensite.journal.v1");
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (_) { return []; }
@@ -285,8 +292,8 @@
     }, sphereFrame(34, 12)));
 
     const card = el("div", { class: "login-card" + (A.loginShake ? " shake" : "") });
-    card.appendChild(el("pre", { class: "login-banner" }, OMEN_ASCII));
-    card.appendChild(el("div", { class: "login-sub" }, "OMENSITE TRADING TERMINAL v2.4 :: RESTRICTED ACCESS"));
+    card.appendChild(el("pre", { class: "login-banner" }, SYNERGY_MODULE_ASCII));
+    card.appendChild(el("div", { class: "login-sub" }, "SYNERGY MODULE TRADING TERMINAL v2.4 :: RESTRICTED ACCESS"));
 
     if (A.phase === "form") {
       const form = el("div", { class: "login-form" });
@@ -360,7 +367,7 @@
   }
 
   function logout() {
-    try { sessionStorage.removeItem(AUTH_KEY); } catch (_) {}
+    try { sessionStorage.removeItem("omensite.auth"); sessionStorage.removeItem(AUTH_KEY); } catch (_) {}
     stopMatrix();
     A.phase = "form";
     A.username = ""; A.password = ""; A.authLines = ""; A.authLines = [];
@@ -409,8 +416,8 @@
     sidebar.appendChild(el("pre", {
       class: "sidebar-sphere", "data-sphere": "", dataset: { cols: "26", rows: "11" },
     }, sphereFrame(26, 11)));
-    sidebar.appendChild(el("div", { class: "sidebar-brand" }, "OMENSITE"));
-    sidebar.appendChild(el("div", { class: "sidebar-prompt" }, "root@omensite:~$"));
+    sidebar.appendChild(el("div", { class: "sidebar-brand" }, "SYNERGY MODULE"));
+    sidebar.appendChild(el("div", { class: "sidebar-prompt" }, "root@synergy-module:~$"));
 
     NAV.forEach((item) => {
       sidebar.appendChild(el("div", {
@@ -525,7 +532,7 @@
     const m = ROUTE_META[key] || ROUTE_META.home;
     const head = el("div", { class: "route-head" },
       el("div", {},
-        el("div", { class: "route-uri" }, "omensite://" + m.uri),
+        el("div", { class: "route-uri" }, "synergy-module://" + m.uri),
         el("div", { class: "route-title" }, m.title),
         el("div", { class: "route-desc" }, m.desc),
       ),
@@ -828,7 +835,7 @@
 
     const dirClass = e.direction === "long" ? "pl-pos" : "pl-neg";
     const plClass = String(e.pl).startsWith("-") ? "pl-neg" : "pl-pos";
-    const url = "omensite.io/journal/" + e.id;
+    const url = "synergymodule.app/journal/" + e.id;
     const embed =
       "TRADE: " + e.direction.toUpperCase() + "\n" +
       "ENTRY: " + e.entryPrice + "  EXIT: " + e.exitPrice + "\n" +
@@ -897,7 +904,7 @@
     });
 
     let authed = false;
-    try { authed = sessionStorage.getItem(AUTH_KEY) === "1"; } catch (_) {}
+    try { authed = readMigratedStorage(sessionStorage, AUTH_KEY, "omensite.auth") === "1"; } catch (_) {}
 
     if (authed) { A.phase = "done"; enterApp(); }
     else { A.phase = "form"; renderLogin(); }

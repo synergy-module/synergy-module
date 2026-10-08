@@ -233,7 +233,7 @@ test("failed ban invalidation retains a fail-closed SID that cannot unban or loa
   assert.equal(harness.banRepository.isBanned("discord:failed-admin"), true);
   await request(harness.app).get("/home").set("Cookie", originalCookie)
     .expect(302).expect("Location", "/login?error=account_banned")
-    .expect((response) => assert.doesNotMatch(response.text, /OMENSITE OVERVIEW/));
+    .expect((response) => assert.doesNotMatch(response.text, /SYNERGY MODULE OVERVIEW/));
 });
 
 test("an Admin mutation refreshes Discord roles at five minutes even when configuration is higher", async () => {

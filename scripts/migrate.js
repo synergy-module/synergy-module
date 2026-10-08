@@ -22,7 +22,7 @@ function poolOptions(env) {
   const config = readDatabaseConfig({ env, nodeEnvironment: "production" });
   return { connectionString: config.connectionString,
     ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
-    max: 1, application_name: "omensite-migration", connectionTimeoutMillis: 5000,
+    max: 1, application_name: "synergy-module-migration", connectionTimeoutMillis: 5000,
     statement_timeout: 120000, idle_in_transaction_session_timeout: 120000 };
 }
 
@@ -83,7 +83,7 @@ export async function migrationStatus(env = process.env, { createPool = (options
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   (process.argv.includes("--status") ? migrationStatus() : migrate()).then(
-    (result) => console.log(JSON.stringify({ message: process.argv.includes("--status") ? "OMENSITE migration status" : "OMENSITE database migration completed", result })),
-    (error) => { console.error(`OMENSITE database migration failed: ${error.message}`); process.exitCode = 1; },
+    (result) => console.log(JSON.stringify({ message: process.argv.includes("--status") ? "SYNERGY MODULE migration status" : "SYNERGY MODULE database migration completed", result })),
+    (error) => { console.error(`SYNERGY MODULE database migration failed: ${error.message}`); process.exitCode = 1; },
   );
 }

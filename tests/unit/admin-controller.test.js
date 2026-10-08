@@ -20,7 +20,7 @@ function responseHarness() {
 
 function requestHarness(overrides = {}) {
   return {
-    isOmensiteFragment: true,
+    isSynergyModuleFragment: true,
     session: { operator: { id: "7", username: "admin", capabilities: ["admin"] } },
     params: { id: "42", userId: "42" },
     body: {},

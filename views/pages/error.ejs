@@ -1,4 +1,4 @@
 <% if (!fragment) { %><!doctype html>
-<html lang="en" data-theme="core"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SYNERGY :: ERROR</title><%- include('../partials/redline-head') %></head><body><main class="error-terminal" data-error-page><% } %>
-<section class="route" data-route-view data-route-key="error"><div class="route-head"><div class="path">synergy://error</div><h1><%= status %> :: <%= heading %></h1></div><p>[ <%= message %> ]</p><a href="/home"<% if (fragment) { %> data-nav-link<% } %>>&gt; RETURN TO HOME</a></section>
+<html lang="en" data-theme="core"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SYNERGY MODULE :: ERROR</title><%- include('../partials/redline-head') %></head><body><main class="error-terminal" data-error-page><% } %>
+<section class="route" data-route-view data-route-key="error"><div class="route-head"><div class="path">synergy-module://error</div><h1><%= status %> :: <%= heading %></h1></div><p>[ <%= message %> ]</p><a href="/home"<% if (fragment) { %> data-nav-link<% } %>>&gt; RETURN TO HOME</a></section>
 <% if (!fragment) { %></main></body></html><% } %>

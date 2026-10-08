@@ -1,4 +1,4 @@
-# OMENSITE Market News Calendar Design
+# Synergy Module Market News Calendar Design
 
 **Date:** 2026-09-02  
 **Target version:** v0.1.2
@@ -6,11 +6,11 @@
 
 ## Purpose
 
-Replace the Market News placeholder with a live economic calendar while preserving OMENSITE's terminal-first visual language and seamless in-app navigation. The calendar will display only medium- and high-impact events. The previously considered FinancialJuice/X panel is excluded from this scope.
+Replace the Market News placeholder with a live economic calendar while preserving Synergy Module's terminal-first visual language and seamless in-app navigation. The calendar will display only medium- and high-impact events. The previously considered FinancialJuice/X panel is excluded from this scope.
 
 ## User Experience
 
-The Market News route remains a native OMENSITE screen. It will not embed third-party interfaces. Every label, filter, event row, loading state, and error message will use the application's monospace typography, dark terminal surfaces, compact borders, and command-line presentation.
+The Market News route remains a native Synergy Module screen. It will not embed third-party interfaces. Every label, filter, event row, loading state, and error message will use the application's monospace typography, dark terminal surfaces, compact borders, and command-line presentation.
 
 The page contains:
 
@@ -29,7 +29,7 @@ On narrow screens, each event row becomes a compact terminal card while preservi
 
 Impact and market filters combine instantly in the browser without a page reload. The event count updates to reflect the visible rows. A filter combination with no matches displays a terminal-style empty result rather than removing the surrounding page structure.
 
-The route continues to participate in OMENSITE's existing fragment-navigation system. Entering or leaving Market News will use the same glitch transition as the other pages. Event filtering and refreshes occur inside the mounted page and will not trigger a route transition.
+The route continues to participate in Synergy Module's existing fragment-navigation system. Entering or leaving Market News will use the same glitch transition as the other pages. Event filtering and refreshes occur inside the mounted page and will not trigger a route transition.
 
 ## Data Source and Licensing Boundary
 
@@ -61,7 +61,7 @@ The service maintains a shared, single-flight cache so multiple browsers do not 
 
 A dedicated Market News controller replaces the generic page controller for this route. It loads the current-week query, asks the service for normalized events, builds the page view model, and renders either the full layout or the existing fragment response.
 
-The controller also exposes `GET /api/market-news/events` for in-page refreshes. Its response contains only normalized OMENSITE data and status metadata; it never proxies a raw provider response.
+The controller also exposes `GET /api/market-news/events` for in-page refreshes. Its response contains only normalized Synergy Module data and status metadata; it never proxies a raw provider response.
 
 ### View
 
@@ -89,7 +89,7 @@ All states preserve page structure and terminal styling. Provider error bodies a
 
 ## Accessibility
 
-Filters are real buttons with pressed-state semantics. Status changes use a restrained live region. Tables retain meaningful headers on desktop, and the mobile-card layout exposes equivalent labels. Keyboard focus uses the existing OMENSITE focus treatment. Motion respects the application's reduced-motion behavior.
+Filters are real buttons with pressed-state semantics. Status changes use a restrained live region. Tables retain meaningful headers on desktop, and the mobile-card layout exposes equivalent labels. Keyboard focus uses the existing Synergy Module focus treatment. Motion respects the application's reduced-motion behavior.
 
 ## Testing Strategy
 
@@ -112,7 +112,7 @@ No database changes, Discord SSO work, journal integration, alert changes, or so
 1. Market News displays live current-week Economicium events without account configuration.
 2. Only high- and medium-impact events reach the rendered calendar.
 3. Users can combine impact and supported-market filters without navigation or reloads.
-4. All calendar content and states look native to the OMENSITE terminal interface.
+4. All calendar content and states look native to the Synergy Module terminal interface.
 5. Direct loads and fragment navigation both render correctly and retain seamless glitch transitions.
 6. Local times, refresh status, stale data, empty results, and failures are presented accurately.
 7. No raw provider error is exposed to the browser.

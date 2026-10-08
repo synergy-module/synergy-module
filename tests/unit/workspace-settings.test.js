@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createCipheriv, createDecipheriv, hkdfSync } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -29,7 +30,7 @@ const response = (text = "fixture result") => new Response(JSON.stringify({
 }), { status: 200, headers: { "Content-Type": "application/json" } });
 
 test("SQLite workspace retains encrypted credentials, preferences and incomplete drafts after reopening", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "omensite-workspace-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "synergy-module-workspace-"));
   const filename = path.join(directory, "workspace.sqlite");
   let repository;
   try {
@@ -87,13 +88,41 @@ test("credential ciphertext is bound to its owner and provider and fails closed 
 });
 
 test("credentials require a stable secret while drafts remain usable without credential storage", async () => {
-  for (const secret of [undefined, "short", "omensite-local-development-secret"]) {
+  for (const secret of [undefined, "short", "synergy-module-local-development-secret", "omensite-local-development-secret"]) {
     const settings = createWorkspaceSettingsService({ aiProvider: provider(), encryptionSecret: secret });
     assert.equal((await settings.getState("alice")).credentialStorageAvailable, false);
     await assert.rejects(settings.saveProvider("alice", "gemini", { apiKey: keys.alice }), { code: "SETTINGS_ENCRYPTION_UNAVAILABLE" });
     const state = await settings.saveDraft("alice", "research", { symbol: "SPY" });
     assert.equal(state.drafts.research.fields.symbol, "SPY");
   }
+});
+
+test("branding upgrade reads existing v1 credentials and saves replacements in the new version", async () => {
+  const repository = createMemoryWorkspaceRepository();
+  const iv = Buffer.alloc(12, 7);
+  const legacyKey = Buffer.from(hkdfSync("sha256", encryptionSecret, "omensite-workspace-v1", "provider-api-credentials", 32));
+  const cipher = createCipheriv("aes-256-gcm", legacyKey, iv);
+  cipher.setAAD(Buffer.from(JSON.stringify(["omensite-workspace-v1", "alice", "gemini"])));
+  const ciphertext = Buffer.concat([cipher.update(keys.alice, "utf8"), cipher.final()]);
+  const legacy = { version: 1, iv: iv.toString("base64url"), tag: cipher.getAuthTag().toString("base64url"), ciphertext: ciphertext.toString("base64url") };
+  await repository.update("alice", (state) => { state.providers.gemini = { sealed: legacy }; });
+  const settings = createWorkspaceSettingsService({ repository, encryptionSecret });
+  assert.equal(await settings.getProviderCredential("alice", "gemini"), keys.alice);
+  assert.equal((await settings.getState("alice")).providers[0].configured, true);
+  assert.deepEqual((await repository.read("alice")).providers.gemini.sealed, legacy, "reads do not rewrite persisted credentials");
+  await repository.update("bob", (state) => { state.providers.gemini = { sealed: legacy }; });
+  await assert.rejects(settings.getProviderCredential("bob", "gemini"), { code: "SETTINGS_CREDENTIAL_UNAVAILABLE" });
+
+  await settings.saveProvider("alice", "gemini", { apiKey: keys.alice });
+  const saved = (await repository.read("alice")).providers.gemini.sealed;
+  assert.equal(saved.version, 2);
+  const newKey = Buffer.from(hkdfSync("sha256", encryptionSecret, "synergy-module-workspace-v2", "provider-api-credentials", 32));
+  const decipher = createDecipheriv("aes-256-gcm", newKey, Buffer.from(saved.iv, "base64url"));
+  decipher.setAAD(Buffer.from(JSON.stringify(["synergy-module-workspace-v2", "alice", "gemini"])));
+  decipher.setAuthTag(Buffer.from(saved.tag, "base64url"));
+  assert.equal(Buffer.concat([decipher.update(Buffer.from(saved.ciphertext, "base64url")), decipher.final()]).toString("utf8"), keys.alice);
+  await repository.update("alice", (state) => { state.providers.gemini.sealed.version = 1; });
+  await assert.rejects(settings.getProviderCredential("alice", "gemini"), { code: "SETTINGS_CREDENTIAL_UNAVAILABLE" });
 });
 
 test("settings reject invalid preferences, oversized drafts and credential fields in draft storage", async () => {

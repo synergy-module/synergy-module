@@ -8,7 +8,7 @@ import { createSqliteRuntime } from "../../src/runtime/sqlite-runtime.js";
 import { beginTestDiscordLogin, createTestApp, loginTestOperator, readCsrfToken } from "../helpers/auth-test-helpers.js";
 
 test("a saved journal and Discord login survive an application and database restart", async (t) => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "omensite-login-persistence-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "synergy-module-login-persistence-"));
   const filename = path.join(directory, "workspace.sqlite");
   const runtimes = [];
   const apps = [];

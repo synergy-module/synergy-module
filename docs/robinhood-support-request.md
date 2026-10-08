@@ -2,25 +2,28 @@
 
 **Subject: Custom hosted MCP integration — redirect URI rejected after verification**
 
+This maintained copy uses the current product name. The historical beta hostname in the recorded error is replaced with `<legacy-beta-host>`; it is not evidence that either planned domain has been tested or approved. The original submitted conversation remains the source for the exact historical address.
+
 Please escalate this to the team responsible for Agentic Trading / Trading MCP OAuth.
 
-We are integrating Synergy, a hosted trading research application, with Robinhood's official Trading MCP at `https://agent.robinhood.com/mcp/trading`.
+We are integrating Synergy Module, a hosted trading research application, with Robinhood's official Trading MCP at `https://agent.robinhood.com/mcp/trading`.
 
 The planned application domains are `synergymodule.dev` and `synergymodule.app`; subdomains may also be used. Please confirm how each exact HTTPS callback must be registered, including future subdomains.
 
-Our current beta callback is:
+The planned callback examples are:
 
 ```text
-https://beta.omensite.com/auth/robinhood/callback
+https://synergymodule.dev/auth/robinhood/callback
+https://synergymodule.app/auth/robinhood/callback
 ```
 
-After sign-in and verification, `https://api.robinhood.com/oauth2/authorize/` returns:
+During the September 24 investigation on the previous beta hostname, sign-in and verification reached this response from `https://api.robinhood.com/oauth2/authorize/` (hostname sanitized):
 
 ```json
-{"detail":"Mismatching Redirect URI: https://beta.omensite.com/auth/robinhood/callback"}
+{"detail":"Mismatching Redirect URI: https://<legacy-beta-host>/auth/robinhood/callback"}
 ```
 
-The app sends this identical URI in dynamic client registration and the authorization request. Public registration checks on September 24, 2026 returned HTTP 200 and echoed each of two requested callback URIs, while returning the same client ID and the name `Robinhood Trading`. No authorization code reaches our callback. We use the authorization-code flow, scope `internal`, resource `https://agent.robinhood.com/mcp/trading`, PKCE S256, and public-client authentication (`token_endpoint_auth_method=none`).
+The app sent the identical historical URI in dynamic client registration and the authorization request. Public registration checks on September 24, 2026 returned HTTP 200 and echoed each of two requested callback URIs, while returning the same client ID and the name `Robinhood Trading`. No authorization code reached that callback. We use the authorization-code flow, scope `internal`, resource `https://agent.robinhood.com/mcp/trading`, PKCE S256, and public-client authentication (`token_endpoint_auth_method=none`).
 
 Could you confirm:
 

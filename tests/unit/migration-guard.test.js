@@ -54,7 +54,7 @@ test("applied checksums skip migration SQL while preserving serialized transacti
   } });
   assert.deepEqual(result, { applied: [], skipped: MIGRATION_FILES });
   assert.equal(options.max, 1, "transaction statements must share one pooled connection");
-  assert.equal(options.application_name, "omensite-migration");
+  assert.equal(options.application_name, "synergy-module-migration");
   assert.equal(statements[0].sql, "BEGIN");
   assert.equal(statements[1].sql, "SET LOCAL lock_timeout = '5s'");
   assert.match(statements[2].sql, /pg_advisory_xact_lock/);

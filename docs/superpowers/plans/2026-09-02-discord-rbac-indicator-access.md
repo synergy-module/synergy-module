@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add Discord SSO, Discord-role-based module authorization, animated permission denials, a TradingView indicator access-request workflow, and a temporary-memory Admin panel to the existing OMENSITE MVC application.
+**Goal:** Add Discord SSO, Discord-role-based module authorization, animated permission denials, a TradingView indicator access-request workflow, and a temporary-memory Admin panel to the existing Synergy Module MVC application.
 
 **Architecture:** Keep authentication providers, authorization policy, repositories, route middleware, MVC controllers, and browser controllers separate and dependency-injected. Discord mode uses the OAuth2 authorization-code flow and reads the signed-in member's guild roles; demo mode retains the current local login. All temporary state is stored behind repository interfaces so PostgreSQL and a durable session store can replace the in-memory implementations later.
 
@@ -20,7 +20,7 @@
 - `Developer` and `Admin` grant every capability; `OS` grants base access; `Indicators` and `Journal` are additive module roles.
 - Keep every primary navigation link visible and enforce authorization on the server.
 - A denied fragment navigation must retain the current page and must not push the denied URL into history.
-- TradingView access remains a manual author action; OMENSITE records requests and decisions only.
+- TradingView access remains a manual author action; Synergy Module records requests and decisions only.
 - Store users, bans, session indexes, and indicator requests in memory for this release, with explicit repository boundaries for PostgreSQL migration.
 - Never render or log Discord client secrets, access tokens, refresh tokens, OAuth codes, or session secrets.
 - Use TDD for every task: observe the new test fail for the intended reason before implementing production code.
@@ -66,7 +66,7 @@
 - `views/pages/indicators.ejs`, `public/js/indicators/indicator-access-controller.js` — catalog and request UI.
 - `views/pages/admin.ejs`, `public/js/admin/admin-controller.js` — Admin user/request tables and actions.
 - `views/partials/sidebar.ejs`, `views/partials/statusbar.ejs`, `public/js/navigation-controller.js`, `public/js/transition-controller.js`, `public/js/app-shell.js` — visible navigation, identity display, hydration, and denied transition.
-- `public/css/omensite.css` — responsive terminal styling for the new states.
+- `public/css/synergy-module.css` — responsive terminal styling for the new states.
 - `tests/helpers/auth-test-helpers.js` — deterministic demo/Discord app configurations, login, and CSRF extraction for integration tests.
 - `tests/helpers/http-test-helpers.js` — minimal Express response harness for middleware unit tests.
 
@@ -687,7 +687,7 @@ git commit -m "feat: add mode-aware Discord login"
 test("requireCapability returns JSON 403 for a denied fragment", () => {
   const response = createJsonResponseHarness();
   requireCapability(CAPABILITIES.INDICATORS)(
-    { session: { operator: { capabilities: [CAPABILITIES.BASE] } }, isOmensiteFragment: true, path: "/indicators" },
+    { session: { operator: { capabilities: [CAPABILITIES.BASE] } }, isSynergyModuleFragment: true, path: "/indicators" },
     response,
     () => assert.fail("next called"),
   );
@@ -700,7 +700,7 @@ test("Admin can open every module while OS receives 403 for modular fragments", 
   const os = await loginDemo(createTestApp({ demoRoles: ["OS"] }), { username: "member" });
   for (const path of ["/indicators", "/journal", "/admin"]) await admin.get(path).expect(200);
   for (const path of ["/indicators", "/journal", "/admin"]) {
-    await os.get(path).set("X-Omensite-Fragment", "1").expect(403).expect(/INSUFFICIENT_PERMISSIONS/);
+    await os.get(path).set("X-Synergy-Module-Fragment", "1").expect(403).expect(/INSUFFICIENT_PERMISSIONS/);
   }
 });
 
@@ -797,7 +797,7 @@ git commit -m "feat: enforce modular role access"
 - Replace: `views/pages/indicators.ejs`
 - Create: `public/js/indicators/indicator-access-controller.js`
 - Modify: `public/js/app-shell.js`
-- Modify: `public/css/omensite.css`
+- Modify: `public/css/synergy-module.css`
 - Create: `tests/unit/indicator-access-service.test.js`
 - Create: `tests/unit/indicator-access-controller.test.js`
 - Create: `tests/integration/indicator-routes.test.js`
@@ -924,7 +924,7 @@ Expected: all tests PASS.
 - [ ] **Step 9: Commit the Indicators workflow**
 
 ```bash
-git add src/config/indicator-catalog.js src/services/indicator-access-service.js src/controllers/indicator-controller.js src/routes/indicator-routes.js views/pages/indicators.ejs public/js/indicators public/js/app-shell.js public/css/omensite.css tests/unit/indicator-access-service.test.js tests/unit/indicator-access-controller.test.js tests/integration/indicator-routes.test.js tests/integration/fidelity-markup.test.js tests/unit/app-shell.test.js
+git add src/config/indicator-catalog.js src/services/indicator-access-service.js src/controllers/indicator-controller.js src/routes/indicator-routes.js views/pages/indicators.ejs public/js/indicators public/js/app-shell.js public/css/synergy-module.css tests/unit/indicator-access-service.test.js tests/unit/indicator-access-controller.test.js tests/integration/indicator-routes.test.js tests/integration/fidelity-markup.test.js tests/unit/app-shell.test.js
 git commit -m "feat: add indicator access requests"
 ```
 
@@ -940,7 +940,7 @@ git commit -m "feat: add indicator access requests"
 - Create: `public/js/admin/admin-controller.js`
 - Modify: `src/app.js`
 - Modify: `public/js/app-shell.js`
-- Modify: `public/css/omensite.css`
+- Modify: `public/css/synergy-module.css`
 - Create: `tests/unit/admin-service.test.js`
 - Create: `tests/unit/admin-controller.test.js`
 - Create: `tests/integration/admin-routes.test.js`
@@ -1067,7 +1067,7 @@ Expected: all tests PASS.
 - [ ] **Step 9: Commit the Admin panel**
 
 ```bash
-git add src/services/admin-service.js src/controllers/admin-controller.js src/routes/admin-routes.js views/pages/admin.ejs public/js/admin public/js/app-shell.js public/css/omensite.css src/app.js tests/unit/admin-service.test.js tests/unit/admin-controller.test.js tests/integration/admin-routes.test.js tests/unit/app-shell.test.js tests/integration/fidelity-markup.test.js
+git add src/services/admin-service.js src/controllers/admin-controller.js src/routes/admin-routes.js views/pages/admin.ejs public/js/admin public/js/app-shell.js public/css/synergy-module.css src/app.js tests/unit/admin-service.test.js tests/unit/admin-controller.test.js tests/integration/admin-routes.test.js tests/unit/app-shell.test.js tests/integration/fidelity-markup.test.js
 git commit -m "feat: add temporary user administration"
 ```
 
@@ -1079,7 +1079,7 @@ git commit -m "feat: add temporary user administration"
 - Create locally, ignored: `.env`
 - Modify: `.env.example`
 - Modify: `README.md`
-- Modify: `start-omensite.bat`
+- Modify: `start-synergy-module.bat`
 - Modify: `tests/integration/server-config.test.js`
 
 **Interfaces:**
@@ -1092,7 +1092,7 @@ Use these exact non-secret local values:
 
 ```text
 AUTH_MODE=demo
-SESSION_SECRET=omensite-local-v0-1-2-change-before-hosting
+SESSION_SECRET=synergy-module-local-v0-1-2-change-before-hosting
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 DISCORD_REDIRECT_URI=http://127.0.0.1:4173/auth/discord/callback
@@ -1168,7 +1168,7 @@ Check every Included, Excluded, Request Protection, Error Handling, and Verifica
 - [ ] **Step 10: Commit docs and final compatibility updates**
 
 ```bash
-git add .env.example README.md start-omensite.bat tests/integration/server-config.test.js
+git add .env.example README.md start-synergy-module.bat tests/integration/server-config.test.js
 git commit -m "docs: add Discord authentication setup"
 ```
 

@@ -70,7 +70,7 @@ test("Admin uses Cortex panels with dense action rows and mobile field labels", 
   const agent = await loginTestOperator(app);
   const [response, stylesheet] = await Promise.all([
     agent.get("/admin").expect(200),
-    request(app).get("/css/omensite.css").expect(200),
+    request(app).get("/css/synergy-module.css").expect(200),
   ]);
   const dom = new JSDOM(response.text);
   const style = dom.window.document.createElement("style");

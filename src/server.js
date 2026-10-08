@@ -35,7 +35,7 @@ const app = createApp({
 });
 
 const server = app.listen(port, host, () => {
-  console.log(`SYNERGY listening on http://${host}:${port}`);
+  console.log(`Synergy Module listening on http://${host}:${port}`);
 });
 
 let closing = false;

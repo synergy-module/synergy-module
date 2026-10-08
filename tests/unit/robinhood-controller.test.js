@@ -8,7 +8,7 @@ import { orderInput } from "../helpers/robinhood-test-helpers.js";
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 const html = readFileSync(new URL("../../views/partials/robinhood-workspace.ejs", import.meta.url), "utf8");
 function fixture(t, overrides = {}) {
-  const dom = new JSDOM(html, { url: "https://omensite.test/brain" }), root = dom.window.document.querySelector("[data-robinhood]"), calls = [];
+  const dom = new JSDOM(html, { url: "https://synergy-module.test/brain" }), root = dom.window.document.querySelector("[data-robinhood]"), calls = [];
   const state = { configured: true, connected: true, paused: true, liveEnabled: false, missing: [], snapshots: [], actions: [], events: [],
     tools: ["Equities", "Options", "Crypto"].map((group, i) => ({ name: ["place_equity_order", "place_option_order", "place_crypto_order"][i], group: "Actions", kind: "order", inputSchema: orderInput })), ...overrides };
   const request = async (url, body) => {

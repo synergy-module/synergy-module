@@ -68,7 +68,7 @@ export function createRobinhoodClient({ fetchImpl = fetch, now = () => Date.now(
       // A successful dynamic registration response alone does not establish callback approval.
       let clientId = registeredClientId;
       if (!clientId) {
-        const registration = await jsonRequest(REGISTER, { client_name: "SYNERGY Brain", redirect_uris: [redirectUri],
+        const registration = await jsonRequest(REGISTER, { client_name: "Synergy Module Brain", redirect_uris: [redirectUri],
           token_endpoint_auth_method: "none", grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], scope: OAUTH_SCOPE });
         clientId = registration.client_id;
       }
@@ -100,7 +100,7 @@ export function createRobinhoodClient({ fetchImpl = fetch, now = () => Date.now(
         requestInit: { headers: { Authorization: `Bearer ${credentials.accessToken}` } }, fetch: boundedFetch,
         reconnectionOptions: { maxRetries: 0, maxReconnectionDelay: 1000, initialReconnectionDelay: 1000, reconnectionDelayGrowFactor: 1 },
       });
-      const client = new Client({ name: "synergy-brain", version: "0.1.2" }, { capabilities: {} });
+      const client = new Client({ name: "synergy-module-brain", version: "0.1.2" }, { capabilities: {} });
       try {
         await client.connect(transport, { timeout: 15000 });
         return await work({

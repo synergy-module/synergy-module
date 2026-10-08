@@ -29,7 +29,7 @@ test("blank integration encryption configuration falls back to the stable sessio
 test("workspace fragment navigation preserves the requested setup or knowledge section", async () => {
   const agent = await loginTestOperator(makeApp());
   for (const path of ["/research?view=knowledge", "/settings?section=defaults", "/settings?section=system"]) {
-    await agent.get(path).set("X-Omensite-Fragment", "1").expect(200).expect("X-Omensite-Path", path);
+    await agent.get(path).set("X-Synergy-Module-Fragment", "1").expect(200).expect("X-Synergy-Module-Path", path);
   }
 });
 

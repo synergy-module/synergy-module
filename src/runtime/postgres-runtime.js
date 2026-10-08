@@ -17,7 +17,7 @@ export function createPostgresRuntime(databaseConfig) {
     statement_timeout: databaseConfig.statementTimeoutMs ?? 10000,
     lock_timeout: databaseConfig.lockTimeoutMs ?? 3000,
     idle_in_transaction_session_timeout: 15000,
-    application_name: databaseConfig.applicationName ?? "omensite-app",
+    application_name: databaseConfig.applicationName ?? "synergy-module-app",
     ssl: databaseConfig.ssl ? { rejectUnauthorized: true } : undefined,
   });
   // A disconnected idle client is removed by pg; do not crash or expose connection details.
