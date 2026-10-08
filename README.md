@@ -185,6 +185,8 @@ The real PostgreSQL persistence test is opt-in. Set `TEST_DATABASE_URL` to a dis
 
 ## Roadmap
 
+See the [project evolution roadmap](docs/project-roadmap.md) for the visual redesign sequence, current capability inventory, and decisions for the next product direction. The ideas below come from the original product direction and remain subject to that review.
+
 1. Trade-execution ingestion from supported brokers or structured imports.
 2. AI-assisted post-trade analysis and pattern detection.
 3. Production indicator, educational-content, and weekly market-intelligence libraries.
