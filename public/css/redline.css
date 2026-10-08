@@ -26,7 +26,10 @@ a:hover { color: var(--red-glow); }
 
 /* A persistent compact shell leaves the Brain room to breathe. */
 .statusbar { min-height: 62px; height: 62px; padding: 0 24px; gap: 20px; border-color: var(--line); background: var(--surface); overflow: visible; }
-.cortex-brand { display: inline-flex; flex-wrap: wrap; align-items: baseline; flex: none; color: var(--ink); font: 600 26px/1 var(--font-display); letter-spacing: -.02em; text-decoration: none; }
+.cortex-brand { display: inline-grid; grid-template-columns: var(--brand-mark-size, 40px) auto; column-gap: 12px; align-items: center; flex: none; color: var(--ink); font: 600 26px/1 var(--font-display); letter-spacing: -.02em; text-decoration: none; }
+.cortex-brand-mark { grid-column: 1; grid-row: 1 / span 3; display: block; width: var(--brand-mark-size, 40px); height: var(--brand-mark-size, 40px); filter: drop-shadow(0 0 10px #ff2e4324); }
+.cortex-brand-name { grid-column: 2; font-weight: inherit; }
+.cortex-brand > span, .cortex-brand > small { grid-column: 2; }
 .cortex-brand:hover { color: var(--ink); text-decoration: none; }
 .cortex-brand > span { flex-basis: 100%; margin-top: 5px; color: var(--red); font-size: .52em; letter-spacing: .3em; }
 .cortex-brand > small { display: block; flex-basis: 100%; margin-top: 6px; color: var(--ink-faint); font: 500 8px/1 var(--font-display); letter-spacing: .23em; }
@@ -104,7 +107,7 @@ a:hover { color: var(--red-glow); }
 .cortex-login-copy { margin: auto 0; padding: 60px 0 36px; }
 .cortex-login-copy h1 { margin: 16px 0; color: var(--ink); font: 600 clamp(36px, 4.8vw, 70px)/1.04 var(--font-display); letter-spacing: -.02em; }
 .cortex-login-copy p { margin: 0; color: var(--ink-muted); font: 400 16px/24px var(--font-sans); }
-.cortex-login-art { display: block; width: min(100%, 480px); height: auto; margin: 16px 0 0; object-fit: contain; }
+.cortex-login-art { display: block; width: min(100%, 480px); height: auto; margin: 20px 0 16px; object-fit: contain; border: 1px solid var(--line); border-radius: 3px; }
 .cortex-login-markets { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--ink-muted); font: 400 10px/18px var(--font-mono); }
 .cortex-login-markets > span { color: var(--red); font-size: 7px; }
 .cortex-login-footer { color: var(--ink-faint); font: 400 9px/16px var(--font-mono); letter-spacing: .1em; }
@@ -157,7 +160,7 @@ a:hover { color: var(--red-glow); }
   .cortex-login-copy { padding: 32px 0 0; }
   .cortex-login-copy h1 { font-size: 38px; }
   .cortex-login-copy p { font-size: 14px; line-height: 20px; }
-  .cortex-login-art { width: 200px; height: 110px; object-fit: cover; margin: 12px 0; }
+  .cortex-login-art { width: min(100%, 300px); height: auto; margin: 20px 0 16px; }
   .cortex-login-footer { display: none; }
   .login-card { max-width: none; width: calc(100% - 32px); margin: 24px 16px; padding: 24px; }
   .login-card > .cortex-theme { margin-bottom: 24px; }

@@ -1,7 +1,7 @@
 /* Focused trading workspace. The existing Redline tokens remain authoritative. */
 :root { --sidebar-w: 206px; }
 .workspace-mobile-header { display: none; }
-.workspace-brand { margin: 7px 22px 36px; font-size: 25px; }
+.workspace-brand { --brand-mark-size: 28px; column-gap: 9px; margin: 7px 16px 36px; font-size: 23px; }
 .sidebar { padding-top: 24px; flex: 0 0 var(--sidebar-w); }
 .sidebar nav { padding-bottom: 20px; }
 .sidebar .navitem { min-height: 48px; margin: 3px 12px; padding: 10px 12px; border-radius: 3px; }
