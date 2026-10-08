@@ -1,11 +1,32 @@
 .git
-.gitignore
+.github
+.env
+.env.*
+!.env.example
 node_modules
 npm-debug.log*
-.env*
+data
+*.sqlite*
+*.log
+Dockerfile*
+compose*.yml
+README.md
+.gitignore
 coverage
 reference
 docs
 tests
-start-omensite.bat
+start-synergy-module.bat
 
+# Local design/agent tooling and private project recall are not application assets.
+.omensite
+.agents
+.codex
+.claude
+.mcp.json
+AGENTS.md
+CLAUDE.md
+evals
+knowledge
+output
+tests/redline-cortex.zip

@@ -1,6 +1,6 @@
 import { createJournalEntry } from "./journal-entry.js";
 
-export function createJournalService(repository, clock, idFactory) {
+export function createJournalService(repository, clock = () => new Date(), idFactory = () => String(Date.now())) {
   return {
     list() {
       return repository.list();

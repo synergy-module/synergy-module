@@ -1,13 +1,5 @@
-<div class="statusbar" data-statusbar>
-  <button class="navtoggle" type="button" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle>[≡]</button>
-  <div class="statusbar-live"><span class="dot idle"></span>LIVE FEED</div>
-  <div class="ticker" aria-label="Market feed status">
-    <div class="ticker-track">
-      <% ["MARKET FEED :: STANDBY", "NO SYMBOLS SUBSCRIBED", "AWAITING DATA SOURCE", "FEED SOCKET :: CLOSED", "MARKET FEED :: STANDBY", "NO SYMBOLS SUBSCRIBED", "AWAITING DATA SOURCE", "FEED SOCKET :: CLOSED"].forEach((segment) => { %>
-        <span><span><%= segment %></span></span>
-      <% }) %>
-    </div>
-  </div>
-  <div class="statusbar-session">SESSION 01 / AUTHORIZED</div>
-  <time class="statusbar-clock" data-clock></time>
-</div>
+<header class="statusbar workspace-mobile-header" data-statusbar>
+  <button class="navtoggle" type="button" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle>≡</button>
+  <a class="cortex-brand" href="/home" data-nav-link aria-label="Synergy Module home">SYNERGY<span>MODULE</span></a>
+  <span class="statusbar-session">DISCORD SSO</span>
+</header>

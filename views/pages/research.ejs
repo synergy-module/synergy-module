@@ -1,0 +1,79 @@
+<section class="route brain research-page" data-brain data-route-view data-route-key="<%= page.route.key %>">
+  <%- include("../partials/route-head", { page }) %>
+  <div class="workspace-tabs" role="tablist" aria-label="Research workspace">
+    <button type="button" id="brain-tab-mission" role="tab" aria-controls="brain-panel-mission" aria-selected="true" data-brain-view="mission">Research <span data-brain-review-count hidden></span></button>
+    <button type="button" id="brain-tab-knowledge" role="tab" aria-controls="brain-panel-knowledge" aria-selected="false" tabindex="-1" data-brain-view="knowledge">Knowledge & memory</button>
+    <a href="/market-news" data-nav-link>Market calendar ↗</a>
+  </div>
+  <p class="brain-cost-lock" data-brain-cost-lock role="status">Checking provider access…</p>
+  <p class="workspace-save-state" data-draft-status role="status">Loading your saved workspace…</p>
+  <section id="brain-panel-mission" class="brain-view" data-brain-panel="mission" role="tabpanel" aria-labelledby="brain-tab-mission" tabindex="0">
+    <div class="brain-workspace">
+      <section class="panel brain-config" aria-labelledby="brain-mission-title">
+        <header class="trader-panel-head"><h2 id="brain-mission-title">New research</h2><span class="trader-micro">INPUT</span></header>
+        <form data-brain-form>
+          <label class="field">OBJECTIVE<textarea name="objective" rows="3" minlength="10" maxlength="1200" required>Evaluate the supplied market setup, retrieve relevant lessons, and challenge the thesis before human review.</textarea></label>
+          <input type="hidden" name="provider" value="gemini">
+          <p class="brain-provider-note" data-brain-provider>Checking server configuration…</p>
+          <div class="trader-form-grid">
+            <label class="field">SYMBOL<input name="symbol" value="SPY" maxlength="24" required></label>
+            <label class="field">TIMEFRAME<select name="timeframe"><option value="1m">1 minute</option><option value="5m">5 minutes</option><option value="15m" selected>15 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option><option value="1d">1 day</option></select></label>
+          </div>
+          <label class="field">MARKET CONTEXT<textarea name="context" rows="5" minlength="40" maxlength="12000" placeholder="Paste dated observations, OHLC data, price levels, and session context." required></textarea></label>
+          <p class="trader-help">When paid access is enabled, analysis sends your context and relevant saved excerpts to the selected providers. Prices are supplied by you.</p>
+          <input type="hidden" name="accountSize" value="50000">
+          <input type="hidden" name="riskPercent" value="0.5">
+          <input type="hidden" name="pointValue" value="1">
+          <input type="hidden" name="minRewardRisk" value="2">
+          <input type="hidden" name="maxSteps" value="12">
+          <input type="hidden" name="maxModelCalls" value="10">
+          <input type="hidden" name="maxTokens" value="64000">
+          <input type="hidden" name="durationSeconds" value="120">
+          <input type="hidden" name="maxCostUsd" value="">
+          <input type="hidden" name="route_planner" value="">
+          <input type="hidden" name="route_researcher" value="">
+          <input type="hidden" name="route_strategist" value="">
+          <input type="hidden" name="route_critic" value="">
+          <p class="trader-help">Risk limits and agent routing follow your <a href="/settings?section=defaults" data-nav-link>saved settings</a>.</p>
+          <div class="trader-actions"><button type="submit" class="btn btn-solid" data-brain-start disabled>START RESEARCH ↗</button><button type="button" class="btn" data-brain-demo>RUN DEMO</button></div>
+          <p class="trader-demo-help">Demo exercises the workflow with scripted decisions and fictional prices. No API key required.</p>
+        </form>
+      </section>
+      <div class="brain-output">
+        <section class="panel" aria-labelledby="brain-run-title">
+          <header class="trader-panel-head"><h2 id="brain-run-title">WORKFLOW & REVIEW</h2><span class="trader-badge" data-brain-status>IDLE</span></header>
+          <div class="brain-metrics" data-brain-metrics aria-label="Run metrics"></div>
+          <div class="brain-run-content">
+            <div class="brain-empty" data-brain-empty><div class="brain-loop" aria-hidden="true">[ ↻ ]</div><h3>Give the system a mission.</h3><p>A planner decomposes the task. Research and strategy agents gather evidence and build a thesis. A critic challenges it. You decide what to keep.</p><div class="brain-role-preview"><span>01 / PLANNER</span><span>02 / RESEARCHER</span><span>03 / STRATEGIST</span><span>04 / CRITIC</span></div></div>
+            <div data-brain-graph class="brain-graph" aria-label="Workflow graph"></div>
+            <div data-brain-result></div>
+            <div class="brain-approval" data-brain-approval hidden><h3>Human review required</h3><p>Accepting saves this research to your agent’s memory. Review its evidence, missing data, and risk checks first.</p><label class="field">REVIEW NOTE<textarea name="approvalNote" data-brain-note maxlength="1000" rows="2" placeholder="Record your decision or a correction."></textarea></label><div class="brain-button-row"><button type="button" class="btn btn-solid" data-brain-approve>ACCEPT & SAVE MEMORY</button><button type="button" class="btn" data-brain-reject>REJECT</button></div></div>
+            <button type="button" class="btn brain-cancel" data-brain-cancel hidden>CANCEL RUN</button>
+          </div>
+          <p class="brain-feedback" role="status" aria-live="polite" data-brain-feedback>Connecting to the agent runtime…</p>
+        </section>
+        <details class="panel research-trace"><summary>Execution details</summary><section aria-labelledby="brain-trace-title"><header class="trader-panel-head"><h2 id="brain-trace-title">EXECUTION TRACE</h2><span class="trader-micro">ACTIONS + EVIDENCE</span></header><ol class="brain-trace" data-brain-trace><li class="brain-placeholder">Tool calls, handoffs, verification, and timing appear here.</li></ol></section></details>
+        <section class="panel"><header class="trader-panel-head"><h2>MISSION HISTORY</h2><button type="button" class="trader-text-button" data-brain-refresh>Refresh</button></header><div class="brain-history" data-brain-history><p class="brain-placeholder">No missions yet.</p></div><div class="trader-actions"><button type="button" class="btn" data-brain-more-runs hidden>Load older missions</button></div><p class="brain-feedback" role="status" data-brain-history-feedback></p></section>
+      </div>
+    </div>
+  </section>
+
+  <section id="brain-panel-knowledge" class="brain-view" data-brain-panel="knowledge" role="tabpanel" aria-labelledby="brain-tab-knowledge" tabindex="0" hidden>
+    <section class="panel brain-library" aria-labelledby="brain-memory-title">
+      <header class="trader-panel-head"><h2 id="brain-memory-title">KNOWLEDGE & MEMORY</h2><span class="trader-micro" data-brain-document-count>0 SOURCES</span></header>
+      <div class="brain-library-body">
+        <div class="brain-library-intro"><h3>Give your agents context.</h3><p class="trader-help">Add a playbook or a trading lesson. Agents retrieve relevant excerpts with citations. Accepted research is saved here automatically.</p></div>
+        <div class="brain-library-workspace">
+          <form data-brain-document-form>
+            <div class="brain-document-inputs"><label class="field">SOURCE TITLE<input name="title" maxlength="200" required placeholder="e.g. ES session playbook"></label><label class="field">TYPE<select name="kind"><option value="knowledge">Knowledge</option></select></label></div>
+            <label class="field">SOURCE TEXT<textarea name="text" rows="8" maxlength="50000" required placeholder="Write or paste the source material…"></textarea></label>
+            <button class="btn" type="submit">ADD SOURCE</button>
+            <p class="brain-feedback" data-brain-library-feedback role="status"></p>
+          </form>
+          <div class="brain-saved-sources"><h3>SAVED SOURCES</h3><div class="brain-documents" data-brain-documents></div><div class="trader-actions"><button type="button" class="btn" data-brain-more-documents hidden>Load more sources</button></div><p class="brain-feedback" role="status" data-brain-sources-feedback></p></div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+</section>

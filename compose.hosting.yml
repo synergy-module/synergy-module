@@ -11,9 +11,53 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: ${APP_INTERNAL_PORT:?Set in Portainer}
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:?Set in Portainer}
+      APP_ALLOW_MIGRATIONS: "false"
       DATABASE_URL: ${DATABASE_URL:?Store the shared production database URL in Portainer}
       DATABASE_SSL: ${DATABASE_SSL:-disable}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+      DATABASE_CONNECT_TIMEOUT_MS: ${DATABASE_CONNECT_TIMEOUT_MS:-5000}
+      DATABASE_STATEMENT_TIMEOUT_MS: ${DATABASE_STATEMENT_TIMEOUT_MS:-10000}
+      DATABASE_LOCK_TIMEOUT_MS: ${DATABASE_LOCK_TIMEOUT_MS:-3000}
+      INTEGRATIONS_ENCRYPTION_KEY: ${INTEGRATIONS_ENCRYPTION_KEY:-}
       SESSION_SECRET: ${SESSION_SECRET:?Store in Portainer}
+      AUTH_MODE: discord
+      DISCORD_ACCESS_POLICY: ${DISCORD_ACCESS_POLICY:-roles}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?Set in Portainer}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?Set in Portainer}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?Set the existing site HTTPS callback in Portainer}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:?Set in Portainer}
+      # Validated by the app: required for roles policy, unused for beta-guild.
+      DISCORD_ROLE_DEVELOPER_ID: ${DISCORD_ROLE_DEVELOPER_ID:-}
+      DISCORD_ROLE_ADMIN_ID: ${DISCORD_ROLE_ADMIN_ID:-}
+      DISCORD_ROLE_OS_ID: ${DISCORD_ROLE_OS_ID:-}
+      DISCORD_ROLE_INDICATORS_ID: ${DISCORD_ROLE_INDICATORS_ID:-}
+      DISCORD_ROLE_JOURNAL_ID: ${DISCORD_ROLE_JOURNAL_ID:-}
+      DISCORD_ROLE_REFRESH_MINUTES: ${DISCORD_ROLE_REFRESH_MINUTES:-5}
+      TRADER_AI_PROVIDER: ${TRADER_AI_PROVIDER:-gemini}
+      TRADER_PAID_AI_ENABLED: ${TRADER_PAID_AI_ENABLED:-false}
+      ROBINHOOD_TOKEN_ENCRYPTION_KEY: ${ROBINHOOD_TOKEN_ENCRYPTION_KEY:-}
+      ROBINHOOD_REDIRECT_URI: ${ROBINHOOD_REDIRECT_URI:-}
+      ROBINHOOD_CLIENT_ID: ${ROBINHOOD_CLIENT_ID:-}
+      ROBINHOOD_LIVE_TRADING_ENABLED: ${ROBINHOOD_LIVE_TRADING_ENABLED:-false}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      BRAIN_GEMINI_INPUT_USD_PER_MILLION: ${BRAIN_GEMINI_INPUT_USD_PER_MILLION:-}
+      BRAIN_GEMINI_OUTPUT_USD_PER_MILLION: ${BRAIN_GEMINI_OUTPUT_USD_PER_MILLION:-}
+      BRAIN_GEMINI_CACHED_INPUT_USD_PER_MILLION: ${BRAIN_GEMINI_CACHED_INPUT_USD_PER_MILLION:-}
+      BRAIN_GEMINI_CACHE_CREATION_INPUT_USD_PER_MILLION: ${BRAIN_GEMINI_CACHE_CREATION_INPUT_USD_PER_MILLION:-}
+      BRAIN_OPENAI_INPUT_USD_PER_MILLION: ${BRAIN_OPENAI_INPUT_USD_PER_MILLION:-}
+      BRAIN_OPENAI_OUTPUT_USD_PER_MILLION: ${BRAIN_OPENAI_OUTPUT_USD_PER_MILLION:-}
+      BRAIN_OPENAI_CACHED_INPUT_USD_PER_MILLION: ${BRAIN_OPENAI_CACHED_INPUT_USD_PER_MILLION:-}
+      BRAIN_OPENAI_CACHE_CREATION_INPUT_USD_PER_MILLION: ${BRAIN_OPENAI_CACHE_CREATION_INPUT_USD_PER_MILLION:-}
+      BRAIN_CLAUDE_INPUT_USD_PER_MILLION: ${BRAIN_CLAUDE_INPUT_USD_PER_MILLION:-}
+      BRAIN_CLAUDE_OUTPUT_USD_PER_MILLION: ${BRAIN_CLAUDE_OUTPUT_USD_PER_MILLION:-}
+      BRAIN_CLAUDE_CACHED_INPUT_USD_PER_MILLION: ${BRAIN_CLAUDE_CACHED_INPUT_USD_PER_MILLION:-}
+      BRAIN_CLAUDE_CACHE_CREATION_INPUT_USD_PER_MILLION: ${BRAIN_CLAUDE_CACHE_CREATION_INPUT_USD_PER_MILLION:-}
     expose:
       - ${APP_INTERNAL_PORT:?Set in Portainer}
     networks:
@@ -37,7 +81,8 @@ services:
       - traefik.http.routers.${APP_SLUG}-${APP_ENVIRONMENT}.rule=${APP_HOST_RULE}
       - traefik.http.routers.${APP_SLUG}-${APP_ENVIRONMENT}.tls=true
       - traefik.http.routers.${APP_SLUG}-${APP_ENVIRONMENT}.tls.certresolver=cloudflare
-      - traefik.http.routers.${APP_SLUG}-${APP_ENVIRONMENT}.middlewares=${APP_AUTH_MIDDLEWARE}
+      # Authentication belongs to this app; do not reattach the former SSO gateway.
+      - traefik.http.routers.${APP_SLUG}-${APP_ENVIRONMENT}.middlewares=security-headers@file,compression@file
       - traefik.http.services.${APP_SLUG}-${APP_ENVIRONMENT}.loadbalancer.server.port=${APP_INTERNAL_PORT}
     logging:
       driver: json-file
@@ -45,7 +90,44 @@ services:
         max-size: 10m
         max-file: "3"
 
+  migration:
+    profiles: [migration]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - sh
+      - -ec
+      - >-
+        test "$$APP_ENVIRONMENT" = "production";
+        test "$$APP_ALLOW_MIGRATIONS" = "true";
+        exec sh -c "$$APP_MIGRATION_COMMAND"
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:?Set in Portainer}
+      APP_ALLOW_MIGRATIONS: "true"
+      APP_MIGRATION_COMMAND: ${APP_MIGRATION_COMMAND:?Set the reviewed production migration command in Portainer}
+      DATABASE_URL: ${DATABASE_URL:?Store the shared production database URL in Portainer}
+      DATABASE_SSL: ${DATABASE_SSL:-disable}
+    networks:
+      - omen_data
+    cpus: ${APP_CPUS:?Set in Portainer}
+    mem_limit: ${APP_MEMORY:?Set in Portainer}
+    pids_limit: ${APP_PIDS_LIMIT:?Set in Portainer}
+    tmpfs:
+      - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
 networks:
+  # Existing shared infrastructure names are stable across product rebranding.
+  # Renaming these external networks requires a separate hosting migration.
   omen_edge:
     name: omen_edge
     external: true

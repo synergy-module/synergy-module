@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+<style>.red,.g{fill:#ff2e43}.deep{fill:#b3101f}.tint{fill:#3a0a11}.ink{fill:#f7eaeb}.brk{fill:none;stroke:#ff2e43;stroke-width:2}.g{font:12px monospace}.g.hot{fill:#ff6b77}.g.cut{fill:#08040a;font-size:14px}</style><!--
+  blocks      red 160x268 bled off the top (the brand, largest) · red-deep 128x188 · red-tint 160x228 bleeding off the right edge · ink 48x32 once for relief — about a third of 960x300
+  arrangement one tall red slab with two satellites, bottoms on one line space-6 above the edge, space-4 gutters, square corners (radius-none) with two red corner brackets like every panel
+  pattern     binary glyphs, from "a rotating 3D brain made of 0s and 1s": 48 mono 0/1 glyphs at a space-4 x 28px pitch over the tint, a few in red-glow; seven cut out of the slab in void
+  scales      sides in space-4 multiples; gutters space-4; pitch space-4; corners radius-none; bracket stroke 2px as in bundle.css
+-->
+<rect class="red blk" x="16" y="-16" width="160" height="292"/>
+<rect class="ink blk" x="192" y="16" width="48" height="32"/>
+<rect class="deep blk" x="192" y="88" width="128" height="188"/>
+<rect class="tint blk" x="336" y="24" width="160" height="252"/>
+<path class="brk" d="M192 76 V64 H204"/>
+<path class="brk" d="M320 264 V276 H308"/>
+<text class="g" x="352" y="72">0</text>
+<text class="g" x="368" y="72">0</text>
+<text class="g hot" x="384" y="72">0</text>
+<text class="g" x="400" y="72">0</text>
+<text class="g" x="416" y="72">0</text>
+<text class="g hot" x="432" y="72">1</text>
+<text class="g" x="448" y="72">0</text>
+<text class="g hot" x="464" y="72">1</text>
+<text class="g hot" x="352" y="100">0</text>
+<text class="g" x="368" y="100">0</text>
+<text class="g" x="384" y="100">1</text>
+<text class="g hot" x="400" y="100">0</text>
+<text class="g hot" x="416" y="100">0</text>
+<text class="g" x="432" y="100">0</text>
+<text class="g" x="448" y="100">1</text>
+<text class="g" x="464" y="100">0</text>
+<text class="g hot" x="352" y="128">0</text>
+<text class="g" x="368" y="128">0</text>
+<text class="g" x="384" y="128">0</text>
+<text class="g" x="400" y="128">1</text>
+<text class="g" x="416" y="128">1</text>
+<text class="g" x="432" y="128">1</text>
+<text class="g" x="448" y="128">0</text>
+<text class="g" x="464" y="128">0</text>
+<text class="g hot" x="352" y="156">1</text>
+<text class="g" x="368" y="156">1</text>
+<text class="g" x="384" y="156">1</text>
+<text class="g" x="400" y="156">0</text>
+<text class="g hot" x="416" y="156">1</text>
+<text class="g hot" x="432" y="156">1</text>
+<text class="g hot" x="448" y="156">1</text>
+<text class="g" x="464" y="156">0</text>
+<text class="g" x="352" y="184">1</text>
+<text class="g" x="368" y="184">1</text>
+<text class="g" x="384" y="184">1</text>
+<text class="g hot" x="400" y="184">0</text>
+<text class="g" x="416" y="184">1</text>
+<text class="g" x="432" y="184">0</text>
+<text class="g hot" x="448" y="184">1</text>
+<text class="g" x="464" y="184">1</text>
+<text class="g" x="352" y="212">1</text>
+<text class="g" x="368" y="212">1</text>
+<text class="g hot" x="384" y="212">1</text>
+<text class="g" x="400" y="212">0</text>
+<text class="g" x="416" y="212">0</text>
+<text class="g" x="432" y="212">0</text>
+<text class="g" x="448" y="212">1</text>
+<text class="g" x="464" y="212">1</text>
+<text class="g cut" x="32" y="200">0</text>
+<text class="g cut" x="48" y="200">0</text>
+<text class="g cut" x="64" y="200">1</text>
+<text class="g cut" x="32" y="224">1</text>
+<text class="g cut" x="48" y="224">1</text>
+<text class="g cut" x="80" y="224">0</text>
+<text class="g cut" x="32" y="176">1</text>
+</svg>

@@ -1,27 +1,26 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<section class="route cortex-journal" data-route-view data-route-key="<%= page.route.key %>">
   <%- include("../partials/route-head", { page }) %>
   <form class="jform" data-journal-form>
-    <div class="dir-toggle">
-      <button class="dir-opt on-long" type="button" aria-pressed="true" data-journal-direction="long">LONG</button>
-      <button class="dir-opt" type="button" aria-pressed="false" data-journal-direction="short">SHORT</button>
-    </div>
-    <div class="jgrid3">
-      <label class="field">ENTRY TIME <input name="entryTime" placeholder="08/31 14:32" autocomplete="off" spellcheck="false"></label>
-      <label class="field">ENTRY PRICE <input name="entryPrice" placeholder="6392.25" autocomplete="off" spellcheck="false"></label>
-      <label class="field">EXIT PRICE <input name="exitPrice" placeholder="6381.75" autocomplete="off" spellcheck="false"></label>
-    </div>
-    <div class="conf-block" data-journal-confluences>
-      <div class="conf-label">CONFLUENCES</div>
-      <div class="conf-set" data-journal-selected-confluences></div>
-      <div class="conf-set" data-journal-available-confluences></div>
-    </div>
-    <label class="field">SCREENSHOTS
-      <span class="dropzone"><input type="file" accept="image/*" multiple data-journal-screenshots><output data-journal-screenshot-count>[ DROP CHART EVIDENCE :: 0 ATTACHED ]</output></span>
-    </label>
-    <label class="field">NOTES <textarea name="notes" rows="4" placeholder="trade thesis, execution commentary, lessons..."></textarea></label>
-    <div class="form-actions">
-      <button class="btn" type="button" data-journal-save-draft>SAVE DRAFT</button>
-      <button class="btn btn-solid" type="submit">SUBMIT ENTRY</button>
-    </div>
+    <section class="cortex-panel cortex-form-section" aria-labelledby="journal-execution-title">
+      <header class="cortex-panel-head"><h2 id="journal-execution-title">01 / EXECUTION</h2><a href="/journal" data-nav-link>Back to journal ↗</a></header>
+      <div class="cortex-panel-body">
+        <div class="cortex-field-heading">TRADE DIRECTION</div>
+        <div class="dir-toggle"><button class="dir-opt on-long" type="button" aria-pressed="true" data-journal-direction="long">▲ LONG</button><button class="dir-opt" type="button" aria-pressed="false" data-journal-direction="short">▼ SHORT</button></div>
+        <div class="jgrid3">
+          <label class="field">ENTRY TIME <input name="entryTime" placeholder="09/24 09:32" autocomplete="off" spellcheck="false"></label>
+          <label class="field">ENTRY PRICE <input name="entryPrice" placeholder="Entry price" autocomplete="off" spellcheck="false"></label>
+          <label class="field">EXIT PRICE <input name="exitPrice" placeholder="Exit price" autocomplete="off" spellcheck="false"></label>
+        </div>
+      </div>
+    </section>
+    <section class="cortex-panel cortex-form-section" aria-labelledby="journal-evidence-title">
+      <header class="cortex-panel-head"><h2 id="journal-evidence-title">02 / CONTEXT &amp; EVIDENCE</h2><span>RECORD THE REASONING</span></header>
+      <div class="cortex-panel-body">
+        <div class="conf-block" data-journal-confluences><div class="conf-label">CONFLUENCES</div><div class="conf-set" data-journal-selected-confluences></div><div class="conf-set" data-journal-available-confluences></div></div>
+        <label class="field">CHART SCREENSHOTS <span class="dropzone"><input type="file" accept="image/*" multiple data-journal-screenshots><output data-journal-screenshot-count>Select chart evidence · 0 attached</output></span></label>
+        <label class="field">REVIEW NOTES <textarea name="notes" rows="6" placeholder="Describe the setup, your execution, and the lesson you want to retain."></textarea></label>
+      </div>
+    </section>
+    <div class="form-actions"><button class="btn" type="button" data-journal-save-draft>Save draft</button><button class="btn btn-solid" type="submit">Save journal entry ↗</button></div>
   </form>
 </section>

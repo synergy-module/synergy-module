@@ -8,17 +8,6 @@ function page(html) {
   return { dom, root: dom.window.document.querySelector("section") };
 }
 
-test("market news chips keep exactly one selected filter", () => {
-  const { dom, root } = page(`<button data-news-filter="all">ALL</button><button data-news-filter="red">RED</button><button data-news-filter="orange">ORANGE</button>`);
-  initializePageInteractions(root, { showToast() {} });
-  for (const name of ["all", "red", "orange"]) {
-    root.querySelector(`[data-news-filter="${name}"]`).click();
-    assert.deepEqual([...root.querySelectorAll("[data-news-filter].active")].map((node) => node.dataset.newsFilter), [name]);
-    assert.equal(root.querySelector(`[data-news-filter="${name}"]`).getAttribute("aria-pressed"), "true");
-  }
-  dom.window.close();
-});
-
 test("alert controls emit the accepted standby copy", () => {
   const { root } = page(`<button data-alert-standby>+ NEW RULE</button>`);
   const messages = [];

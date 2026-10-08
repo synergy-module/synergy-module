@@ -1,11 +1,10 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<section class="route cortex-journal" data-route-view data-route-key="<%= page.route.key %>">
   <%- include("../partials/route-head", { page }) %>
-  <div class="toolbar">
-    <a class="btn btn-primary" href="/journal/new" data-nav-link>+ NEW JOURNAL ENTRY</a>
-  </div>
-  <div class="list" data-journal-list></div>
-  <div class="empty" data-journal-empty>
-    <span class="blip">[ NO ENTRIES LOGGED ]</span><br>
-    <span>SUBMIT YOUR FIRST TRADE TO OPEN THE JOURNAL</span>
-  </div>
+  <section class="cortex-panel" aria-labelledby="journal-records-title">
+    <header class="cortex-panel-head"><div><h2 id="journal-records-title">TRADE RECORDS</h2><p>A clear record of your decisions and execution.</p></div><a class="btn btn-solid" href="/journal/new" data-nav-link>Create entry <span aria-hidden="true">+</span></a></header>
+    <div class="cortex-panel-body">
+      <div class="list" data-journal-list></div>
+      <div class="cortex-empty-state" data-journal-empty><span class="cortex-empty-glyph" aria-hidden="true">▤</span><h3>Your review starts with a record.</h3><p>Capture your first trade, the confluences behind it, and what you learned. Saved entries will appear here.</p><a class="btn" href="/journal/new" data-nav-link>Create your first entry</a></div>
+    </div>
+  </section>
 </section>

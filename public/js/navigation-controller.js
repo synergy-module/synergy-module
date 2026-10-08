@@ -1,6 +1,15 @@
 const FAILURE_MESSAGE = "ROUTE LOAD FAILED :: CURRENT BUFFER RETAINED";
 const ROUTE_NOT_FOUND_MESSAGE = "ROUTE NOT FOUND :: CURRENT BUFFER RETAINED";
 const SYSTEM_ERROR_MESSAGE = "SYSTEM ERROR :: RETRY ROUTE";
+const ACCESS_DENIED_MESSAGE = "ACCESS FAILED :: INSUFFICIENT PERMISSIONS";
+const LOGIN_ERROR_CODES = new Set([
+  "discord_cancelled",
+  "invalid_oauth_state",
+  "discord_auth_failed",
+  "access_revoked",
+  "account_banned",
+  "role_sync_failed",
+]);
 
 function reducedMotion(windowRef) {
   return Boolean(windowRef.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
@@ -8,6 +17,21 @@ function reducedMotion(windowRef) {
 
 function wait(windowRef, milliseconds) {
   return new Promise((resolve) => windowRef.setTimeout(resolve, milliseconds));
+}
+
+function safeLoginUrl(value, windowRef) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return "/login";
+  try {
+    const current = new URL(windowRef.location.href);
+    const candidate = new URL(value, current);
+    if (candidate.origin !== current.origin || candidate.pathname !== "/login" || candidate.hash) return "/login";
+    const entries = [...candidate.searchParams.entries()];
+    if (entries.length === 0) return "/login";
+    if (entries.length !== 1 || entries[0][0] !== "error" || !LOGIN_ERROR_CODES.has(entries[0][1])) return "/login";
+    return `${candidate.pathname}${candidate.search}`;
+  } catch {
+    return "/login";
+  }
 }
 
 function parseRoute(documentRef, html) {
@@ -48,14 +72,27 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
 
     try {
       const response = await fetchImpl(`${destination.pathname}${destination.search}`, {
-        headers: { "X-Omensite-Fragment": "1" },
+        headers: { "X-Synergy-Module-Fragment": "1" },
         signal: controller.signal,
       });
 
       if (currentRequest !== requestId || disposed) return;
       if (response.status === 401) {
+        const payload = await response.json().catch(() => null);
         transition.hide();
-        windowRef.location.assign("/login");
+        windowRef.location.assign(safeLoginUrl(payload?.loginUrl, windowRef));
+        return;
+      }
+      if (response.status === 403) {
+        const denialAfter = useReducedMotion ? 120 : 900;
+        const remaining = Math.max(0, denialAfter - (Date.now() - startedAt));
+        if (remaining) await wait(windowRef, remaining);
+        if (currentRequest !== requestId || disposed) return;
+        transition.fail(ACCESS_DENIED_MESSAGE);
+        showToast(ACCESS_DENIED_MESSAGE);
+        windowRef.setTimeout(() => {
+          if (currentRequest === requestId && !disposed) transition.hide();
+        }, hideAfter);
         return;
       }
       if (response.status === 404) toastMessage = ROUTE_NOT_FOUND_MESSAGE;
@@ -65,9 +102,9 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
       if (!routeView) throw new Error("Fragment response does not contain [data-route-view]");
       if (currentRequest !== requestId || disposed) return;
 
-      const path = response.headers.get("X-Omensite-Path") || `${destination.pathname}${destination.search}`;
-      const title = response.headers.get("X-Omensite-Title") || initialTitle;
-      const key = response.headers.get("X-Omensite-Key") || routeView.dataset.routeKey || "";
+      const path = response.headers.get("X-Synergy-Module-Path") || `${destination.pathname}${destination.search}`;
+      const title = response.headers.get("X-Synergy-Module-Title") || initialTitle;
+      const key = response.headers.get("X-Synergy-Module-Key") || routeView.dataset.routeKey || "";
       if (typeof transition.setTitle === "function") transition.setTitle(title);
       else if (title !== initialTitle) transition.show(title);
       const elapsed = Date.now() - startedAt;
@@ -79,8 +116,8 @@ export function createNavigationController({ documentRef, windowRef, fetchImpl, 
       if (previousRoute) previousRoute.replaceWith(routeView);
       else main?.prepend(routeView);
       if (main) main.scrollTop = 0;
-      documentRef.title = `OMENSITE :: ${title}`;
-      if (history === "push") windowRef.history.pushState({ omensitePath: path }, "", path);
+      documentRef.title = `SYNERGY MODULE :: ${title}`;
+      if (history === "push") windowRef.history.pushState({ synergyModulePath: path }, "", path);
       initializePage(routeView, { path, title, key });
 
       const remaining = Math.max(0, hideAfter - (Date.now() - startedAt));

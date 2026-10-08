@@ -5,6 +5,7 @@ export function buildPageViewModel(route, extras = {}) {
     route,
     navigation: NAVIGATION,
     operator: extras.operator,
+    accessNotice: extras.accessNotice ?? null,
     stats: extras.stats ?? null,
     data: extras.data ?? {},
   };

@@ -1,14 +1,9 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>" data-entry-id="<%= page.data.entryId %>">
+<section class="route cortex-journal" data-route-view data-route-key="<%= page.route.key %>" data-entry-id="<%= page.data.entryId %>">
   <%- include("../partials/route-head", { page }) %>
-  <div class="empty" data-journal-not-found hidden>
-    <span class="blip">[ ENTRY NOT FOUND ]</span><br>
-    <span>the requested public record is not on this terminal</span>
-  </div>
+  <div class="cortex-empty-state" data-journal-not-found hidden><span class="cortex-empty-glyph" aria-hidden="true">◇</span><h3>Entry not found</h3><p>This record is not available to this workspace.</p></div>
   <div class="pub" data-journal-public-view>
-    <section class="pub-embed"><div class="pub-embed-label">// WEBHOOK EMBED DELIVERED</div><pre data-webhook-embed></pre></section>
-    <div class="pub-link"><span class="lbl">PUBLIC LINK</span><span class="url" data-public-link></span><button class="btn" type="button" data-journal-copy-link>COPY</button></div>
-    <div class="section-label">&gt; PUBLIC ENTRY RECORD</div>
-    <div class="pub-record" data-journal-record></div>
+    <section class="cortex-panel" aria-labelledby="journal-record-title"><header class="cortex-panel-head"><h2 id="journal-record-title">TRADE RECORD</h2><span>JOURNAL ARCHIVE</span></header><div class="cortex-panel-body"><div class="pub-record" data-journal-record></div></div></section>
+    <section class="cortex-panel" aria-labelledby="journal-share-title"><header class="cortex-panel-head"><h2 id="journal-share-title">SHARE &amp; EXPORT</h2><span>ENTRY REFERENCE</span></header><div class="cortex-panel-body"><div class="pub-link"><span class="lbl">ENTRY LINK</span><span class="url" data-public-link></span><button class="btn" type="button" data-journal-copy-link>Copy link</button></div><details class="pub-embed"><summary class="pub-embed-label">Inspect webhook embed</summary><pre data-webhook-embed></pre></details></div></section>
   </div>
-  <div style="margin-top: 18px"><a class="btn" href="/journal" data-nav-link>← BACK TO JOURNAL</a></div>
+  <div class="form-actions"><a class="btn" href="/journal" data-nav-link>← Back to journal</a></div>
 </section>

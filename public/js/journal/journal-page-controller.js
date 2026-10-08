@@ -67,6 +67,19 @@ function initializeNewEntryPage(root, service) {
   if (!form) return;
   const pageState = getPageState(service);
   const draft = pageState.newEntry;
+  const windowRef = root.ownerDocument.defaultView;
+  let dirty = false, touched = false, disposed = false, saved = false, timer, revision = 0;
+  const saveState = root.ownerDocument.createElement("p"); saveState.className = "workspace-save-state"; saveState.setAttribute("role", "status"); form.append(saveState);
+  async function flush(keepalive = false) {
+    windowRef.clearTimeout(timer);
+    if (!dirty || saved || !service.saveDraft) return;
+    const version = revision, snapshot = { ...draft, confluences: [...draft.confluences] };
+    try { await service.saveDraft(snapshot, { keepalive }); if (version === revision) { dirty = false; if (!disposed) saveState.textContent = "Draft saved to your account"; } }
+    catch { if (!disposed) saveState.textContent = "Draft not saved. Your text is still here; try Save draft again."; }
+  }
+  const changed = () => { touched = true; dirty = true; revision++; saveState.textContent = "Saving draft…"; windowRef.clearTimeout(timer); timer = windowRef.setTimeout(() => void flush(), 450); };
+  const leaving = () => { void flush(true); };
+  windowRef.addEventListener("pagehide", leaving);
   const screenshotCount = root.querySelector("[data-journal-screenshot-count]");
   const updateDirection = () => {
     root.querySelectorAll("[data-journal-direction]").forEach((button) => {
@@ -82,7 +95,7 @@ function initializeNewEntryPage(root, service) {
 
   for (const name of ["entryTime", "entryPrice", "exitPrice", "notes"]) {
     if (form.elements[name]) form.elements[name].value = draft[name];
-    form.elements[name]?.addEventListener("input", (event) => { draft[name] = event.target.value; });
+    form.elements[name]?.addEventListener("input", (event) => { draft[name] = event.target.value; changed(); });
   }
   renderConfluences(root, draft.confluences);
   updateDirection();
@@ -93,20 +106,20 @@ function initializeNewEntryPage(root, service) {
     if (!target || !root.contains(target)) return;
     if (target.dataset.journalDirection) {
       draft.direction = target.dataset.journalDirection;
-      updateDirection();
+      updateDirection(); changed();
       return;
     }
     if (target.dataset.journalConfluenceOption) {
       draft.confluences.push(target.dataset.journalConfluenceOption);
-      renderConfluences(root, draft.confluences);
+      renderConfluences(root, draft.confluences); changed();
       return;
     }
     if (target.dataset.journalConfluenceSelected) {
       draft.confluences = draft.confluences.filter((confluence) => confluence !== target.dataset.journalConfluenceSelected);
-      renderConfluences(root, draft.confluences);
+      renderConfluences(root, draft.confluences); changed();
       return;
     }
-    if (target.hasAttribute("data-journal-save-draft")) showToast(root, "DRAFT HELD IN SESSION");
+    if (target.hasAttribute("data-journal-save-draft")) { dirty = true; void flush(); }
   });
 
   root.querySelector("[data-journal-screenshots]")?.addEventListener("change", (event) => {
@@ -117,16 +130,35 @@ function initializeNewEntryPage(root, service) {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     for (const name of ["entryTime", "entryPrice", "exitPrice", "notes"]) draft[name] = form.elements[name]?.value ?? "";
-    const entry = service.create({
-      ...draft,
-      confluences: draft.confluences.slice(),
-      screenshotCount: pageState.screenshotCount,
-    });
-    pageState.newEntry = freshJournalEntry();
-    pageState.screenshotCount = 0;
-    showToast(root, "ENTRY SUBMITTED :: WEBHOOK DELIVERED");
-    service.navigate?.(`/journal/${entry.id}`);
+    const finish = (entry) => {
+      saved = true; dirty = false; windowRef.clearTimeout(timer);
+      service.saveDraft?.(null)?.catch(() => {});
+      pageState.newEntry = freshJournalEntry();
+      pageState.screenshotCount = 0;
+      showToast(root, "ENTRY SUBMITTED :: SHARED DATABASE UPDATED");
+      service.navigate?.(`/journal/${entry.id}`);
+    };
+    const fail = () => showToast(root, "ENTRY NOT SAVED :: TRY AGAIN");
+    try {
+      const entry = service.create({
+        ...draft,
+        confluences: draft.confluences.slice(),
+        screenshotCount: pageState.screenshotCount,
+      });
+      if (entry?.then) entry.then(finish, fail);
+      else finish(entry);
+    } catch {
+      fail();
+    }
   });
+  if (service.loadDraft) void service.loadDraft().then((stored) => {
+    if (disposed || touched || !stored) return;
+    Object.assign(draft, stored);
+    draft.confluences = Array.isArray(stored.confluences) ? stored.confluences.slice() : [];
+    for (const name of ["entryTime", "entryPrice", "exitPrice", "notes"]) if (form.elements[name]) form.elements[name].value = draft[name] ?? "";
+    renderConfluences(root, draft.confluences); updateDirection(); saveState.textContent = "Saved draft restored";
+  }).catch(() => { if (!disposed) saveState.textContent = "Saved draft unavailable. Your current text is retained."; });
+  return { dispose() { leaving(); disposed = true; windowRef.clearTimeout(timer); windowRef.removeEventListener("pagehide", leaving); } };
 }
 
 function renderList(root, entries) {
@@ -172,7 +204,9 @@ function renderPublicEntry(root, entry) {
   if (notFound) notFound.hidden = true;
   if (publicView) publicView.hidden = false;
 
-  const publicUrl = `omensite.io/journal/${entry.id}`;
+  const entryPath = `/journal/${encodeURIComponent(entry.id)}`;
+  const origin = documentRef.defaultView?.location?.origin;
+  const publicUrl = origin && origin !== "null" ? new URL(entryPath, origin).href : entryPath;
   const embed = [
     `TRADE: ${entry.direction.toUpperCase()}`,
     `ENTRY: ${entry.entryPrice}  EXIT: ${entry.exitPrice}`,
@@ -227,10 +261,16 @@ function renderPublicEntry(root, entry) {
 
 export function initializeJournalPage(root, service) {
   const key = root.dataset.routeKey;
-  if (key === "journal-new") initializeNewEntryPage(root, service);
-  if (key === "journal") renderList(root, service.list());
+  if (key === "journal-new") return initializeNewEntryPage(root, service);
+  if (key === "journal") {
+    const entries = service.list();
+    if (entries?.then) entries.then((value) => renderList(root, value), () => renderList(root, []));
+    else renderList(root, entries);
+  }
   if (key === "journal-public") {
-    renderPublicEntry(root, service.find(root.dataset.entryId));
+    const entry = service.find(root.dataset.entryId);
+    if (entry?.then) entry.then((value) => renderPublicEntry(root, value), () => renderPublicEntry(root));
+    else renderPublicEntry(root, entry);
     root.querySelector("[data-journal-copy-link]")?.addEventListener("click", async () => {
       const link = root.querySelector("[data-public-link]")?.textContent;
       try {

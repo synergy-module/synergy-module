@@ -1,30 +1,23 @@
 import { createNavigationController } from "./navigation-controller.js";
 import { initializeJournalPage } from "./journal/journal-page-controller.js";
-import { LocalStorageJournalRepository } from "./journal/local-storage-journal-repository.js";
+import { initializeSettings } from "./settings-controller.js";
+import { initializeBrainCanvas } from "./brain/brain-canvas-controller.js";
+import { initializeAccounts } from "./accounts-controller.js";
+import { initializeOverview } from "./overview-controller.js";
+import { createWorkspaceRequest, queueDraft, waitForDrafts } from "./workspace-client.js";
+import { initializeAdminPage } from "./admin/admin-controller.js";
+import { HttpJournalRepository } from "./journal/http-journal-repository.js";
 import { createJournalService } from "./journal/journal-service.js";
+import { initializeMarketNewsPage } from "./market-news/market-news-controller.js";
+import { initializeTraderPage } from "./trader/trader-controller.js";
+import { initializeBrainPage } from "./brain/brain-controller.js";
 import { startSphereRenderer } from "./sphere-renderer.js";
 import { createTransitionController } from "./transition-controller.js";
 import { createDrawerController, setActiveNavigation, startStatusUpdates } from "./ui-utils.js";
 import { initializePageInteractions } from "./page-interactions.js";
+import { initializeColorTheme } from "./redline-theme.js";
 
 const shellInstances = new WeakMap();
-
-function createSessionStorageFallback() {
-  const entries = new Map();
-  return {
-    getItem(key) { return entries.get(key) ?? null; },
-    setItem(key, value) { entries.set(key, value); },
-    removeItem(key) { entries.delete(key); },
-  };
-}
-
-function getJournalStorage(windowRef) {
-  try {
-    return windowRef.localStorage;
-  } catch {
-    return createSessionStorageFallback();
-  }
-}
 
 function showTerminalToast(documentRef, message) {
   const toast = documentRef.querySelector("[data-toast]");
@@ -43,31 +36,65 @@ function showTerminalToast(documentRef, message) {
 function hydrateJournalCount(root, service) {
   const count = root.querySelector("[data-journal-count]");
   if (!count) return;
-  const entryCount = service.list().length;
-  count.textContent = String(entryCount);
-  count.classList.toggle("muted", entryCount === 0);
+  const update = (entries) => {
+    const entryCount = entries.length;
+    count.textContent = String(entryCount);
+    count.classList.toggle("muted", entryCount === 0);
+  };
+  const entries = service.list();
+  if (entries?.then) return entries.then(update);
+  update(entries);
 }
 
 export function initializeAppShell({ documentRef = document, windowRef = window, fetchImpl = window.fetch.bind(window), initializePage = () => {}, journalService } = {}) {
   if (shellInstances.has(documentRef)) return shellInstances.get(documentRef);
+  const stopTheme = initializeColorTheme({ documentRef, windowRef });
   const reducedMotion = Boolean(windowRef.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   const transition = createTransitionController({ documentRef, reducedMotion });
   const drawer = createDrawerController({ documentRef });
   const stopSpheres = startSphereRenderer({ documentRef, windowRef, reducedMotion });
   const stopStatus = startStatusUpdates({ documentRef, windowRef });
-  const service = journalService ?? createJournalService(
-    new LocalStorageJournalRepository(getJournalStorage(windowRef)),
-    () => new Date(),
-    () => String(Date.now()),
-  );
+  const csrfToken = documentRef.querySelector('meta[name="csrf-token"]')?.content ?? "";
+  const service = journalService ?? createJournalService(new HttpJournalRepository(fetchImpl, csrfToken));
   const journalPageState = { newEntry: null, screenshotCount: 0 };
   let navigator;
+  let disposeActiveRoute = () => {};
   const initializeShellPage = (root, route) => {
-    setActiveNavigation(documentRef, route.key);
+    disposeActiveRoute();
+    disposeActiveRoute = () => {};
+    documentRef.querySelector("[data-app-shell]").dataset.activeRoute = route.key;
+    setActiveNavigation(documentRef, route.key === "market-news" ? "research" : route.key === "admin" ? "settings" : route.key);
     drawer.close();
-    hydrateJournalCount(root, service);
+    const journalCount = hydrateJournalCount(root, service);
+    journalCount?.catch?.(() => showTerminalToast(documentRef, "JOURNAL DATA UNAVAILABLE"));
     if (route.key.startsWith("journal")) {
-      initializeJournalPage(root, { ...service, pageState: journalPageState, navigate: (path) => navigator.navigate(path) });
+      const request = createWorkspaceRequest(root, fetchImpl);
+      const journal = initializeJournalPage(root, { ...service, pageState: journalPageState, navigate: (path) => navigator.navigate(path),
+        loadDraft: async () => { await waitForDrafts(); return (await request("/api/settings")).drafts?.journal?.fields; },
+        saveDraft: (fields, options) => queueDraft(request, "journal", fields, options),
+      });
+      disposeActiveRoute = journal?.dispose ?? (() => {});
+    }
+    if (route.key === "market-news") {
+      disposeActiveRoute = initializeMarketNewsPage(root, { fetchImpl, windowRef }).dispose;
+    }
+    if (route.key === "trader") {
+      disposeActiveRoute = initializeTraderPage(root, {
+        fetchImpl,
+        showToast: (message) => showTerminalToast(documentRef, message),
+      }).dispose;
+    }
+    if (route.key === "brain") disposeActiveRoute = initializeBrainCanvas(root, { fetchImpl, windowRef, navigate: (path) => navigator.navigate(path) }).dispose;
+    if (route.key === "research") disposeActiveRoute = initializeBrainPage(root, { fetchImpl, windowRef }).dispose;
+    if (route.key === "settings") disposeActiveRoute = initializeSettings(root, { fetchImpl, windowRef }).dispose;
+    if (route.key === "accounts") disposeActiveRoute = initializeAccounts(root, { fetchImpl, windowRef, navigate: (path) => navigator.navigate(path) }).dispose;
+    if (route.key === "home") disposeActiveRoute = initializeOverview(root, { fetchImpl }).dispose;
+    if (route.key === "admin") {
+      disposeActiveRoute = initializeAdminPage(root, {
+        fetchImpl,
+        showToast: (message) => showTerminalToast(documentRef, message),
+        windowRef,
+      }).dispose;
     }
     initializePageInteractions(root, { showToast: (message) => showTerminalToast(documentRef, message) });
     initializePage(root, route);
@@ -89,7 +116,7 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     try {
       const response = await fetchImpl("/auth/logout", {
         method: "POST",
-        headers: { Accept: "application/json" },
+        headers: { Accept: "application/json", "X-CSRF-Token": csrfToken },
       });
       const result = await response.json();
       if (!response.ok || !result.ok || typeof result.redirectTo !== "string") throw new Error("Logout request failed");
@@ -104,10 +131,12 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
   const instance = {
     navigator,
     dispose() {
+      disposeActiveRoute();
       navigator.dispose();
       drawer.dispose();
       stopSpheres();
       stopStatus();
+      stopTheme();
       logoutButton?.removeEventListener("click", logout);
       shellInstances.delete(documentRef);
     },
@@ -119,7 +148,7 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     setActiveNavigation(documentRef, key);
     initializeShellPage(initialRoute, {
       path: `${windowRef.location.pathname}${windowRef.location.search}`,
-      title: documentRef.title.replace(/^OMENSITE ::\s*/, ""),
+      title: documentRef.title.replace(/^SYNERGY MODULE ::\s*/, ""),
       key,
     });
   }

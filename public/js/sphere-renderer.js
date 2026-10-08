@@ -32,7 +32,7 @@ export function buildSphereFrame(cols, rows, angle) {
     for (let point = 0; point <= 110; point += 1) plotBody((point / 110) * Math.PI * 2, phi);
   }
 
-  const word = "OMENSITE";
+  const word = "SYNERGY MODULE";
   const textRow = Math.round(centerY);
   const beltHalfRows = Math.max(1, Math.round(rows * 0.1));
   for (let row = textRow - beltHalfRows; row <= textRow + beltHalfRows; row += 1) {
@@ -48,6 +48,7 @@ export function buildSphereFrame(cols, rows, angle) {
 }
 
 export function startSphereRenderer({ documentRef, windowRef, reducedMotion = false }) {
+  if (!documentRef.querySelector("[data-sphere]")) return () => {};
   let angle = 0;
   const render = () => {
     angle += 0.09;

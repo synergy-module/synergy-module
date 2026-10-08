@@ -1,0 +1,10 @@
+<article class="calendar-event calendar-event-<%= event.importance %>"
+  data-calendar-event data-event-id="<%= event.id %>"
+  data-timestamp="<%= event.timestamp %>"
+  data-market="<%= event.market.toLowerCase() %>"
+  data-impact="<%= event.importance %>">
+  <time class="calendar-event-time" datetime="<%= event.timestamp %>" data-event-time data-field="TIME"><span class="calendar-field-label">TIME :: </span><span data-event-field-value data-event-time-value><%= event.timestamp.slice(11, 16) %>Z</span></time>
+  <span class="calendar-impact" data-field="IMPACT"><span class="calendar-field-label">IMPACT :: </span><span aria-hidden="true">●</span> <span data-event-field-value><%= event.importance.toUpperCase() %></span></span>
+  <span class="calendar-market" data-field="MARKET"><span class="calendar-field-label">MARKET :: </span><span data-event-field-value><%= event.market %></span></span>
+  <span class="calendar-event-title" data-field="EVENT"><span class="calendar-field-label">EVENT :: </span><span data-event-field-value><%= event.title %></span></span>
+</article>

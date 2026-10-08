@@ -1,4 +1,58 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<%
+  const calendar = page.data.calendar;
+  const calendarLinkState = calendar.state === "stale" ? "STALE DATA" : calendar.state.toUpperCase();
+%>
+<section class="route market-news" data-route-view data-route-key="<%= page.route.key %>" data-market-news data-calendar-state="<%= calendar.state %>">
   <%- include("../partials/route-head", { page }) %>
-  <div class="chips"><button class="chip" type="button" data-news-filter="all">ALL</button><button class="chip" type="button" data-news-filter="red">RED</button><button class="chip" type="button" data-news-filter="orange">ORANGE</button></div><%- include("../partials/empty-state", { lines: ["[ NO EVENTS ON CALENDAR ]", "NEWS FEED ON STANDBY :: RED / ORANGE FOLDERS EMPTY"] }) %>
+
+  <section class="panel cortex-panel market-calendar" aria-labelledby="market-calendar-title">
+    <header class="calendar-console-head cortex-panel-head">
+      <div>
+        <h2 id="market-calendar-title">ECONOMIC CALENDAR</h2>
+        <p class="calendar-range"><%= calendar.range ? calendar.range.from + " → " + calendar.range.to : "Date range unavailable" %> · <span data-calendar-timezone>TIMES UTC</span></p>
+      </div>
+      <button class="btn" type="button" data-calendar-refresh>Refresh calendar ↻</button>
+    </header>
+
+    <div class="calendar-status" role="status" aria-live="polite" data-calendar-status>
+      <span data-calendar-link-status>LINK :: <%= calendarLinkState %></span>
+      <a class="calendar-source" href="https://www.economicium.com/economic-calendar/" target="_blank" rel="noopener noreferrer">SOURCE :: ECONOMICIUM / OFFICIAL SCHEDULES</a>
+      <span>EVENTS <strong data-calendar-count><%= calendar.events.length %></strong></span>
+      <span>UPDATED <time data-calendar-updated datetime="<%= calendar.updatedAt || "" %>"><%= calendar.updatedAt || "Not yet refreshed" %></time></span>
+    </div>
+
+    <div class="calendar-toolbar" aria-label="Calendar filters">
+      <fieldset class="calendar-filter-group">
+        <legend>IMPACT</legend>
+        <% for (const impact of ["all", "high", "medium"]) { %>
+          <button class="chip <%= impact === "all" ? "active" : "" %>" type="button"
+            data-calendar-impact="<%= impact %>" aria-pressed="<%= impact === "all" %>"><%= impact.toUpperCase() %></button>
+        <% } %>
+      </fieldset>
+      <fieldset class="calendar-filter-group">
+        <legend>MARKET</legend>
+        <% for (const market of ["ALL", "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "NZD", "CHF", "CNY"]) { %>
+          <button class="chip <%= market === "ALL" ? "active" : "" %>" type="button"
+            data-calendar-market="<%= market.toLowerCase() %>" aria-pressed="<%= market === "ALL" %>"><%= market %></button>
+        <% } %>
+      </fieldset>
+    </div>
+
+    <div class="calendar-column-head" aria-hidden="true">
+      <span>TIME</span><span>IMPACT</span><span>MARKET</span><span>EVENT</span>
+    </div>
+    <div class="calendar-events" data-calendar-events>
+      <% for (const event of calendar.events) { %>
+        <%- include("../partials/market-news-event", { event }) %>
+      <% } %>
+    </div>
+
+    <div class="calendar-state cortex-empty-state" data-calendar-empty <%= calendar.events.length || calendar.state === "offline" ? "hidden" : "" %>>
+      <h3>No high or medium impact events this week</h3><p>Refresh the calendar to check the latest schedule.</p>
+    </div>
+    <div class="calendar-state cortex-empty-state" data-calendar-filter-empty hidden><h3>No events match these filters</h3><p>Select another market or impact level.</p></div>
+    <div class="calendar-state calendar-state-error cortex-empty-state" data-calendar-offline <%= calendar.state === "offline" ? "" : "hidden" %>>
+      <h3>Calendar source unavailable</h3><p>Refresh to retry. No current schedule has been confirmed.</p>
+    </div>
+  </section>
 </section>

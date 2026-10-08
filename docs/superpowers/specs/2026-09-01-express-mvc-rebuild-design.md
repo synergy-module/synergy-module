@@ -1,8 +1,8 @@
-# OMENSITE Express MVC Rebuild Design
+# Synergy Module Express MVC Rebuild Design
 
 ## Objective
 
-Rebuild the existing three-file OMENSITE trading terminal as a Node.js and Express MVC application without changing its accepted visual design or interaction character. The finished application must use clean server routes, focused model/view/controller boundaries, and progressive fragment navigation while retaining the current glitch transitions, cinematic login handshake, `ACCESS GRANTED` state, matrix effect, responsive shell, and journal workflow.
+Rebuild the existing three-file Synergy Module trading terminal as a Node.js and Express MVC application without changing its accepted visual design or interaction character. The finished application must use clean server routes, focused model/view/controller boundaries, and progressive fragment navigation while retaining the current glitch transitions, cinematic login handshake, `ACCESS GRANTED` state, matrix effect, responsive shell, and journal workflow.
 
 ## Scope
 
@@ -155,7 +155,7 @@ If JavaScript is unavailable or fragment navigation fails before interception, s
 
 ## Journal Design
 
-The current browser-local journal remains the temporary persistence implementation. Browser-side journal access moves behind a repository contract with operations for listing, finding, creating, and clearing entries. `LocalStorageJournalRepository` uses the existing `omensite.journal.v1` local-storage key so existing local records remain readable.
+The current browser-local journal remains the temporary persistence implementation. Browser-side journal access moves behind a repository contract with operations for listing, finding, creating, and clearing entries. `LocalStorageJournalRepository` uses the existing `synergy-module.journal.v1` local-storage key so existing local records remain readable.
 
 The browser-side `JournalEntry` module owns normalization, default values, and P&L calculation. `JournalService` coordinates creation and lookup through the repository. The journal page controller renders and hydrates local records within the server-rendered page structure.
 

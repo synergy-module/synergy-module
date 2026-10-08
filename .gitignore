@@ -11,6 +11,12 @@ node_modules/
 npm-debug.log*
 coverage/
 
+# Local durable agent state
+/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
 # OS and editor files
 .DS_Store
 Thumbs.db
@@ -24,3 +30,6 @@ Thumbs.db
 /app.js
 /styles.css
 /favicon.ico
+
+# User-provided source design archive (adapted assets are committed separately)
+/tests/redline-cortex.zip

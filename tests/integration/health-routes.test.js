@@ -1,23 +1,15 @@
 import test from "node:test";
+import { createTestApp } from "../helpers/auth-test-helpers.js";
 import request from "supertest";
-import { createApp } from "../../src/app.js";
 
 test("health is public and reports ready dependencies", async () => {
-  const app = createApp({
-    sessionSecret: "test-secret",
-    readinessCheck: async () => true,
-  });
-
+  const app = createTestApp({ readinessCheck: async () => true });
   const response = await request(app).get("/health").expect(200);
   assertHealth(response.body, "ok");
 });
 
-test("health fails closed without exposing dependency details", async () => {
-  const app = createApp({
-    sessionSecret: "test-secret",
-    readinessCheck: async () => false,
-  });
-
+test("health fails closed when a required dependency is unavailable", async () => {
+  const app = createTestApp({ readinessCheck: async () => false });
   const response = await request(app).get("/health").expect(503);
   assertHealth(response.body, "unavailable");
 });

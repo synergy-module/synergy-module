@@ -1,0 +1,267 @@
+/* Redline Cortex supporting workspaces. Loaded after the legacy page styles.
+   Content and state stay with each existing controller; this file only presents them. */
+
+.cortex-page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 0 0 24px; }
+.cortex-page-intro > div { min-width: 0; }
+.cortex-page-intro :is(.cortex-eyebrow, .eyebrow) { margin: 0 0 8px; color: var(--red); font: 500 11px/16px var(--font-display); letter-spacing: .16em; text-transform: uppercase; }
+.cortex-page-intro :is(h1, h2) { margin: 0 0 8px; color: var(--ink); font: 600 clamp(26px, 3vw, 40px)/1.15 var(--font-display); letter-spacing: .02em; }
+.cortex-page-intro p { max-width: 72ch; margin: 0; color: var(--ink-muted); font: 400 14px/1.6 var(--font-sans); }
+.cortex-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.cortex-kpi { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 16px; background: var(--surface); border: 1px solid var(--line); }
+.cortex-kpi > :is(span, .stat-label, .cortex-kpi-label, dt) { margin: 0; color: var(--ink-faint); font: 500 11px/16px var(--font-display); letter-spacing: .14em; text-transform: uppercase; }
+.cortex-kpi > :is(strong, .stat-value, .cortex-kpi-value, dd) { margin: 0; color: var(--ink); font: 500 clamp(22px, 2.5vw, 30px)/1.2 var(--font-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cortex-kpi > .cortex-kpi-word { font-family: var(--font-display); font-size: 26px; font-weight: 600; }
+.cortex-kpi :is(small, p, .cortex-kpi-meta) { margin: 0; color: var(--ink-muted); font: 400 12px/16px var(--font-sans); }
+.cortex-panel { position: relative; min-width: 0; background: var(--surface); border: 1px solid var(--line); padding: 0; }
+.cortex-panel::before, .cortex-panel::after { content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none; border-color: var(--red); border-style: solid; z-index: 1; }
+.cortex-panel::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.cortex-panel::after { right: -1px; bottom: -1px; border-width: 0 2px 2px 0; }
+.cortex-panel-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; min-width: 0; padding: 16px; border-bottom: 1px solid var(--line); }
+.cortex-panel-head :is(h2, h3, .panel-kicker, .section-label) { margin: 0; color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; text-transform: uppercase; }
+.cortex-panel-head > :is(span, small) { color: var(--ink-faint); font: 400 11px/16px var(--font-mono); }
+.cortex-panel-head p { margin: 6px 0 0; color: var(--ink-muted); font: 400 12px/18px var(--font-sans); }
+.cortex-panel-head > a { color: var(--red); font: 500 12px/18px var(--font-display); }
+.cortex-panel-body { min-width: 0; padding: 16px; color: var(--ink-muted); font: 400 14px/1.6 var(--font-sans); }
+.cortex-panel-body.cortex-page-intro { margin: 0; padding: 24px; }
+.cortex-panel.cortex-page-intro { padding: 24px; }
+.cortex-page-intro > .btn { flex-shrink: 0; white-space: nowrap; }
+.cortex-command-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.cortex-command-actions .btn { justify-content: center; white-space: nowrap; }
+.cortex-home > .cortex-panel, .cortex-home > .cortex-workspace-grid { margin-bottom: 24px; }
+.cortex-alerts > .cortex-panel + .cortex-panel { margin-top: 16px; }
+.cortex-signal-links { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.cortex-signal-links p { flex: 1 1 320px; margin: 0; }
+.cortex-section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 24px 0 12px; }
+.cortex-section-heading :is(h2, h3) { margin: 0; color: var(--ink); font: 600 18px/24px var(--font-display); letter-spacing: .08em; text-transform: uppercase; }
+.cortex-section-heading :is(p, span) { margin: 0; color: var(--ink-muted); font: 400 12px/18px var(--font-sans); }
+.cortex-workspace-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr)); gap: 12px; }
+.cortex-workspace-card { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; }
+a.cortex-workspace-card:hover { border-color: var(--line-strong); background: var(--surface-raised); }
+.cortex-workspace-card :is(h2, h3, strong) { margin: 0; font: 600 18px/24px var(--font-display); letter-spacing: .08em; text-transform: uppercase; }
+.cortex-workspace-card p { margin: 0; color: var(--ink-muted); font: 400 14px/20px var(--font-sans); }
+.cortex-workspace-card :is(small, .cortex-workspace-meta) { color: var(--ink-faint); font: 400 11px/16px var(--font-mono); }
+.cortex-workspace-index { color: var(--red); font: 500 11px/16px var(--font-display); letter-spacing: .14em; }
+.cortex-workspace-card h3 { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cortex-workspace-card h3 > span { color: var(--red); }
+.cortex-workspace-card .cortex-workspace-meta { margin-top: auto; padding-top: 8px; }
+.cortex-workspace-card .cortex-workspace-link { margin-top: auto; padding-top: 8px; color: var(--red); font: 600 12px/18px var(--font-display); letter-spacing: .1em; }
+.cortex-empty-state { display: grid; justify-items: center; align-content: center; gap: 12px; min-height: 180px; padding: 32px 24px; border: 1px solid var(--line); background: var(--surface-sunken); text-align: center; color: var(--ink-muted); font: 400 14px/1.6 var(--font-sans); }
+.cortex-empty-state :is(h2, h3, strong) { margin: 0; color: var(--ink); font: 600 18px/24px var(--font-display); letter-spacing: .06em; }
+.cortex-empty-state p { margin: 0; max-width: 60ch; }
+.cortex-empty-state .blip { color: var(--red); }
+.cortex-empty-glyph { color: var(--red); font: 400 44px/1 var(--font-mono); }
+.cortex-empty-compact { min-height: 140px; }
+.cortex-empty-state .cortex-workspace-meta { color: var(--ink-faint); font: 400 11px/18px var(--font-mono); }
+.cortex-empty-state[hidden], .cortex-panel[hidden], .cortex-kpi[hidden] { display: none; }
+.cortex-table-wrap { min-width: 0; overflow-x: auto; }
+.cortex-form-section { min-width: 0; margin: 0; padding: 20px; border: 1px solid var(--line); background: var(--surface); }
+.cortex-form-section > :is(h2, h3, legend) { margin: 0 0 16px; color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; text-transform: uppercase; }
+.cortex-panel.cortex-form-section { padding: 0; }
+.cortex-form-section .cortex-panel-body { display: grid; gap: 16px; }
+.cortex-field-heading { color: var(--ink-muted); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+.cortex-journal .pub { display: grid; gap: 16px; margin-bottom: 20px; }
+.cortex-journal .pub[hidden] { display: none; }
+.cortex-journal .pub-record { border: 0; padding: 0; }
+.cortex-journal .pub-embed { margin-bottom: 0; background: var(--surface-sunken); }
+.cortex-journal .pub-embed summary { margin-bottom: 0; cursor: pointer; }
+.cortex-journal .pub-embed[open] summary { margin-bottom: 12px; }
+
+/* Local control treatments, independent of the application navigation shell. */
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console, .market-news, .route[data-route-key^="journal"], .route[data-route-key^="alerts"]) :is(.btn, .terminal-button, .chip, .dir-opt, .conf-chip, .conf-opt) {
+  min-height: 34px; border-radius: 2px; border-color: var(--line-strong); color: var(--ink); background: transparent; box-shadow: none;
+  font: 600 12px/18px var(--font-display); letter-spacing: .08em;
+}
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console, .market-news, .route[data-route-key^="journal"], .route[data-route-key^="alerts"]) :is(.btn, .terminal-button, .chip, .dir-opt, .conf-opt):hover:not(:disabled) { background: var(--red-tint); color: var(--ink); }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console, .route[data-route-key^="journal"], .route[data-route-key^="alerts"]) :is(.btn-solid, .btn-primary) { color: var(--on-red); background: var(--red-deep); border-color: var(--red-deep); }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console, .route[data-route-key^="journal"], .route[data-route-key^="alerts"]) :is(.btn-solid, .btn-primary):hover:not(:disabled) { color: var(--on-red); background: var(--red-deep); filter: brightness(1.15); }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console) .btn-danger { color: var(--loss); border-color: var(--loss); background: transparent; }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .admin-console, .market-news, .route[data-route-key^="journal"], .route[data-route-key^="alerts"]) :is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .route[data-route-key^="journal"]) .field { color: var(--ink-muted); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .route[data-route-key^="journal"]) .field :is(input:not([type="checkbox"]):not([type="file"]), select, textarea) {
+  min-width: 0; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--surface-raised); color: var(--ink);
+  padding: 10px 12px; font: 400 13px/20px var(--font-mono); letter-spacing: 0;
+}
+:is(.trader:not(.brain), .rh-workspace, .indicator-access, .route[data-route-key^="journal"]) .field :is(input, textarea)::placeholder { color: var(--ink-faint); }
+:is(.rh-workspace, .indicator-access, .route[data-route-key^="journal"]) input[type="checkbox"] { accent-color: var(--red); }
+:is(.trader:not(.brain), .rh-workspace) .trader-panel-head { padding: 16px; background: var(--surface); border-color: var(--line); }
+:is(.trader:not(.brain), .rh-workspace) .trader-panel-head :is(h2, h3) { margin: 0; color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; }
+:is(.trader:not(.brain), .rh-workspace) .trader-micro { color: var(--ink-faint); font: 400 10px/16px var(--font-mono); }
+
+/* Analysis workspace: the provider and risk controls retain their existing behavior. */
+.trader:not(.brain) .trader-session { padding: 12px 16px; background: var(--surface-sunken); border-color: var(--line); font: 400 11px/18px var(--font-mono); color: var(--ink-muted); }
+.trader:not(.brain) .trader-session-mode { color: var(--red); }
+.trader:not(.brain) .trader-provider > span { background: var(--surface-raised); color: var(--ink); border-color: var(--line-strong); font: 600 13px/18px var(--font-display); }
+.trader:not(.brain) .trader-provider small { font: 400 10px/14px var(--font-mono); color: var(--ink-muted); }
+.trader:not(.brain) .trader-provider input:checked + span { background: var(--red-tint); color: var(--red); box-shadow: inset 0 -2px 0 var(--red); }
+.trader:not(.brain) .trader-provider input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+.trader:not(.brain) :is(.trader-provider-info, .trader-help, .trader-demo-help, .trader-feedback, .trader-risk-note, .trader-history-note, .trader-result-footer p) { color: var(--ink-muted); font: 400 12px/18px var(--font-sans); letter-spacing: 0; }
+.trader:not(.brain) .trader-provider-info [data-ready="true"] { color: var(--gain); }
+.trader:not(.brain) .trader-provider-info [data-trader-model] { color: var(--ink); font-family: var(--font-mono); }
+.trader:not(.brain) :is(.trader-feedback[data-error="true"], .trader-review[data-verdict="wait"] strong, .trader-history-item[data-state="wait"] .trader-history-state) { color: var(--alert); }
+.trader:not(.brain) .trader-badge { border-radius: 999px; padding: 3px 8px; border-color: var(--line-strong); font: 500 10px/16px var(--font-display); }
+.trader:not(.brain) .trader-badge[data-state="ready"] { color: var(--gain); border-color: var(--gain); }
+.trader:not(.brain) .trader-badge[data-state="wait"] { color: var(--alert); border-color: var(--alert); }
+.trader:not(.brain) .trader-empty { background: var(--surface-sunken); }
+.trader:not(.brain) .trader-empty h3 { color: var(--ink); font-family: var(--font-display); font-weight: 600; }
+.trader:not(.brain) .trader-empty > p:not(.trader-micro) { color: var(--ink-muted); font: 400 14px/22px var(--font-sans); }
+.trader:not(.brain) .trader-empty > p.trader-empty-note { font-size: 12px; }
+.trader:not(.brain) :is(.trader-empty-stages, .trader-invalidation, .trader-result-section ul, .trader-review p) { color: var(--ink-muted); font: 400 13px/20px var(--font-sans); }
+.trader:not(.brain) .trader-demo-banner { background: var(--surface-raised); color: var(--alert); border-color: var(--alert); font: 400 12px/18px var(--font-sans); }
+.trader:not(.brain) .trader-result h3 { font-family: var(--font-display); font-weight: 600; }
+.trader:not(.brain) .trader-summary { color: var(--ink); font: 400 14px/22px var(--font-sans); }
+.trader:not(.brain) :is(.trader-result-meta, .trader-result dt, .trader-step-detail, .trader-history-item small) { color: var(--ink-faint); font: 400 11px/17px var(--font-mono); }
+.trader:not(.brain) .trader-result dd { color: var(--ink); font: 500 20px/26px var(--font-mono); font-variant-numeric: tabular-nums; }
+.trader:not(.brain) .trader-plan-levels > div:last-child dd { color: var(--gain); }
+.trader:not(.brain) .trader-result-section h4 { color: var(--red); font: 600 12px/18px var(--font-display); letter-spacing: .12em; }
+.trader:not(.brain) .trader-history-item { color: var(--ink); font-family: var(--font-mono); font-size: 12px; }
+.trader:not(.brain) .trader-history-item:hover, .trader:not(.brain) .trader-history-item[aria-pressed="true"] { background: var(--red-tint); }
+.trader:not(.brain) .trader-history-item[aria-pressed="true"] { box-shadow: inset 2px 0 0 var(--red); }
+.trader:not(.brain) .trader-history-item .trader-history-state { color: var(--red); font-size: 11px; }
+.trader:not(.brain) .trader-text-button { color: var(--red); font: 500 12px/18px var(--font-display); }
+.trader:not(.brain) .trader-actions .btn-solid:disabled { background: var(--surface-raised); color: var(--ink-muted); border-color: var(--line-strong); }
+
+/* Robinhood remains the real, account-scoped broker workspace. */
+.rh-workspace { container-type: inline-size; }
+.rh-hero { position: relative; padding: 24px; background: var(--surface); border-color: var(--line); }
+.rh-eyebrow { color: var(--red); font: 500 11px/16px var(--font-display); letter-spacing: .16em; }
+.rh-hero h2 { color: var(--ink); font: 600 clamp(26px, 3vw, 36px)/1.15 var(--font-display); letter-spacing: .02em; text-shadow: none; }
+.rh-hero p:not(.rh-eyebrow) { color: var(--ink-muted); font: 400 14px/22px var(--font-sans); }
+.rh-connection { gap: 8px; color: var(--ink-muted); font: 400 11px/17px var(--font-mono); }
+.rh-connection strong { color: var(--red); font-family: var(--font-display); letter-spacing: .12em; }
+.rh-beacon { border-color: var(--red); box-shadow: none; }
+.rh-flow { color: var(--ink-muted); background: var(--surface-sunken); border-color: var(--line); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+.rh-flow i { color: var(--red); }
+.rh-controls { gap: 8px; margin: 20px 0 12px; }
+.rh-workspace .trader-text-button { color: var(--red); font: 500 12px/18px var(--font-display); }
+.rh-feedback { color: var(--ink-muted); font: 400 13px/20px var(--font-sans); }
+.rh-feedback[data-error="true"] { color: var(--alert); }
+.rh-setup { background: var(--surface-sunken); border-style: solid; border-color: var(--line); color: var(--ink-muted); font: 400 14px/22px var(--font-sans); }
+.rh-setup h3 { color: var(--red); font: 600 16px/22px var(--font-display); letter-spacing: .06em; }
+.rh-setup a { color: var(--red); font-size: 13px; }
+.rh-markets { gap: 12px; margin: 20px 0; }
+.rh-markets button { padding: 20px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 0; }
+.rh-markets span { color: var(--ink-faint); font: 500 11px/16px var(--font-display); letter-spacing: .14em; }
+.rh-markets strong { color: var(--ink); font: 600 22px/28px var(--font-display); letter-spacing: .03em; }
+.rh-markets small { color: var(--ink-muted); font: 400 12px/18px var(--font-sans); }
+.rh-markets button:hover { background: var(--surface-raised); border-color: var(--red); box-shadow: none; }
+.rh-markets button[aria-pressed="true"] { background: var(--red-tint); border-color: var(--red); box-shadow: none; }
+.rh-markets button[aria-pressed="true"] strong { color: var(--red); }
+.rh-fields { gap: 12px; }
+.rh-fields small { color: var(--ink-muted); font: 400 12px/18px var(--font-sans); }
+.rh-workspace .trader-help { color: var(--ink-muted); font: 400 12px/18px var(--font-sans); }
+.rh-data pre, .rh-action pre { padding: 12px; background: var(--surface-sunken); border-color: var(--line); color: var(--ink); font: 400 12px/18px var(--font-mono); }
+.rh-data h4, .rh-action h4 { color: var(--red); font: 600 13px/20px var(--font-display); letter-spacing: .05em; }
+.rh-data time, .rh-action time { color: var(--ink-faint); font: 400 11px/16px var(--font-mono); }
+.rh-action :is(p, label, details), .rh-empty, .rh-workspace .brain-placeholder { color: var(--ink-muted); font: 400 13px/20px var(--font-sans); }
+.rh-action { border-color: var(--line); }
+.rh-action[data-status="unknown"] { border-color: var(--alert); }
+.rh-action[data-status="unknown"] h4 { color: var(--alert); }
+.rh-action summary { color: var(--ink); }
+.rh-action input[type="checkbox"] { flex: 0 0 auto; margin-top: 4px; }
+.rh-events { padding-top: 16px; background: var(--surface-sunken); }
+.rh-events li { color: var(--ink-muted); font: 400 12px/20px var(--font-mono); }
+.rh-events time { color: var(--ink-faint); font-size: 11px; }
+.rh-footnote { color: var(--ink-muted); font: 400 12px/19px var(--font-sans); }
+
+/* Real entitlement and administration records. */
+.indicator-access-meta { padding: 12px 16px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--ink-muted); font: 400 12px/18px var(--font-mono); }
+.indicator-access-meta span { color: var(--ink-faint); }
+.indicator-access-meta strong { color: var(--ink); }
+.indicator-console, .indicator-request, .admin-rail { background: var(--surface); border: 1px solid var(--line); padding: 0 16px; }
+.indicator-console-head, .admin-rail-head { padding: 16px 0; border-color: var(--line); }
+.indicator-console-head .section-label, .indicator-request .section-label, .admin-rail-head .section-label { color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; }
+.indicator-console-head p, .indicator-request > div > p, .indicator-field-help, .terminal-check { color: var(--ink-muted); font: 400 12px/18px var(--font-sans); letter-spacing: 0; }
+.indicator-request { padding: 20px 16px; }
+.indicator-catalog-head, .admin-user-head, .admin-request-head { color: var(--ink-faint); font: 500 11px/16px var(--font-display); letter-spacing: .12em; border-color: var(--line); }
+.indicator-catalog-row, .admin-user-row, .admin-request-row { color: var(--ink-muted); font: 400 12px/18px var(--font-mono); border-color: var(--line); }
+.indicator-catalog-row:hover, .admin-user-row:hover, .admin-request-row:hover { background: var(--surface-raised); }
+.indicator-catalog-main strong, .admin-user-identity strong, .admin-request-row strong { color: var(--ink); font: 600 13px/20px var(--font-display); letter-spacing: .04em; }
+.indicator-catalog-main span, .indicator-catalog-row a { color: var(--ink-muted); font-size: 12px; }
+.indicator-catalog-row a { color: var(--red); }
+.indicator-request-state, .admin-request-state { font: 600 11px/16px var(--font-display); letter-spacing: .1em; }
+.indicator-state-pending { color: var(--alert); }
+.indicator-state-granted, .admin-state-ok { color: var(--gain); }
+.indicator-state-denied, .admin-state-danger { color: var(--loss); }
+.indicator-state-not_requested { color: var(--ink-muted); }
+.indicator-request-feedback, .admin-feedback { color: var(--gain); font: 400 12px/18px var(--font-sans); letter-spacing: 0; }
+.indicator-feedback-error, .admin-feedback-error { color: var(--alert); }
+.admin-memory-warning { padding: 12px 16px; background: var(--surface-sunken); border: 1px solid var(--line-strong); color: var(--ink-muted); font: 400 12px/18px var(--font-sans); letter-spacing: 0; }
+.admin-memory-warning .blip { color: var(--alert); font-family: var(--font-mono); }
+.admin-memory-warning[data-storage-state="persistent"] .blip { color: var(--gain); }
+.admin-memory-warning[data-storage-state="temporary"] { border-color: var(--alert); }
+.admin-rail-head > span { font: 400 11px/17px var(--font-mono); color: var(--ink-faint); }
+.admin-user-identity span, .admin-access-list > span, .admin-session-state > span, .admin-request-row time { color: var(--ink-faint); }
+.admin-access-list strong, .admin-session-state strong { color: var(--ink); }
+.admin-actions .btn { padding: 6px 10px; }
+
+/* Journal direction and realized outcomes use distinct semantic colors. */
+.route[data-route-key^="journal"] .row { background: var(--surface); border-color: var(--line); padding: 16px; }
+.route[data-route-key^="journal"] .row:hover { border-color: var(--line-strong); background: var(--surface-raised); }
+.route[data-route-key^="journal"] :is(.row-mono, .journal-entry-pl, .pub-record .pl, .journal-entry-time) { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.route[data-route-key^="journal"] .journal-entry-confluences { color: var(--ink-muted); font: 400 13px/20px var(--font-sans); }
+.route[data-route-key^="journal"] :is(.t-green, .pl-pos) { color: var(--gain); }
+.route[data-route-key^="journal"] :is(.t-red, .pl-neg) { color: var(--loss); }
+.route[data-route-key^="journal"] .tagbox { font: 600 11px/16px var(--font-display); letter-spacing: .1em; }
+.route[data-route-key^="journal"] .dir-opt.on-long { background: var(--surface-raised); border-color: var(--gain); color: var(--gain); box-shadow: inset 0 -2px 0 var(--gain); }
+.route[data-route-key^="journal"] .dir-opt.on-short { background: var(--surface-raised); border-color: var(--loss); color: var(--loss); box-shadow: inset 0 -2px 0 var(--loss); }
+.route[data-route-key^="journal"] .conf-label { color: var(--ink-muted); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+.route[data-route-key^="journal"] .conf-chip { background: var(--red-tint); color: var(--red); border-color: var(--red); }
+.route[data-route-key^="journal"] .dropzone { background: var(--surface-sunken); border-color: var(--line-strong); color: var(--ink-muted); font: 400 12px/18px var(--font-mono); }
+.route[data-route-key^="journal"] .dropzone:focus-within { outline: 2px solid var(--red); outline-offset: 2px; }
+.route[data-route-key^="journal"] :is(.pub-embed, .pub-record) { background: var(--surface); border-color: var(--line); }
+.route[data-route-key^="journal"] .pub-embed-label { color: var(--ink-faint); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+.route[data-route-key^="journal"] .pub-embed pre { color: var(--ink-muted); font: 400 12px/20px var(--font-mono); }
+.route[data-route-key^="journal"] .pub-link { background: var(--surface-raised); border-color: var(--line); }
+.route[data-route-key^="journal"] .pub-link .url { color: var(--red); font-family: var(--font-mono); }
+.route[data-route-key^="journal"] .pub-record :is(.notes, .meta) { color: var(--ink-muted); font: 400 14px/22px var(--font-sans); }
+.route[data-route-key^="journal"] .pub-record .conf span { color: var(--ink-muted); border-color: var(--line-strong); font: 400 12px/18px var(--font-sans); }
+.route[data-route-key^="journal"] .pub-record .shots { color: var(--ink-faint); font-size: 12px; }
+
+/* Economic calendar: impact stays written and is never indicated by color alone. */
+.market-news .calendar-console-head, .market-news .calendar-toolbar, .market-news .calendar-status { border-color: var(--line); }
+.market-news .calendar-console-head .panel-kicker { color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; }
+.market-news :is(.calendar-range, .calendar-status) { color: var(--ink-muted); font: 400 12px/18px var(--font-mono); letter-spacing: 0; }
+.market-news .calendar-status { background: var(--surface-sunken); }
+.market-news .calendar-filter-group legend { color: var(--ink-faint); font: 500 11px/18px var(--font-display); letter-spacing: .12em; }
+.market-news .chip.active { background: var(--red-tint); border-color: var(--red); color: var(--red); }
+.market-news .calendar-column-head { color: var(--ink-faint); font: 500 11px/16px var(--font-display); letter-spacing: .12em; }
+.market-news .calendar-day-label { color: var(--ink); background: var(--surface-sunken); font: 600 12px/18px var(--font-display); letter-spacing: .1em; }
+.market-news .calendar-event { color: var(--ink-muted); border-color: var(--line); font: 400 12px/18px var(--font-mono); }
+.market-news .calendar-event:hover { background: var(--surface-raised); }
+.market-news .calendar-event-title { color: var(--ink); font: 400 14px/20px var(--font-sans); }
+.market-news .calendar-event-high { box-shadow: inset 3px 0 var(--alert); }
+.market-news .calendar-event-medium { box-shadow: inset 3px 0 var(--loss); }
+.market-news .calendar-event-high .calendar-impact { color: var(--alert); }
+.market-news .calendar-event-medium .calendar-impact { color: var(--loss); }
+.market-news :is(.calendar-event-time, .calendar-market, .calendar-value) { color: var(--ink-muted); }
+.market-news .calendar-state { background: var(--surface-sunken); color: var(--ink-muted); font: 400 13px/20px var(--font-sans); border-color: var(--line); }
+.market-news .calendar-state-error { color: var(--alert); border-color: var(--alert); }
+
+@container (max-width: 760px) {
+  .rh-columns { grid-template-columns: minmax(0, 1fr); }
+  .rh-hero { align-items: flex-start; flex-direction: column; gap: 16px; padding: 20px; }
+  .rh-connection { max-width: none; justify-items: start; text-align: left; }
+  .rh-markets button { padding: 16px 12px; }
+  .rh-markets strong { font-size: 18px; line-height: 24px; }
+  .rh-flow { flex-wrap: wrap; justify-content: flex-start; gap: 8px 12px; }
+}
+@media (max-width: 620px) {
+  .cortex-page-intro { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .cortex-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cortex-kpi { padding: 12px; }
+  .cortex-kpi > :is(strong, .stat-value, .cortex-kpi-value, dd) { font-size: 22px; }
+  .cortex-panel-head, .cortex-panel-body, .cortex-form-section { padding: 16px; }
+  .rh-markets { gap: 8px; }
+  .rh-markets span { font-size: 10px; letter-spacing: .06em; }
+  .rh-markets strong { font-size: 16px; line-height: 22px; }
+  .rh-markets small { font-size: 12px; }
+  .rh-workspace .rh-controls .btn { flex: 1 1 160px; }
+  .route[data-route-key^="journal"] .row { flex-wrap: wrap; gap: 10px 14px; }
+  .route[data-route-key^="journal"] .journal-entry-confluences { flex: 1 1 100%; order: 3; }
+  .route[data-route-key^="journal"] .journal-entry-pl { margin-left: auto; }
+}
+@media (max-width: 390px) {
+  .rh-markets { grid-template-columns: minmax(0, 1fr); }
+  .rh-markets button { gap: 5px; }
+  .cortex-kpis { grid-template-columns: minmax(0, 1fr); }
+}

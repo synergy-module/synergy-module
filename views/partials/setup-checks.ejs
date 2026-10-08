@@ -1,0 +1,16 @@
+  <section id="brain-panel-checks" class="brain-view" data-brain-panel="checks" aria-label="System checks">
+    <div class="brain-checks-workspace">
+      <section class="panel brain-readiness" aria-labelledby="brain-readiness-title">
+        <header class="trader-panel-head"><h2 id="brain-readiness-title">SETUP READINESS</h2><a class="trader-text-button" href="#brain-evals-title">Offline checks ↓</a></header>
+        <div class="brain-readiness-body">
+          <p class="trader-help">API keys alone cannot enable paid calls. Verify the system here before enabling provider access on the server.</p>
+          <ul class="brain-readiness-checks" data-brain-readiness-checks><li class="brain-placeholder">Checking the current setup…</li></ul>
+          <p class="brain-readiness-time" data-brain-readiness-time></p>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="brain-evals-title">
+        <header class="trader-panel-head"><h2 id="brain-evals-title">SYSTEM EVALUATIONS</h2><span class="trader-micro">OFFLINE SUITE</span></header>
+        <div class="brain-evals-body"><h3>Verify the controls.</h3><p>Run deterministic scenarios against the agent system: workflow, risk checks, tool permissions, retrieval, memory, and approval rules.</p><button type="button" class="btn" data-brain-evals>RUN EVALUATIONS</button><div data-brain-eval-results role="status"></div><p class="trader-help">No provider calls. These checks test system behavior; they do not measure trading performance or live model quality.</p></div>
+      </section>
+    </div>
+  </section>

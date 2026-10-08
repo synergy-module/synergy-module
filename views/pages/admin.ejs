@@ -1,0 +1,84 @@
+<section class="route admin-console" data-route-view data-route-key="<%= page.route.key %>"
+  data-admin-root data-current-user-id="<%= page.operator.id %>" aria-busy="false">
+  <%- include("../partials/route-head", { page }) %>
+
+  <div class="cortex-kpis" aria-label="Administration overview">
+    <article class="cortex-kpi"><span>MEMBER IDENTITIES</span><strong><%= page.data.users.length %></strong><small>Recorded Discord members</small></article>
+    <article class="cortex-kpi"><span>ACTIVE SESSIONS</span><strong><%= page.data.users.reduce((sum, user) => sum + Number(user.activeSessions || 0), 0) %></strong><small>Snapshot at page load</small></article>
+  </div>
+
+  <div class="admin-memory-warning" data-storage-state="<%= page.data.storage?.persistent ? 'persistent' : 'temporary' %>" role="status">
+    <% if (page.data.storage?.persistent) { %>
+      <strong><%= page.data.storage.kind === "postgres" ? "POSTGRESQL CONNECTED" : "PERSISTENT SQLITE STORAGE" %></strong>
+      <span>Member records, bans, and sessions are saved in the database.</span>
+    <% } else { %>
+      <strong>WARN · TEMPORARY MEMORY MODE</strong>
+      <span>Administrative records may reset when this process restarts.</span>
+    <% } %>
+  </div>
+
+  <section class="admin-rail cortex-panel" aria-labelledby="admin-users-heading" data-admin-users>
+    <div class="admin-rail-head cortex-panel-head">
+      <h2 id="admin-users-heading">MEMBER ACCESS</h2>
+      <span><%= page.data.users.length %> IDENTITIES</span>
+      <a href="/admin" data-nav-link>Refresh overview ↻</a>
+    </div>
+    <div class="admin-user-head" aria-hidden="true">
+      <span>IDENTITY</span><span>ACCESS</span><span>SESSION STATE</span><span>ACTIONS</span>
+    </div>
+    <ol class="admin-records">
+      <% for (const user of page.data.users) { const isSelf = user.id === page.operator.id; %>
+        <li class="admin-user-row" data-admin-user-row data-user-id="<%= user.id %>"
+          data-user-banned="<%= user.banned %>" data-active-sessions="<%= user.activeSessions %>"
+          data-admin-ban-endpoint="/api/admin/users/<%= encodeURIComponent(user.id) %>/ban"
+          data-admin-unban-endpoint="/api/admin/users/<%= encodeURIComponent(user.id) %>/unban">
+          <div class="admin-user-identity" data-field="IDENTITY">
+            <strong><%= user.displayName || user.username %></strong>
+            <span>@<%= user.username %> · <%= user.id %></span>
+            <span><%= user.authMode.toUpperCase() %> AUTHENTICATION</span>
+          </div>
+          <div class="admin-access-list" data-field="ACCESS">
+            <span>ROLES <strong><%= user.roles.length ? user.roles.join(" / ") : "NONE" %></strong></span>
+            <span>ACCESS <strong><%= user.capabilities.length ? user.capabilities.join(" / ") : "NONE" %></strong></span>
+            <% if (user.lastSignedInAt) { %><span data-admin-last-sign-in>SIGNED IN <time datetime="<%= user.lastSignedInAt %>"><%= user.lastSignedInAt %></time></span><% } %>
+            <% if (user.rolesSyncedAt) { %><span data-admin-role-sync>ROLE SYNC <time datetime="<%= user.rolesSyncedAt %>"><%= user.rolesSyncedAt %></time></span><% } %>
+            <% if (user.lastSeenAt) { %><span>LAST SEEN <time datetime="<%= user.lastSeenAt %>"><%= user.lastSeenAt %></time></span><% } %>
+          </div>
+          <div class="admin-session-state" data-field="SESSION STATE">
+            <output data-admin-ban-state class="<%= user.banned ? "admin-state-danger" : "admin-state-ok" %>"><%= user.banned ? "BANNED" : "ALLOWED" %></output>
+            <span>ACTIVE SESSIONS <strong data-admin-session-count><%= user.activeSessions %></strong></span>
+            <% if (user.ban) { %>
+              <span data-admin-ban-detail>BY <%= user.ban.actorId %> :: <time datetime="<%= user.ban.bannedAt %>"><%= user.ban.bannedAt %></time></span>
+            <% } %>
+          </div>
+          <div class="admin-actions" data-field="ACTIONS">
+            <form action="/api/admin/users/<%= encodeURIComponent(user.id) %>/sign-out" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn" type="submit" data-admin-action="sign-out"
+                data-admin-action-endpoint="/api/admin/users/<%= encodeURIComponent(user.id) %>/sign-out"
+                data-admin-confirm="SIGN OUT ALL SESSIONS FOR <%= user.username %>?">Sign out</button>
+            </form>
+            <% if (user.banned) { %>
+              <form action="/api/admin/users/<%= encodeURIComponent(user.id) %>/unban" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn" type="submit" data-admin-action="unban"
+                  data-admin-action-endpoint="/api/admin/users/<%= encodeURIComponent(user.id) %>/unban"
+                  data-admin-confirm="RESTORE SITE ACCESS FOR <%= user.username %>?">Restore access</button>
+              </form>
+            <% } else { %>
+              <form action="/api/admin/users/<%= encodeURIComponent(user.id) %>/ban" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="reason" value="Administrative action">
+                <button class="btn btn-danger" type="submit" data-admin-action="ban"
+                  data-admin-action-endpoint="/api/admin/users/<%= encodeURIComponent(user.id) %>/ban"
+                  data-admin-confirm="BAN <%= user.username %> AND TERMINATE ALL SESSIONS?" <%= isSelf ? "disabled" : "" %>>Ban member</button>
+              </form>
+            <% } %>
+          </div>
+        </li>
+      <% } %>
+    </ol>
+  </section>
+
+  <output class="admin-feedback" data-admin-feedback aria-live="polite"></output>
+</section>

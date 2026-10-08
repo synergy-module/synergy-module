@@ -1,0 +1,46 @@
+<div class="rh-workspace" data-robinhood>
+  <header class="rh-hero">
+    <div><p class="rh-eyebrow">SYNERGY MODULE × ROBINHOOD / AGENTIC TRADING</p><h2>One brain. Three markets.</h2><p>Your portfolio, market evidence, and broker actions in one terminal.</p></div>
+    <div class="rh-connection"><span class="rh-beacon" aria-hidden="true"></span><strong data-rh-status>CHECKING CONNECTION</strong><span data-rh-lock>LIVE SUBMISSIONS LOCKED</span></div>
+  </header>
+  <div class="rh-flow" aria-label="Robinhood workflow"><span>01 CONNECT</span><i>›</i><span>02 RESEARCH</span><i>›</i><span>03 PREVIEW</span><i>›</i><span>04 REVIEW</span><i>›</i><span>05 TRACK</span></div>
+  <div class="rh-controls">
+    <button class="btn btn-solid" type="button" data-rh-connect disabled>CONNECT ROBINHOOD ↗</button>
+    <button class="btn" type="button" data-rh-refresh>REFRESH WORKSPACE</button>
+    <button class="btn" type="button" data-rh-discover disabled>SYNC AVAILABLE TOOLS</button>
+    <button class="btn btn-danger" type="button" data-rh-pause disabled>PAUSE SUBMISSIONS</button>
+    <button class="trader-text-button" type="button" data-rh-disconnect disabled>Disconnect</button>
+  </div>
+  <p class="rh-feedback" data-rh-feedback role="status">Checking your saved connection…</p>
+  <div class="rh-setup" data-rh-setup>
+    <h3>Connect your Agentic account.</h3><p>Continue to Robinhood to authorize Synergy Module and complete Agentic account setup. Your Robinhood password stays with Robinhood. Discord remains your Synergy Module sign-in.</p>
+    <p>Robinhood can share all your accounts, positions, balances, and history. Trading is restricted to your Agentic account. Every broker change in Synergy Module requires a separate confirmation.</p>
+    <p data-rh-config></p>
+    <a href="https://robinhood.com/us/en/support/articles/agentic-trading-overview/" target="_blank" rel="noopener noreferrer">Robinhood connection guide ↗</a>
+  </div>
+  <div class="rh-markets" aria-label="Choose a market">
+    <button type="button" data-rh-market="Equities"><span>01 / EQUITIES</span><strong>Stocks & ETFs</strong><small>Quotes · positions · fundamentals · orders</small></button>
+    <button type="button" data-rh-market="Options"><span>02 / DERIVATIVES</span><strong>Options</strong><small>Chains · contracts · premiums · orders</small></button>
+    <button type="button" data-rh-market="Crypto"><span>03 / DIGITAL ASSETS</span><strong>Crypto</strong><small>Pairs · bid / ask · holdings · orders</small></button>
+  </div>
+  <div class="rh-columns">
+    <section class="panel rh-tools" aria-labelledby="rh-tool-title">
+      <header class="trader-panel-head"><h3 id="rh-tool-title">ACCOUNT & MARKET TOOLS</h3><span class="trader-micro" data-rh-tool-count>0 AVAILABLE</span></header>
+      <form data-rh-form>
+        <label class="field">WORKSPACE<select name="group" data-rh-group><option>Account</option><option>Equities</option><option>Options</option><option>Crypto</option><option>Research</option><option>Watchlists</option><option>Scanners</option><option>Actions</option></select></label>
+        <label class="field">ACTION<select name="tool" data-rh-tool disabled><option value="">Connect to load available actions</option></select></label>
+        <div data-rh-fields class="rh-fields"></div>
+        <label class="field" data-rh-reason-field hidden>REASON FOR THIS CHANGE<textarea name="reason" rows="2" minlength="5" maxlength="1000" placeholder="What should this action accomplish?"></textarea></label>
+        <p class="trader-help" data-rh-action-help>Fields load from your authenticated Robinhood connection.</p>
+        <button class="btn btn-solid" type="submit" data-rh-submit disabled>FETCH DATA</button>
+      </form>
+      <div class="rh-data" data-rh-data><p class="brain-placeholder">Account and market results will appear here.</p></div>
+      <button class="btn rh-use" type="button" data-rh-use hidden>USE THIS EVIDENCE IN A MISSION ↗</button>
+    </section>
+    <div class="rh-right">
+      <section class="panel" aria-labelledby="rh-review-title"><header class="trader-panel-head"><h3 id="rh-review-title">BROKER REVIEW QUEUE</h3><span class="trader-micro">EXACT REQUEST / YOUR DECISION</span></header><div data-rh-actions class="rh-actions"><p class="brain-placeholder">No broker requests. Prepare an order preview or another change to review it here.</p></div></section>
+      <section class="panel" aria-labelledby="rh-activity-title"><header class="trader-panel-head"><h3 id="rh-activity-title">CONNECTION & ACTION HISTORY</h3><span class="trader-micro">SAVED AUDIT</span></header><ol data-rh-events class="rh-events"><li>No Robinhood activity yet.</li></ol></section>
+    </div>
+  </div>
+  <p class="rh-footnote">Broker acknowledgement is not a fill. Check Robinhood order history for execution status. Pausing stops new submissions; it does not cancel orders already sent. Data requests use no AI tokens. Starting a model-driven mission follows the separate paid-AI setting.</p>
+</div>

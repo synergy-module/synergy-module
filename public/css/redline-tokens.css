@@ -1,0 +1,73 @@
+/* Redline Cortex — tokens.css, compiled from tokens.json. Themes: set data-theme="core" (default) or "daylight" on <html>. */
+:root, [data-theme="core"] {
+  --void: #08040a;
+  --surface: #110809;
+  --surface-raised: #1a0c0f;
+  --surface-sunken: #050203;
+  --line: #3d1a1f;
+  --line-strong: #b0454f;
+  --ink: #f7eaeb;
+  --ink-muted: #bd9ea2;
+  --ink-faint: #a0797e;
+  --red: #ff2e43;
+  --red-glow: #ff6b77;
+  --red-deep: #b3101f;
+  --red-tint: #3a0a11;
+  --on-red: #ffffff;
+  --gain: #3fe0c4;
+  --loss: #ffa53a;
+  --alert: #ffd84a;
+  --synergy-1: #d40000;
+  --synergy-2: #2c2b2b;
+  --synergy-3: #f2faff;
+  --synergy-4: #4e0000;
+  --glow-red: 0 0 0 1px #ff2e4333, 0 0 24px #ff2e4340;
+}
+[data-theme="daylight"] {
+  --void: #f2eaeb;
+  --surface: #fbf6f6;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1e6e7;
+  --line: #e6d2d4;
+  --line-strong: #9a6d73;
+  --ink: #1d0a0d;
+  --ink-muted: #6a474c;
+  --ink-faint: #7d5a60;
+  --red: #cf0f22;
+  --red-glow: #e0303f;
+  --red-deep: #a00c1a;
+  --red-tint: #fde4e6;
+  --on-red: #ffffff;
+  --gain: #006b5f;
+  --loss: #984a00;
+  --alert: #735700;
+  --glow-red: 0 0 0 1px #cf0f2233, 0 8px 24px #cf0f221f;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --Synergy1: 8px;
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-pill: 999px;
+  --Synegy: 6px;
+  --z-hud: 10;
+  --z-popover: 50;
+  --font-display: "Chakra Petch", "Arial Narrow", sans-serif;
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --font-work-sans: 'Work Sans', sans-serif;
+}
+.hud-hero { font-family: var(--font-display); font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0.02em; }
+.hud-title { font-family: var(--font-display); font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: 0.08em; }
+.hud-label { font-family: var(--font-display); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.16em; }
+.body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.body-small { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.num-hero { font-family: var(--font-mono); font-size: 32px; line-height: 36px; font-weight: 500; }
+.num { font-family: var(--font-mono); font-size: 13px; line-height: 18px; font-weight: 400; }
+.num-micro { font-family: var(--font-mono); font-size: 10px; line-height: 12px; font-weight: 400; }
+.Synergy1 { font-family: var(--font-work-sans); font-size: 16px; line-height: 1.5; font-weight: 400; letter-spacing: 0; }

@@ -1,6 +1,76 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<%
+  const request = page.data.request;
+  const statusLabel = page.data.status.replaceAll("_", " ");
+  const activeCatalog = page.data.catalog.filter((indicator) => indicator.active);
+%>
+<section class="route indicator-access" data-route-view data-route-key="<%= page.route.key %>"
+  data-indicator-access-root data-request-status="<%= page.data.status %>"
+  data-catalog-available="<%= activeCatalog.length > 0 %>" aria-busy="false">
   <%- include("../partials/route-head", { page }) %>
-  <div class="section-label">&gt; INDICATOR ACCESS</div><%- include("../partials/empty-state", { lines: ["[ NO INDICATORS PROVISIONED ]", "ENTITLEMENT SYNC PENDING :: INDICATOR ACCESS READY"] }) %>
-  <div style="height:24px"></div>
-  <section class="panel howto"><div class="panel-kicker">&gt; TRADINGVIEW ACCESS INSTRUCTIONS</div><ol><li>copy the invite code issued to your operator ID</li><li>open TradingView &gt; indicators &gt; invite-only scripts</li><li>paste the code to unlock the entitlement</li><li>entitlement syncs back to this terminal within 60s</li></ol><div class="code-row"><span class="code-field">[ NO CODE ISSUED ]</span><button class="btn" type="button" disabled>COPY</button></div></section>
+
+  <div class="indicator-access-meta cortex-kpis" aria-label="Indicator access identity">
+    <div class="cortex-kpi"><span>OPERATOR</span><strong class="cortex-kpi-word" data-indicator-identity><%= page.operator.displayName || page.operator.username %></strong><small><%= page.operator.authMode.toUpperCase() %> identity</small></div>
+    <div class="cortex-kpi"><span>ACTIVE SCRIPTS</span><strong><%= activeCatalog.length %></strong><small>Available in the catalog</small></div>
+    <div class="cortex-kpi" data-indicator-role-sync><span>ROLE SYNC</span><time datetime="<%= page.operator.rolesSyncedAt %>"><%= page.operator.rolesSyncedAt %></time><small>Latest entitlement check</small></div>
+  </div>
+
+  <section class="indicator-console cortex-panel" aria-labelledby="indicator-catalog-heading">
+    <div class="indicator-console-head cortex-panel-head">
+      <div>
+        <h2 id="indicator-catalog-heading">SCRIPT CATALOG</h2>
+        <p>Browse available scripts. An author grants access through TradingView after reviewing your request.</p>
+      </div>
+      <output class="indicator-request-state indicator-state-<%= page.data.status.toLowerCase() %>"
+        data-indicator-request-status aria-live="polite"><%= statusLabel %></output>
+    </div>
+
+    <% if (activeCatalog.length) { %>
+      <div class="indicator-catalog-head" aria-hidden="true">
+        <span>SCRIPT</span><span>VERSION</span><span>STATE</span><span>ACTION</span>
+      </div>
+      <ol class="indicator-catalog" aria-label="Available indicator scripts">
+        <% for (const indicator of activeCatalog) { %>
+          <li class="indicator-catalog-row" data-indicator-catalog-row data-indicator-id="<%= indicator.id %>">
+            <div class="indicator-catalog-main" data-field="SCRIPT">
+              <strong><%= indicator.name %></strong>
+              <span><%= indicator.description %></span>
+            </div>
+            <span data-field="VERSION"><%= indicator.version %></span>
+            <span data-field="STATE"><%= indicator.demo ? "DEMO RECORD" : "ACTIVE" %></span>
+            <span data-field="ACTION">
+              <% if (page.data.status === "GRANTED" && indicator.tradingViewUrl && request?.indicatorIds.includes(indicator.id)) { %>
+                <a href="<%= indicator.tradingViewUrl %>" target="_blank" rel="noopener noreferrer">OPEN IN TRADINGVIEW</a>
+              <% } else { %>
+                <span class="t-dim"><%= page.data.status === "GRANTED" ? "NO LINK CONFIGURED" : "AWAITING GRANT" %></span>
+              <% } %>
+            </span>
+          </li>
+        <% } %>
+      </ol>
+    <% } else { %>
+      <div class="indicator-catalog-empty cortex-empty-state"><h3>No active scripts configured</h3><p>Available indicators will appear here when added to the catalog.</p></div>
+    <% } %>
+  </section>
+
+  <section class="indicator-request cortex-panel" aria-labelledby="indicator-request-heading">
+    <div class="cortex-panel-head">
+      <div><h2 id="indicator-request-heading">REQUEST ACCESS</h2><p>One request covers every active script. Access is granted manually in TradingView.</p></div>
+    </div>
+    <form action="/api/indicator-access/requests" method="post" data-indicator-request-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="field" for="trading-view-username">TRADINGVIEW USERNAME
+        <input id="trading-view-username" name="tradingViewUsername"
+          value="<%= request?.tradingViewUsername ?? "" %>" required minlength="3" maxlength="64"
+          pattern="[A-Za-z0-9_-]{3,64}" autocomplete="username" aria-describedby="trading-view-username-help">
+      </label>
+      <p id="trading-view-username-help" class="indicator-field-help">3–64 letters, numbers, underscores, or hyphens.</p>
+      <label class="terminal-check">
+        <input name="consent" type="checkbox" value="true" required>
+        <span>I request access to every active script in this catalog.</span>
+      </label>
+      <button class="btn btn-primary" type="submit" data-indicator-submit <%= activeCatalog.length ? "" : "disabled" %>>Request script access ↗</button>
+    </form>
+    <output class="indicator-request-feedback<%= page.data.notice ? " indicator-feedback-error" : "" %>"
+      data-indicator-request-feedback aria-live="polite"><%= page.data.notice?.message ?? "" %></output>
+  </section>
 </section>

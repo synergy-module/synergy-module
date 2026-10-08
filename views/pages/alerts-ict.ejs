@@ -1,4 +1,16 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<section class="route cortex-alerts" data-route-view data-route-key="<%= page.route.key %>">
   <%- include("../partials/route-head", { page }) %>
-  <div class="toolbar"><button class="btn btn-primary" type="button" data-alert-standby>+ NEW RULE</button></div><div class="section-label">&gt; ICT RULES</div><%- include("../partials/empty-state", { lines: ["[ NO ICT RULES CONFIGURED ]", "ALERT ENGINE STANDBY :: MSS / FVG / LIQUIDITY SWEEP"] }) %><div style="height:22px"></div><div class="section-label">&gt; TRIGGER LOG</div><%- include("../partials/empty-state", { lines: ["[ NO TRIGGERS LOGGED ]"] }) %>
+  <div class="cortex-kpis" aria-label="ICT alert status">
+    <article class="cortex-kpi"><span>CONFIGURED RULES</span><strong>0</strong><small>No rules configured</small></article>
+    <article class="cortex-kpi"><span>RECORDED TRIGGERS</span><strong>0</strong><small>No connected alert engine</small></article>
+    <article class="cortex-kpi"><span>ENGINE STATE</span><strong class="cortex-kpi-word">Standby</strong><small>Automation is not active</small></article>
+  </div>
+  <section class="cortex-panel" aria-labelledby="ict-rules-title">
+    <header class="cortex-panel-head"><h2 id="ict-rules-title">ICT SIGNAL RULES</h2><button class="btn" type="button" data-alert-standby>Inspect rule setup</button></header>
+    <div class="cortex-empty-state"><span class="cortex-empty-glyph" aria-hidden="true">◇</span><h3>No signal rules configured</h3><p>Market structure shifts, fair value gaps, and liquidity sweeps will appear here when an alert engine is connected.</p><span class="cortex-workspace-meta">MSS / FVG / LIQUIDITY SWEEP</span></div>
+  </section>
+  <section class="cortex-panel" aria-labelledby="ict-triggers-title">
+    <header class="cortex-panel-head"><h2 id="ict-triggers-title">TRIGGER HISTORY</h2><span>0 EVENTS</span></header>
+    <div class="cortex-empty-state cortex-empty-compact"><h3>No triggers recorded</h3><p>Triggered signals will need a connected source and active rules.</p></div>
+  </section>
 </section>

@@ -1,0 +1,60 @@
+APP_SLUG=synergy-module
+# Development/beta example; production uses synergymodule.app.
+APP_ENVIRONMENT=beta
+APP_DOMAIN=synergymodule.dev
+APP_ADDITIONAL_DOMAINS=
+APP_HOST_RULE=Host(`synergymodule.dev`)
+APP_CPUS=1.0
+APP_MEMORY=1g
+APP_PIDS_LIMIT=128
+APP_HEALTH_PATH=/health
+APP_INTERNAL_PORT=3000
+DATABASE_URL=stored-in-portainer-not-this-file
+DATABASE_SSL=disable
+SESSION_SECRET=stored-in-portainer-not-this-file
+AUTH_MODE=discord
+DISCORD_ACCESS_POLICY=roles
+# To preserve full preview for every beta guild member, explicitly set beta-guild.
+# beta-guild is rejected unless APP_ENVIRONMENT=beta; it does not require role IDs.
+DISCORD_CLIENT_ID=stored-in-portainer-not-this-file
+DISCORD_CLIENT_SECRET=stored-in-portainer-not-this-file
+DISCORD_REDIRECT_URI=https://synergymodule.dev/auth/discord/callback
+DISCORD_GUILD_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_DEVELOPER_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_ADMIN_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_OS_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_INDICATORS_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_JOURNAL_ID=stored-in-portainer-not-this-file
+DISCORD_ROLE_REFRESH_MINUTES=5
+APP_MIGRATION_COMMAND=npm run migrate
+
+# Optional AI providers: store populated keys in Portainer, never in this file.
+TRADER_AI_PROVIDER=gemini
+# Keep false until setup is reviewed and paid calls are explicitly activated.
+TRADER_PAID_AI_ENABLED=false
+ROBINHOOD_TOKEN_ENCRYPTION_KEY=
+ROBINHOOD_REDIRECT_URI=
+# Optional public client supplied or approved by Robinhood for this exact callback.
+ROBINHOOD_CLIENT_ID=
+ROBINHOOD_LIVE_TRADING_ENABLED=false
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_MODEL=
+OPENAI_MODEL=
+ANTHROPIC_MODEL=
+
+# Agent Brain pricing: optional USD per million tokens for the configured models.
+# Needed for dollar caps; unknown prices remain unknown in the UI.
+BRAIN_GEMINI_INPUT_USD_PER_MILLION=
+BRAIN_GEMINI_OUTPUT_USD_PER_MILLION=
+BRAIN_GEMINI_CACHED_INPUT_USD_PER_MILLION=
+BRAIN_GEMINI_CACHE_CREATION_INPUT_USD_PER_MILLION=
+BRAIN_OPENAI_INPUT_USD_PER_MILLION=
+BRAIN_OPENAI_OUTPUT_USD_PER_MILLION=
+BRAIN_OPENAI_CACHED_INPUT_USD_PER_MILLION=
+BRAIN_OPENAI_CACHE_CREATION_INPUT_USD_PER_MILLION=
+BRAIN_CLAUDE_INPUT_USD_PER_MILLION=
+BRAIN_CLAUDE_OUTPUT_USD_PER_MILLION=
+BRAIN_CLAUDE_CACHED_INPUT_USD_PER_MILLION=
+BRAIN_CLAUDE_CACHE_CREATION_INPUT_USD_PER_MILLION=

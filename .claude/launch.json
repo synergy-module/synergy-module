@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "omensite-mvc",
+      "name": "synergy-module",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 3000

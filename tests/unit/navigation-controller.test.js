@@ -8,9 +8,9 @@ function fragment(body, headers = {}) {
   return new Response(body, {
     status: 200,
     headers: {
-      "X-Omensite-Path": "/market-news",
-      "X-Omensite-Title": "MARKET NEWS",
-      "X-Omensite-Key": "market-news",
+      "X-Synergy-Module-Path": "/market-news",
+      "X-Synergy-Module-Title": "MARKET NEWS",
+      "X-Synergy-Module-Key": "market-news",
       ...headers,
     },
   });
@@ -47,7 +47,7 @@ test("navigate swaps the fragment and pushes clean history", async () => {
 
   await controller.navigate("/market-news");
 
-  assert.equal(calls[0].headers["X-Omensite-Fragment"], "1");
+  assert.equal(calls[0].headers["X-Synergy-Module-Fragment"], "1");
   assert.match(dom.window.document.querySelector("[data-main]").textContent, /MARKET NEWS/);
   assert.equal(dom.window.location.pathname, "/market-news");
   assert.equal(initialized[0].details.key, "market-news");
@@ -89,8 +89,8 @@ test("fragment metadata replaces immediate routing feedback with exact nontrivia
   const navigation = controller.navigate("/alerts/support-resistance");
   assert.deepEqual(calls, ["ROUTING"]);
   resolveFragment(fragment("<section data-route-view>ALERTS</section>", {
-    "X-Omensite-Title": "ALERTS :: S&R",
-    "X-Omensite-Key": "alerts-sr",
+    "X-Synergy-Module-Title": "ALERTS :: S&R",
+    "X-Synergy-Module-Key": "alerts-sr",
   }));
   await navigation;
 
@@ -107,7 +107,7 @@ test("fragment metadata preserves exact titles for new and public journal routes
     documentRef: dom.window.document,
     windowRef: dom.window,
     fetchImpl: async () => fragment("<section data-route-view>JOURNAL</section>", {
-      "X-Omensite-Title": titles[call++],
+      "X-Synergy-Module-Title": titles[call++],
     }),
     transition: { show: (title) => shownTitles.push(title), hide() {}, fail() {} },
     initializePage() {},
@@ -131,7 +131,7 @@ test("a successful fragment swap resets the main pane scroll position", async ()
   assert.equal(main.scrollTop, 0);
 });
 
-test("a 401 redirects to login without replacing the current route", async () => {
+test("a 401 preserves a validated relative login URL without replacing the current route", async () => {
   const dom = new JSDOM("<main data-main><section data-route-view>HOME</section></main>", { url: "http://localhost/home" });
   const redirects = [];
   const windowRef = {
@@ -144,15 +144,73 @@ test("a 401 redirects to login without replacing the current route", async () =>
   const controller = createNavigationController({
     documentRef: dom.window.document,
     windowRef,
-    fetchImpl: async () => new Response("", { status: 401 }),
+    fetchImpl: async () => Response.json({
+      error: "AUTH_REQUIRED",
+      loginUrl: "/login?error=access_revoked",
+    }, { status: 401 }),
     transition: { show() {}, hide() {}, fail() {} },
     initializePage() {},
   });
 
   await controller.navigate("/market-news");
 
-  assert.deepEqual(redirects, ["/login"]);
+  assert.deepEqual(redirects, ["/login?error=access_revoked"]);
   assert.match(dom.window.document.querySelector("[data-main]").textContent, /HOME/);
+});
+
+test("a 401 rejects unsafe or unknown login URLs", async () => {
+  for (const loginUrl of [
+    "https://evil.example/login",
+    "//evil.example/login",
+    "/admin",
+    "/login?error=arbitrary",
+    "/login?error=access_revoked&next=https://evil.example",
+  ]) {
+    const dom = new JSDOM("<main data-main><section data-route-view>HOME</section></main>", { url: "http://localhost/home" });
+    const redirects = [];
+    const windowRef = {
+      ...dom.window,
+      location: { href: dom.window.location.href, assign: (path) => redirects.push(path) },
+      history: dom.window.history,
+      addEventListener: dom.window.addEventListener.bind(dom.window),
+      removeEventListener: dom.window.removeEventListener.bind(dom.window),
+    };
+    const controller = createNavigationController({
+      documentRef: dom.window.document,
+      windowRef,
+      fetchImpl: async () => Response.json({ error: "AUTH_REQUIRED", loginUrl }, { status: 401 }),
+      transition: { show() {}, hide() {}, fail() {} },
+      initializePage() {},
+    });
+
+    await controller.navigate("/market-news");
+
+    assert.deepEqual(redirects, ["/login"]);
+    controller.dispose();
+    dom.window.close();
+  }
+});
+
+test("a denied navigation holds the overlay, reports permission failure, and retains route history", async () => {
+  const { dom, controller, transitionCalls, toasts } = createHarness({
+    fetchImpl: async () => Response.json({
+      error: "INSUFFICIENT_PERMISSIONS",
+      message: "ACCESS FAILED :: INSUFFICIENT PERMISSIONS",
+    }, { status: 403 }),
+  });
+  dom.window.matchMedia = () => ({ matches: true });
+  const originalPath = dom.window.location.pathname;
+  const originalTitle = dom.window.document.title;
+  const startedAt = Date.now();
+
+  await controller.navigate("/admin");
+
+  assert.ok(Date.now() - startedAt >= 110, "reduced-motion denial must retain its loading state for about 120ms");
+  assert.equal(dom.window.location.pathname, originalPath);
+  assert.equal(dom.window.document.title, originalTitle);
+  assert.match(dom.window.document.querySelector("[data-main]").textContent, /HOME/);
+  assert.deepEqual(transitionCalls.at(-1), ["fail", "ACCESS FAILED :: INSUFFICIENT PERMISSIONS"]);
+  assert.deepEqual(toasts, ["ACCESS FAILED :: INSUFFICIENT PERMISSIONS"]);
 });
 
 test("a 404 fragment retains current content and reports terminal route-not-found feedback", async () => {
@@ -198,7 +256,7 @@ test("real transition controller receives metadata through setTitle without crea
     documentRef: dom.window.document,
     windowRef: dom.window,
     fetchImpl: async () => fragment("<section data-route-view>NEWS</section>", {
-      "X-Omensite-Title": "MARKET <img src=x onerror=alert(1)>",
+      "X-Synergy-Module-Title": "MARKET <img src=x onerror=alert(1)>",
     }),
     transition,
     initializePage() {},
@@ -241,9 +299,9 @@ test("a newer navigation aborts the stale request and only mounts the latest fra
       requests.push({ url: String(url), signal: options.signal });
       if (requests.length === 1) return new Promise((resolve) => { resolveFirst = resolve; });
       return Promise.resolve(fragment("<section data-route-view>JOURNAL</section>", {
-        "X-Omensite-Path": "/journal",
-        "X-Omensite-Title": "JOURNAL",
-        "X-Omensite-Key": "journal",
+        "X-Synergy-Module-Path": "/journal",
+        "X-Synergy-Module-Title": "JOURNAL",
+        "X-Synergy-Module-Key": "journal",
       }));
     },
   });

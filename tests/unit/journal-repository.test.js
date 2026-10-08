@@ -14,7 +14,7 @@ function fakeStorage(values = {}) {
   };
 }
 
-test("repository inserts newest entries first and keeps the legacy storage key", () => {
+test("repository migrates legacy entries before inserting new records under the current brand", () => {
   const storage = fakeStorage({
     "omensite.journal.v1": JSON.stringify([{ id: "older", direction: "long" }]),
   });
@@ -25,7 +25,8 @@ test("repository inserts newest entries first and keeps the legacy storage key",
 
   const listed = repository.list();
   assert.deepEqual(listed.map(({ id, direction }) => ({ id, direction })), [newest, { id: "older", direction: "long" }]);
-  assert.deepEqual(JSON.parse(storage.getItem("omensite.journal.v1")).map(({ id, direction }) => ({ id, direction })), [newest, { id: "older", direction: "long" }]);
+  assert.deepEqual(JSON.parse(storage.getItem("synergy-module.journal.v1")).map(({ id, direction }) => ({ id, direction })), [newest, { id: "older", direction: "long" }]);
+  assert.equal(storage.getItem("omensite.journal.v1"), null);
   assert.deepEqual(listed[1].confluences, []);
 });
 
@@ -42,6 +43,38 @@ test("repository finds entries by string ID and clears persisted records", () =>
   repository.clear();
   assert.deepEqual(repository.list(), []);
   assert.equal(storage.getItem("omensite.journal.v1"), null);
+  assert.equal(storage.getItem("synergy-module.journal.v1"), null);
+});
+
+test("repository preserves legacy journal data and a readable session copy when migration writes fail", () => {
+  const saved = JSON.stringify([{ id: "saved-trade", direction: "long", notes: "keep this" }]);
+  const storage = fakeStorage({ "omensite.journal.v1": saved });
+  storage.setItem = () => { throw new Error("Quota exceeded"); };
+  const repository = new LocalStorageJournalRepository(storage);
+  assert.equal(repository.find("saved-trade").notes, "keep this");
+  assert.equal(repository.persistenceAvailable, false);
+  assert.equal(storage.getItem("omensite.journal.v1"), saved);
+  assert.equal(storage.getItem("synergy-module.journal.v1"), null);
+});
+
+test("current journal data takes precedence and clearing also removes stale legacy records", () => {
+  const storage = fakeStorage({
+    "synergy-module.journal.v1": "[]",
+    "omensite.journal.v1": JSON.stringify([{ id: "stale", direction: "long" }]),
+  });
+  const repository = new LocalStorageJournalRepository(storage);
+  assert.deepEqual(repository.list(), []);
+  repository.clear();
+  assert.deepEqual(new LocalStorageJournalRepository(storage).list(), []);
+});
+
+test("custom journal namespaces do not import or clear legacy product data", () => {
+  const saved = JSON.stringify([{ id: "saved-trade", direction: "long" }]);
+  const storage = fakeStorage({ "omensite.journal.v1": saved });
+  const repository = new LocalStorageJournalRepository(storage, "isolated.journal");
+  assert.deepEqual(repository.list(), []);
+  repository.clear();
+  assert.equal(storage.getItem("omensite.journal.v1"), saved);
 });
 
 test("malformed persisted data falls back to an empty journal", () => {
@@ -112,7 +145,7 @@ test("repository keeps a session copy when persistent writes fail", () => {
 });
 
 test("app shell remains usable when localStorage access throws", () => {
-  const dom = new JSDOM('<main data-main><section data-route-view data-route-key="journal"><div data-journal-list></div></section></main>', { url: "http://localhost/journal" });
+  const dom = new JSDOM('<main data-app-shell data-main><section data-route-view data-route-key="journal"><div data-journal-list></div></section></main>', { url: "http://localhost/journal" });
   const windowRef = {
     location: dom.window.location,
     history: dom.window.history,

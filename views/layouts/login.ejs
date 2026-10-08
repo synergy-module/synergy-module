@@ -1,64 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="core">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OMENSITE Login</title>
-    <meta name="description" content="Omensite — a retro-terminal trading operations hub: alerts, TradingView indicator access, market news, financial reports, and a shareable trade journal.">
-    <meta name="color-scheme" content="dark">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230b0f0d'/%3E%3Ctext x='1.5' y='12' font-family='monospace' font-size='11' fill='%2364e6a0'%3E%3E_%3C/text%3E%3C/svg%3E">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/omensite.css">
+    <title>SYNERGY MODULE Login</title>
+    <meta name="description" content="Synergy Module — agentic research, connected accounts, reviewed trading decisions, and a persistent trade journal.">
+    <%- include("../partials/redline-head") %>
   </head>
   <body>
-    <div class="crt-scan" aria-hidden="true"></div>
-    <div class="crt-vignette" aria-hidden="true"></div>
 
     <main id="app" aria-live="polite">
       <section class="login" data-login-root>
-        <pre class="login-sphere" data-sphere data-cols="34" data-rows="12" aria-hidden="true">         ·················
-      ·························
-    ·········   OMENSITE   ·········
-      ·························
-         ·················</pre>
+        <div class="cortex-login-intro"><a class="cortex-brand" href="/login" aria-label="Synergy Module">SYNERGY<span>MODULE</span></a><div class="cortex-login-copy"><span class="cortex-eyebrow">AGENTIC TRADING WORKSPACE</span><h1>INTELLIGENCE.<br>WITH INTENT.</h1><p>Your research, reasoning, and execution.<br>One connected command center.</p><img class="cortex-login-art" src="<%= assetPath('/assets/redline-signal.svg') %>" alt="" width="480" height="300"><div class="cortex-login-markets">STOCKS &amp; ETFs <span>◆</span> OPTIONS <span>◆</span> CRYPTO</div></div><span class="cortex-login-footer">SYNERGY MODULE / POWERED BY YOUR PROCESS</span></div>
         <div class="login-card">
-          <pre class="login-banner"> ___  __  __ _____ _  _  ____ ___ _____ _____
-/ _ \|  \/  || ____|| \| |/ ___||_   _|_   _|| ____|
-| | | | |\/| || _|  | .  |\___ \  | |   | |  |  _|
-| |_| | |  | || |___ | |\ | ___) | | |   | |  | |___
-\___/|_|  |_||_____||_| \_||____/  |_|   |_|  |_____|</pre>
-          <div class="login-sub">OMENSITE TRADING TERMINAL v0.1.0 :: RESTRICTED ACCESS</div>
-          <form class="login-form" action="/auth/login" method="post" novalidate data-login-form>
-            <div class="login-prompt">&gt; identify yourself to continue</div>
-            <label class="field">USER
-              <input name="username" type="text" placeholder="operator_id" autocomplete="off" spellcheck="false" required data-login-user>
-            </label>
-            <label class="field">PASSKEY
-              <input name="passkey" type="password" placeholder="••••••••" autocomplete="off" required data-login-passkey>
-            </label>
-            <div class="login-err" hidden data-login-error></div>
-            <button class="btn btn-primary btn-login" type="submit" data-login-submit>[ LOGIN ]</button>
-            <div class="login-fineprint">SESSION WILL BE ENCRYPTED. UNAUTHORIZED ACCESS IS LOGGED.</div>
-          </form>
+          <div class="cortex-theme" role="group" aria-label="Color theme"><button type="button" data-color-theme="core" aria-pressed="true">CORE</button><button type="button" data-color-theme="daylight" aria-pressed="false">DAYLIGHT</button></div><span class="cortex-eyebrow">OPERATOR ACCESS</span><h2>ENTER THE<br>WORKSPACE.</h2><p class="login-sub">Sign in with Discord to access your Synergy Module tools and permissions.</p><% if (typeof designPreview !== 'undefined' && designPreview) { %><p class="cortex-preview">DESIGN PREVIEW · ISOLATED DATA</p><% } %>
+          <% if (typeof popupResult !== "undefined") { %>
+            <div class="login-form" data-discord-popup-result>
+              <div class="login-prompt">&gt; <%= popupResult === "complete" ? "identity confirmed" : "authentication interrupted" %></div>
+              <div class="login-fineprint">RETURN TO YOUR TERMINAL. THIS WINDOW WILL CLOSE AUTOMATICALLY.</div>
+              <a class="btn btn-primary btn-login" href="/home">[ CONTINUE IN THIS WINDOW ]</a>
+            </div>
+          <% } else if (complete) { %>
+            <div data-auth-complete data-redirect-to="/home"></div>
+          <% } else { %>
+            <div class="login-form" data-discord-entry>
+              <div class="login-prompt">DISCORD SINGLE SIGN-ON</div>
+              <div class="login-err" role="alert" <%= authError ? "" : "hidden" %> data-login-error<%= authError ? " data-login-page-error" : "" %>><%= authError ?? "" %></div>
+              <a class="btn btn-primary btn-login" href="/auth/discord" data-discord-login>SIGN IN WITH DISCORD ↗</a>
+              <div class="login-status" role="status" data-discord-status>Ready when you are.<span class="login-cursor" aria-hidden="true">_</span></div>
+              <button class="btn" type="button" data-discord-cancel hidden>[ CANCEL / RETRY ]</button>
+              <a class="login-fallback" href="/auth/discord" data-discord-fallback hidden>CONTINUE IN THIS TAB &gt;</a>
+              <div class="login-fineprint">Your Discord server roles determine workspace access.</div>
+            </div>
+          <% } %>
         </div>
       </section>
     </main>
 
-    <noscript>
-      <div class="noscript">
-        <pre>
- ___  __  __ _____ _  _  ____ ___ _____ _____
-/ _ \|  \/  || ____|| \| |/ ___||_   _|_   _|| ____|
-| | | | |\/| || _|  | .  |\___ \  | |   | |  |  _|
-| |_| | |  | || |___ | |\ | ___) | | |   | |  | |___
-\___/|_|  |_||_____||_| \_||____/  |_|   |_|  |_____|</pre>
-        <p>&gt; JAVASCRIPT REQUIRED :: this terminal cannot render without a script runtime.</p>
-      </div>
-    </noscript>
+    <noscript><div class="noscript"><strong>SYNERGY MODULE</strong><p>Enable JavaScript to use the trading workspace.</p></div></noscript>
 
-    <script type="module" src="/js/login-controller.js"></script>
+    <script type="module" src="<%= assetPath('/js/login-controller.js') %>"></script>
   </body>
 </html>

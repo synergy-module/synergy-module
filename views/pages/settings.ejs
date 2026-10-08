@@ -1,0 +1,37 @@
+<section class="route settings-page" data-route-view data-route-key="<%= page.route.key %>">
+  <%- include("../partials/route-head", { page }) %>
+  <div class="workspace-tabs" role="tablist" aria-label="Settings sections">
+    <% for (const [id,label] of [['connections','Connections'],['defaults','Research defaults'],['system','System checks']]) { %><button type="button" role="tab" id="settings-tab-<%= id %>" aria-controls="settings-<%= id %>" aria-selected="<%= id === 'connections' %>" tabindex="<%= id === 'connections' ? 0 : -1 %>" data-settings-tab="<%= id %>"><%= label %></button><% } %>
+  </div>
+  <p class="workspace-save-state" data-settings-status role="status">Loading saved settings…</p>
+  <section id="settings-connections" role="tabpanel" aria-labelledby="settings-tab-connections" data-settings-panel="connections">
+    <div class="workspace-section-title"><div><h2>AI providers</h2><p>Choose the models your agents can use. Keys are encrypted and saved to your account.</p></div><span data-settings-paid>Checking access…</span></div>
+    <div class="provider-grid">
+      <% for (const [id,label,mark] of [['gemini','Gemini','G'],['openai','OpenAI','O'],['claude','Claude','C']]) { %>
+      <form class="provider-card" data-provider-form="<%= id %>">
+        <div class="provider-card-heading"><span class="provider-mark" aria-hidden="true"><%= mark %></span><h3><%= label %></h3><span class="connection-state" data-provider-state>Checking…</span></div>
+        <p class="provider-model" data-provider-model></p>
+        <label class="field"><%= label %> API key<input name="apiKey" type="password" maxlength="4096" autocomplete="new-password" spellcheck="false" placeholder="Paste a key to save or replace" required></label>
+        <div class="workspace-actions"><button class="btn" type="submit" disabled>Save key</button><button class="text-action" type="button" data-provider-remove disabled>Remove saved key</button></div>
+        <p class="provider-feedback" data-provider-feedback role="status">Saving does not make an AI call.</p>
+      </form><% } %>
+    </div>
+    <div class="workspace-section-title"><div><h2>Connected accounts</h2><p>Your brokerage connection stays saved until you disconnect or its authorization expires.</p></div></div>
+    <section class="connection-card"><div class="connection-card-heading"><span class="provider-mark" aria-hidden="true">R</span><div><h3>Robinhood</h3><p>Stocks, options, and crypto</p></div><span class="connection-state" data-connection-state>Checking…</span></div><p data-connection-detail>Loading your saved connection…</p><div class="workspace-actions"><button class="btn btn-solid" type="button" data-connection-connect disabled>Connect Robinhood ↗</button><button class="text-action" type="button" data-connection-disconnect disabled>Disconnect</button><a class="btn" href="/accounts" data-nav-link>Open accounts</a></div><p class="provider-feedback" data-connection-feedback role="status"></p></section>
+    <div class="workspace-section-title"><div><h2>Research data</h2><p>Available sources your agents can use alongside the context you provide.</p></div></div>
+    <div class="source-list"><div><strong>Robinhood market data</strong><p>Authenticated, on-demand data from your connected account.</p><a href="/accounts" data-nav-link>Open market tools ↗</a></div><div><strong>Economic calendar</strong><p>Scheduled releases via Economicium. No personal API key is required.</p><a href="/market-news" data-nav-link>Open calendar ↗</a></div><div><strong>Your knowledge & memory</strong><p>Saved playbooks, reviewed research, and journal lessons.</p><a href="/research?view=knowledge" data-nav-link>Manage knowledge ↗</a></div></div>
+  </section>
+  <section id="settings-defaults" role="tabpanel" aria-labelledby="settings-tab-defaults" data-settings-panel="defaults" hidden>
+    <form class="settings-defaults-form" data-settings-defaults>
+      <section class="settings-form-section"><h2>Research preferences</h2><p>Applied to new research. Your unfinished objective and market context are saved separately.</p><div class="settings-fields"><label class="field">Default provider<select name="provider"><option value="gemini">Gemini</option><option value="openai">OpenAI</option><option value="claude">Claude</option></select></label><label class="field">Default symbol<input name="symbol" maxlength="24" required></label><label class="field">Timeframe<select name="timeframe"><% for(const value of ['1m','5m','15m','1h','4h','1d']) { %><option value="<%= value %>"><%= value %></option><% } %></select></label></div></section>
+      <section class="settings-form-section"><h2>Risk limits</h2><p>Research sizing inputs. They do not change your broker account or grant permission to trade.</p><div class="settings-fields"><label class="field">Account size ($)<input name="accountSize" type="number" min="0.01" max="1000000000" step="0.01" required></label><label class="field">Risk per idea (%)<input name="riskPercent" type="number" min="0.01" max="5" step="0.01" required></label><label class="field">Value per point ($)<input name="pointValue" type="number" min="0.000001" max="1000000" step="any" required></label><label class="field">Minimum reward / risk<input name="minRewardRisk" type="number" min="1" max="20" step="0.1" required></label></div></section>
+      <details class="settings-form-section"><summary>Advanced agent routing & budgets</summary><p>Roles inherit your default provider unless you choose another one.</p><div class="settings-fields"><% for(const role of ['planner','researcher','strategist','critic']) { %><label class="field"><%= role %><select name="route_<%= role %>"><option value="">Use default</option><option value="gemini">Gemini</option><option value="openai">OpenAI</option><option value="claude">Claude</option></select></label><% } %><label class="field">Maximum steps<input name="maxSteps" type="number" min="1" max="24" required></label><label class="field">Maximum model calls<input name="maxModelCalls" type="number" min="1" max="16" required></label><label class="field">Token budget<input name="maxTokens" type="number" min="1000" max="128000" required></label><label class="field">Time limit (seconds)<input name="durationSeconds" type="number" min="1" max="180" required></label><label class="field">Cost cap ($)<input name="maxCostUsd" type="number" min="0.001" max="10" step="0.001" placeholder="Optional"></label></div><p>A cost cap requires configured provider pricing. Server limits still apply.</p></details>
+      <button class="btn btn-solid" type="submit" disabled>Save defaults</button><span class="provider-feedback" data-defaults-feedback role="status"></span>
+    </form>
+  </section>
+  <section id="settings-system" role="tabpanel" aria-labelledby="settings-tab-system" data-settings-panel="system" hidden>
+    <div class="workspace-storage"><h2>Workspace storage</h2><p data-settings-storage>Checking persistence…</p><p>Sign-in lasts up to 30 days of inactivity. Signing out ends this session; saved research, drafts, and connections remain in your account.</p></div>
+    <%- include("../partials/setup-checks") %>
+    <% if (page.operator?.capabilities?.includes('admin')) { %><a class="btn" href="/admin" data-nav-link>Administration ↗</a><% } %>
+  </section>
+</section>

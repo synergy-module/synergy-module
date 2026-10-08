@@ -1,0 +1,169 @@
+@import url('./redline-tokens.css');
+
+/* Redline Cortex design system, adapted to Synergy Module's existing application. */
+:root {
+  --c-bg: var(--void); --c-bg-deep: var(--surface-sunken);
+  --c-panel: var(--surface); --c-panel-alt: var(--surface); --c-input: var(--surface-raised);
+  --c-border: var(--line-strong); --c-border-soft: var(--line); --c-border-faint: var(--line);
+  --c-text: var(--ink); --c-text-dim: var(--ink-muted); --c-text-mid: var(--ink-muted);
+  --c-text-mute: var(--ink-muted); --c-text-faint: var(--ink-faint);
+  /* Legacy brand-token aliases; gains and losses use their dedicated semantic tokens. */
+  --c-green: var(--red); --c-green-bri: var(--red-glow); --c-green-deep: var(--red-deep);
+  --c-red: var(--loss); --c-amber: var(--alert); --glow-green: var(--glow-red);
+  --font-term: var(--font-display); --sidebar-w: 188px; --statusbar-h: 62px;
+  color-scheme: dark;
+}
+[data-theme="daylight"] { color-scheme: light; }
+body { background: var(--void); color: var(--ink); font: 400 14px/1.5 var(--font-sans); }
+::selection { background: var(--red-deep); color: var(--on-red); }
+button, input, textarea, select { font-family: var(--font-sans); }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+a { color: var(--red); }
+a:hover { color: var(--red-glow); }
+[hidden] { display: none !important; }
+.crt-scan, .crt-vignette { display: none; }
+
+/* A persistent compact shell leaves the Brain room to breathe. */
+.statusbar { min-height: 62px; height: 62px; padding: 0 24px; gap: 20px; border-color: var(--line); background: var(--surface); overflow: visible; }
+.cortex-brand { display: inline-flex; flex-wrap: wrap; align-items: baseline; flex: none; color: var(--ink); font: 600 26px/1 var(--font-display); letter-spacing: -.02em; text-decoration: none; }
+.cortex-brand:hover { color: var(--ink); text-decoration: none; }
+.cortex-brand > span { flex-basis: 100%; margin-top: 5px; color: var(--red); font-size: .52em; letter-spacing: .3em; }
+.cortex-brand > small { display: block; flex-basis: 100%; margin-top: 6px; color: var(--ink-faint); font: 500 8px/1 var(--font-display); letter-spacing: .23em; }
+.cortex-header-controls { display: flex; align-items: center; gap: 24px; margin-left: auto; }
+.cortex-theme { display: inline-flex; align-self: start; border: 1px solid var(--line); border-radius: 2px; padding: 2px; gap: 2px; }
+.cortex-theme button { min-height: 26px; padding: 3px 10px; border: 1px solid transparent; border-radius: 1px; background: transparent; color: var(--ink-muted); font: 500 10px/16px var(--font-display); letter-spacing: .1em; cursor: pointer; }
+.cortex-theme button[aria-pressed="true"] { color: var(--on-red); background: var(--red-deep); border-color: var(--red-deep); }
+.statusbar-session { display: flex; align-items: center; gap: 8px; color: var(--ink-muted); font: 500 10px/16px var(--font-display); letter-spacing: .1em; }
+.statusbar-session > span { color: var(--red); font-size: 8px; }
+.statusbar-clock { min-width: 63px; color: var(--ink-muted); font: 400 12px/18px var(--font-mono); font-variant-numeric: tabular-nums; }
+.cortex-preview { color: var(--alert); font: 400 9px/16px var(--font-mono); letter-spacing: .04em; }
+.cortex-market-strip { display: flex; flex: none; align-items: center; gap: 28px; height: 30px; padding: 0 24px; border-bottom: 1px solid var(--line); background: var(--surface-sunken); color: var(--ink-muted); font: 400 10px/16px var(--font-mono); white-space: nowrap; overflow: auto; scrollbar-width: none; }
+.cortex-strip-label { color: var(--red); font: 600 10px/16px var(--font-display); letter-spacing: .1em; }
+.cortex-strip-status { margin-left: auto; color: var(--ink-faint); }
+.body { min-height: 0; }
+.sidebar { display: flex; flex-direction: column; width: var(--sidebar-w); padding: 24px 0 0; background: var(--surface); border-color: var(--line); }
+.cortex-nav-label { display: flex; justify-content: space-between; padding: 0 16px; margin-bottom: 12px; color: var(--ink-faint); font: 500 10px/16px var(--font-display); letter-spacing: .16em; }
+.cortex-nav-label > span { color: var(--red); font-family: var(--font-mono); }
+.navitem { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 8px 12px; margin: 2px 8px; border: 1px solid transparent; border-left: 2px solid transparent; color: var(--ink-muted); font: 500 13px/18px var(--font-sans); white-space: normal; text-decoration: none; }
+.navitem:hover { background: var(--surface-raised); color: var(--ink); text-decoration: none; }
+.navitem.active { color: var(--ink); background: var(--red-tint); border-color: var(--line); border-left-color: var(--red); animation: none; }
+.cortex-nav-index { display: grid; flex: none; place-items: center; width: 22px; height: 22px; color: var(--ink-faint); border: 1px solid var(--line); font: 400 9px/1 var(--font-mono); }
+.active .cortex-nav-index { color: var(--red); border-color: var(--red-deep); }
+.cortex-nav-note { margin: 24px 16px; padding-top: 20px; border-top: 1px solid var(--line); }
+.cortex-node-mark { display: block; margin-bottom: 12px; color: var(--red); font: 20px/1 var(--font-mono); }
+.cortex-nav-note strong { color: var(--ink-faint); font: 500 9px/16px var(--font-display); letter-spacing: .1em; }
+.cortex-nav-note p { color: var(--ink-muted); font: 400 12px/20px var(--font-sans); margin: 8px 0 0; }
+.sidebar-foot { margin-top: auto; padding: 16px; border-color: var(--line); font-size: 11px; }
+.sidebar-foot .cortex-nav-label { padding: 0; margin: 0 0 8px; }
+.cortex-operator { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font: 500 13px/20px var(--font-sans); }
+.cortex-session-detail { display: flex; justify-content: space-between; margin: 8px 0; color: var(--ink-faint); font: 400 9px/16px var(--font-mono); }
+.sidebar-logout { margin-top: 4px; }
+.main { min-width: 0; background: var(--void); scrollbar-color: var(--line-strong) var(--surface); }
+.route { padding: 24px 24px 48px; animation: none; }
+.route-head { align-items: start; margin-bottom: 24px; padding-bottom: 20px; border-color: var(--line); }
+.route-uri { color: var(--red); font: 500 10px/16px var(--font-display); letter-spacing: .14em; }
+.route-title { margin: 6px 0 0; color: var(--ink); font: 600 clamp(28px, 3vw, 40px)/1.1 var(--font-display); letter-spacing: .02em; }
+.route-desc { margin: 10px 0 0; color: var(--ink-muted); font: 400 14px/20px var(--font-sans); }
+.toast { max-width: 100%; color: var(--ink); border-color: var(--line-strong); background: var(--surface-raised); white-space: normal; overflow-wrap: anywhere; font: 12px/18px var(--font-mono); }
+.route-xn { background: var(--void); animation: none; }
+.route-xn::before, .route-xn-glitch { display: none; }
+.route-xn-title { color: var(--ink); animation: none; }
+.route-xn-buffer { color: var(--ink-muted); font-size: 14px; }
+.route-xn-bar { height: 4px; border: 0; background: var(--line); }
+.route-xn-bar > span { box-shadow: none; background: var(--red); }
+
+/* Flat framed surfaces and controls from the supplied component system. */
+.panel { position: relative; padding: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; }
+.panel::before, .panel::after { position: absolute; content: ''; width: 9px; height: 9px; border: solid var(--red); pointer-events: none; }
+.panel::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.panel::after { right: -1px; bottom: -1px; border-width: 0 2px 2px 0; }
+.panel-kicker, .section-label { color: var(--red); font: 600 14px/20px var(--font-display); letter-spacing: .1em; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: transparent; color: var(--ink); font: 600 12px/18px var(--font-display); letter-spacing: .08em; text-decoration: none; box-shadow: none; }
+.btn:hover, .btn:active { background: var(--red-tint); border-color: var(--red); color: var(--ink); transform: none; text-decoration: none; }
+.btn-primary, .btn-solid { border-color: var(--red-deep); background: var(--red-deep); color: var(--on-red); }
+.btn-primary:hover, .btn-solid:hover { border-color: var(--red); background: var(--red-deep); color: var(--on-red); filter: brightness(1.12); }
+.btn:disabled { opacity: .45; }
+.btn:disabled:hover { background: var(--surface); color: var(--ink-muted); border-color: var(--line); }
+.btn-danger, .btn-danger:hover { color: var(--loss); border-color: var(--loss); background: transparent; }
+.field { color: var(--ink-muted); font: 500 11px/16px var(--font-display); letter-spacing: .1em; }
+.field input, .field textarea, .field select { border: 1px solid var(--line-strong); border-radius: 2px; color: var(--ink); background: var(--surface-raised); padding: 10px 12px; font: 400 13px/20px var(--font-sans); letter-spacing: normal; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--red); outline: 2px solid var(--red); outline-offset: 2px; }
+.stat { box-shadow: none; animation: none; }
+.stat-value { font-family: var(--font-mono); }
+.grid { gap: 16px; }
+.cortex-eyebrow { color: var(--red); font: 500 11px/16px var(--font-display); letter-spacing: .16em; }
+.error-terminal { background: var(--void); color: var(--ink); font-family: var(--font-sans); }
+.error-terminal .route { max-width: 760px; margin: 8vh auto; }
+.route.brain .brain-tabs { overflow-y: hidden; scrollbar-width: none; }
+
+/* Discord is still the sole authentication method. */
+.login { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: 0; padding: 0; background: var(--void); animation: none; }
+.cortex-login-intro { display: flex; flex-direction: column; align-self: stretch; min-height: 100%; padding: 36px 48px; border-right: 1px solid var(--line); background: var(--surface); }
+.cortex-login-intro .cortex-brand { font-size: 30px; }
+.cortex-login-copy { margin: auto 0; padding: 60px 0 36px; }
+.cortex-login-copy h1 { margin: 16px 0; color: var(--ink); font: 600 clamp(36px, 4.8vw, 70px)/1.04 var(--font-display); letter-spacing: -.02em; }
+.cortex-login-copy p { margin: 0; color: var(--ink-muted); font: 400 16px/24px var(--font-sans); }
+.cortex-login-art { display: block; width: min(100%, 480px); height: auto; margin: 16px 0 0; object-fit: contain; }
+.cortex-login-markets { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--ink-muted); font: 400 10px/18px var(--font-mono); }
+.cortex-login-markets > span { color: var(--red); font-size: 7px; }
+.cortex-login-footer { color: var(--ink-faint); font: 400 9px/16px var(--font-mono); letter-spacing: .1em; }
+.login-card { width: auto; max-width: 480px; margin: 48px auto; padding: 32px; border-color: var(--line); background: var(--surface); box-shadow: none; }
+.login-card::before, .login-card::after { content: ''; position: absolute; width: 12px; height: 12px; border: solid var(--red); pointer-events: none; }
+.login-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.login-card::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+.login-card > .cortex-theme { display: flex; width: fit-content; margin: 0 0 40px auto; }
+.login-card h2 { margin: 12px 0 16px; font: 600 40px/44px var(--font-display); letter-spacing: .02em; }
+.login-sub { margin-bottom: 28px; color: var(--ink-muted); font: 400 14px/20px var(--font-sans); letter-spacing: normal; }
+.login-prompt { color: var(--ink-faint); font: 500 10px/16px var(--font-display); letter-spacing: .14em; }
+.login-form { gap: 12px; }
+.btn-login { width: 100%; min-height: 46px; margin-top: 0; }
+.login-status { color: var(--ink-muted); font: 400 12px/18px var(--font-mono); letter-spacing: normal; }
+.login-fineprint, .login-fallback { font: 400 12px/18px var(--font-sans); letter-spacing: normal; }
+.login-err { font-size: 13px; }
+.auth-granted span { animation: none; }
+
+@media (max-width: 1100px) {
+  .statusbar { padding: 0 16px; gap: 12px; }
+  .cortex-header-controls { gap: 16px; }
+  .statusbar > .cortex-preview { max-width: 110px; font-size: 8px; line-height: 12px; }
+  .cortex-login-intro { padding: 32px; }
+  .login-card { max-width: calc(100% - 48px); padding: 28px; }
+}
+@media (max-width: 900px) {
+  .navtoggle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; font: 22px/1 var(--font-mono); color: var(--red); border-color: var(--line); }
+  .sidebar { position: absolute; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform .18s ease; width: 228px; }
+  .body.nav-open .sidebar { transform: translateX(0); }
+  .body.nav-open .scrim { display: block; }
+  .route { padding: 20px 16px 40px; }
+  .cortex-market-strip { padding: 0 16px; gap: 20px; }
+  .cortex-login-copy h1 { font-size: 44px; }
+  .login-card h2 { font-size: 34px; line-height: 38px; }
+}
+@media (max-width: 620px) {
+  .statusbar { height: 60px; min-height: 60px; gap: 10px; padding: 0 12px; }
+  .cortex-brand { font-size: 23px; }
+  .cortex-brand > small { font-size: 7px; }
+  .statusbar-session, .statusbar-clock { display: none; }
+  .cortex-header-controls { gap: 0; }
+  .cortex-theme button { padding: 3px 7px; font-size: 9px; }
+  .statusbar > .cortex-preview { position: absolute; bottom: 4px; right: 12px; max-width: none; font-size: 6px; line-height: 8px; }
+  .statusbar { position: relative; }
+  .cortex-strip-status { padding-right: 12px; }
+  .route-title { font-size: 30px; }
+  .route-head { margin-bottom: 20px; }
+  .login { display: flex; flex-direction: column; align-items: stretch; justify-content: start; }
+  .cortex-login-intro { padding: 24px; min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .cortex-login-copy { padding: 32px 0 0; }
+  .cortex-login-copy h1 { font-size: 38px; }
+  .cortex-login-copy p { font-size: 14px; line-height: 20px; }
+  .cortex-login-art { width: 200px; height: 110px; object-fit: cover; margin: 12px 0; }
+  .cortex-login-footer { display: none; }
+  .login-card { max-width: none; width: calc(100% - 32px); margin: 24px 16px; padding: 24px; }
+  .login-card > .cortex-theme { margin-bottom: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .btn { transition: none; }
+  .route-xn-bar > span, .login-cursor { animation: none; }
+}
+@media (max-height: 850px) { .cortex-nav-note { display: none; } }

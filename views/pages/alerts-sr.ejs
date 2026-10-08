@@ -1,4 +1,12 @@
-<section class="route" data-route-view data-route-key="<%= page.route.key %>">
+<section class="route cortex-alerts" data-route-view data-route-key="<%= page.route.key %>">
   <%- include("../partials/route-head", { page }) %>
-  <div class="toolbar"><button class="btn btn-primary" type="button" data-alert-standby>+ NEW LEVEL</button></div><div class="section-label">&gt; SUPPORT / RESISTANCE LEVELS</div><%- include("../partials/empty-state", { lines: ["[ NO LEVELS DEFINED ]", "ALERT ENGINE STANDBY :: AWAITING FIRST LEVEL"] }) %>
+  <div class="cortex-kpis" aria-label="Price-level alert status">
+    <article class="cortex-kpi"><span>WATCHED LEVELS</span><strong>0</strong><small>No levels configured</small></article>
+    <article class="cortex-kpi"><span>PRICE MONITOR</span><strong class="cortex-kpi-word">Standby</strong><small>No connected price source</small></article>
+    <article class="cortex-kpi"><span>EXECUTION</span><strong class="cortex-kpi-word">Review</strong><small>Alerts do not submit orders</small></article>
+  </div>
+  <section class="cortex-panel" aria-labelledby="sr-levels-title">
+    <header class="cortex-panel-head"><h2 id="sr-levels-title">SUPPORT &amp; RESISTANCE</h2><button class="btn" type="button" data-alert-standby>Inspect level setup</button></header>
+    <div class="cortex-empty-state"><span class="cortex-empty-glyph" aria-hidden="true">≡</span><h3>No price levels defined</h3><p>A connected alert engine will be needed to monitor support, resistance, and price reactions. No automated level monitoring is running.</p><a class="btn" href="/brain" data-nav-link>Open research workspace</a></div>
+  </section>
 </section>

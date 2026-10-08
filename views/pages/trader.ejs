@@ -1,0 +1,127 @@
+<section class="route trader" data-route-view data-route-key="<%= page.route.key %>" data-trader>
+  <%- include("../partials/route-head", { page }) %>
+
+  <section class="cortex-panel cortex-page-intro" aria-label="Analysis workflow">
+    <div><span class="cortex-eyebrow">RESEARCH STUDIO</span><h2>From context to a reviewed thesis.</h2><p>Choose your model, supply dated observations, and inspect the risk behind every proposal.</p></div>
+    <a class="btn" href="/brain?view=robinhood" data-nav-link>Open Robinhood ↗</a>
+  </section>
+
+  <p class="trader-session" data-trader-cost-lock role="status">Paid AI calls locked. Offline demo and checks are available.</p>
+
+  <div class="trader-workspace">
+    <section class="panel cortex-panel trader-input" aria-labelledby="trader-input-title">
+      <header class="trader-panel-head cortex-panel-head">
+        <h2 id="trader-input-title"><span class="trader-section-number">01</span> MISSION INPUT</h2>
+        <span class="trader-micro">YOUR CONTEXT</span>
+      </header>
+
+      <form data-trader-form>
+        <fieldset class="trader-provider-group">
+          <legend>REASONING PROVIDER</legend>
+          <div class="trader-providers">
+            <label class="trader-provider">
+              <input type="radio" name="provider" value="gemini" checked>
+              <span>Gemini<small>GOOGLE</small></span>
+            </label>
+            <label class="trader-provider">
+              <input type="radio" name="provider" value="openai">
+              <span>OpenAI<small>OPENAI</small></span>
+            </label>
+            <label class="trader-provider">
+              <input type="radio" name="provider" value="claude">
+              <span>Claude<small>ANTHROPIC</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="trader-provider-info">
+          <div><span class="trader-micro">MODEL</span><span data-trader-model>Checking configuration…</span></div>
+          <p data-trader-provider-status>Checking provider availability…</p>
+          <button type="button" class="trader-text-button" data-trader-refresh hidden>Retry connection</button>
+        </div>
+
+        <div class="trader-form-grid">
+          <label class="field" for="trader-symbol">SYMBOL
+            <input id="trader-symbol" name="symbol" value="SPY" maxlength="24" pattern="[A-Za-z0-9^\/][A-Za-z0-9._:\/=^\-]{0,23}" required spellcheck="false" autocomplete="off" title="Use 1 to 24 standard ticker characters, such as SPY or BTC/USD.">
+          </label>
+          <label class="field" for="trader-timeframe">TIMEFRAME
+            <select id="trader-timeframe" name="timeframe">
+              <option value="1m">1 minute</option>
+              <option value="5m">5 minutes</option>
+              <option value="15m" selected>15 minutes</option>
+              <option value="1h">1 hour</option>
+              <option value="4h">4 hours</option>
+              <option value="1d">1 day</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field trader-context-label" for="trader-context">MARKET CONTEXT
+          <textarea id="trader-context" name="context" rows="7" minlength="40" maxlength="12000" required aria-describedby="trader-context-help" placeholder="Paste dated market observations or OHLC data. Include price levels, structure, session, and the setup you want reviewed."></textarea>
+        </label>
+        <p class="trader-help" id="trader-context-help">At least 40 characters. This workspace has no live price feed. Your context is sent to the selected provider.</p>
+
+        <fieldset class="trader-risk-inputs">
+          <legend>RISK PARAMETERS <span>USD</span></legend>
+          <div class="trader-form-grid">
+            <label class="field" for="trader-account">ACCOUNT SIZE ($)
+              <input id="trader-account" name="accountSize" type="number" min="0.01" max="1000000000" step="0.01" value="50000" required>
+            </label>
+            <label class="field" for="trader-risk">RISK PER IDEA (%)
+              <input id="trader-risk" name="riskPercent" type="number" min="0.01" max="5" step="0.01" value="0.5" required>
+            </label>
+            <label class="field" for="trader-point">VALUE PER POINT ($)
+              <input id="trader-point" name="pointValue" type="number" min="0.000001" max="1000000" step="any" value="1" required aria-describedby="trader-point-help">
+            </label>
+            <label class="field" for="trader-reward">MIN. REWARD / RISK
+              <input id="trader-reward" name="minRewardRisk" type="number" min="1" max="20" step="0.1" value="2" required>
+            </label>
+          </div>
+          <p class="trader-help" id="trader-point-help">Dollar value of a 1.0 price move per share, unit, or contract. Verify for your instrument.</p>
+        </fieldset>
+
+        <div class="trader-actions">
+          <button class="btn btn-solid" type="submit" data-trader-submit disabled>Analyze context <span aria-hidden="true">↗</span></button>
+          <button class="btn" type="button" data-trader-demo>Run offline demo</button>
+        </div>
+        <p class="trader-demo-help">Demo uses fictional prices with your risk settings. No API key required.</p>
+        <p class="trader-feedback" role="status" aria-live="polite" data-trader-feedback>Checking provider configuration…</p>
+      </form>
+    </section>
+
+    <div class="trader-output-column">
+      <section class="panel cortex-panel trader-output" aria-labelledby="trader-output-title">
+        <header class="trader-panel-head cortex-panel-head">
+          <h2 id="trader-output-title"><span class="trader-section-number">02</span> RESEARCH BRIEF</h2>
+          <span class="trader-badge" data-trader-output-state>AWAITING INPUT</span>
+        </header>
+
+        <div class="trader-empty" data-trader-empty>
+          <div class="trader-empty-glyph" aria-hidden="true"><span>◇</span></div>
+          <p class="trader-micro">CONTEXT → THESIS → RISK → REVIEW</p>
+          <h3>Every thesis needs evidence.</h3>
+          <p>Give the agent your market context. Review its thesis, proposed levels, and calculated risk in one place.</p>
+          <div class="trader-empty-stages" aria-label="Analysis workflow">
+            <span><b>01</b> Read context</span>
+            <span><b>02</b> Build thesis</span>
+            <span><b>03</b> Check risk</span>
+            <span><b>04</b> Review plan</span>
+          </div>
+          <p class="trader-empty-note">Every result is a proposal for your review.<br>This workspace does not place trades.</p>
+        </div>
+
+        <div class="trader-result" data-trader-result hidden></div>
+      </section>
+
+      <section class="panel cortex-panel trader-history" aria-labelledby="trader-history-title">
+        <header class="trader-panel-head cortex-panel-head">
+          <h2 id="trader-history-title"><span class="trader-section-number">03</span> RECENT RUNS</h2>
+          <span class="trader-micro" data-trader-history-count>0 RUNS</span>
+        </header>
+        <p class="trader-history-empty" data-trader-history-empty>Your analysis history will appear here.</p>
+        <div class="trader-history-list" data-trader-history></div>
+        <p class="trader-history-note">Last 10 runs. Clears on server restart or after inactivity.</p>
+      </section>
+    </div>
+  </div>
+</section>

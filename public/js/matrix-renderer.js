@@ -1,4 +1,4 @@
-const MATRIX_CHARACTERS = "01\u30a2\u30ab\u30b5\u30bf\u30ca\u30cf\u30de\u30e4\u30e9\u30efOMENSITE";
+const MATRIX_CHARACTERS = "01";
 const CHARACTER_SIZE = 14;
 
 export function startMatrix(canvas) {
@@ -16,12 +16,12 @@ export function startMatrix(canvas) {
   };
 
   const draw = () => {
-    context.fillStyle = "rgba(8,12,10,0.15)";
+    context.fillStyle = "rgba(8,4,10,0.15)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.font = "14px monospace";
     for (let index = 0; index < columns; index += 1) {
       const character = MATRIX_CHARACTERS[(Math.random() * MATRIX_CHARACTERS.length) | 0];
-      context.fillStyle = Math.random() > 0.94 ? "#dfffe8" : "rgba(60,230,130,0.85)";
+      context.fillStyle = Math.random() > 0.94 ? "#f7eaeb" : "rgba(255,46,67,0.85)";
       context.fillText(character, index * CHARACTER_SIZE, drops[index] * CHARACTER_SIZE);
       drops[index] = drops[index] * CHARACTER_SIZE > canvas.height && Math.random() > 0.975 ? 0 : drops[index] + 1;
     }

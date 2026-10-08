@@ -1,22 +1,15 @@
 <aside class="sidebar" data-sidebar>
-  <pre class="sidebar-sphere" data-sphere data-cols="26" data-rows="11" aria-hidden="true">       ·············
-    ···················
-  ······ OMENSITE ······
-    ···················
-       ·············</pre>
-  <div class="sidebar-brand">OMENSITE</div>
-  <div class="sidebar-prompt">root@omensite:~$</div>
-
-  <nav aria-label="Terminal navigation">
-    <% page.navigation.forEach((item, index) => { %>
-      <a class="navitem<%= item.key === page.route.key || (item.key === "journal" && ["journal-new", "journal-public"].includes(page.route.key)) ? " active" : "" %>" href="<%= item.path %>" data-nav-link data-nav-key="<%= item.key %>"<% if (item.key === page.route.key) { %> aria-current="page"<% } %>><%= index === page.navigation.length - 1 ? "`-- " : "|-- " %><%= item.uri === "alerts/support-resistance" ? "alerts/s-r" : item.uri %></a>
+  <a class="cortex-brand workspace-brand" href="/home" data-nav-link aria-label="Synergy Module home">SYNERGY<span>MODULE</span><small>AGENTIC TRADING</small></a>
+  <nav aria-label="Workspace navigation">
+    <% const labels = {home: 'Overview', brain: 'Brain', research: 'Research', accounts: 'Accounts', journal: 'Journal', settings: 'Settings'}; %>
+    <% page.navigation.forEach((item, index) => { const active = item.key === page.route.key || (item.key === 'journal' && ['journal-new', 'journal-public'].includes(page.route.key)) || (item.key === 'research' && page.route.key === 'market-news') || (item.key === 'settings' && page.route.key === 'admin'); %>
+      <a class="navitem<%= active ? ' active' : '' %>" href="<%= item.path %>" data-nav-link data-nav-key="<%= item.key %>" data-required-capability="<%= item.capability %>"<% if (active) { %> aria-current="page"<% } %>><span class="cortex-nav-index" aria-hidden="true"><%= ['⌂','◈','⌕','▣','▤','⚙'][index] %></span><span><%= labels[item.key] %></span></a>
     <% }) %>
   </nav>
-
   <div class="sidebar-foot">
-    <div>UPTIME <span data-uptime>0m 0s</span></div>
-    <div>ALERTS ARMED 0</div>
-    <div>SYNC: <span class="standby">STANDBY</span></div>
-    <button class="btn btn-danger sidebar-logout" type="button" data-logout>[ LOGOUT ]</button>
+    <% if (typeof designPreview !== 'undefined' && designPreview) { %><span class="cortex-preview">ISOLATED DESIGN PREVIEW</span><% } %>
+    <div class="cortex-theme" role="group" aria-label="Color theme"><button type="button" data-color-theme="core" aria-pressed="true">CORE</button><button type="button" data-color-theme="daylight" aria-pressed="false">DAYLIGHT</button></div>
+    <span class="cortex-nav-label">SIGNED IN WITH DISCORD</span><strong class="cortex-operator"><%= page.operator?.displayName ?? page.operator?.username ?? 'Operator' %></strong>
+    <button class="btn sidebar-logout" type="button" data-logout>Sign out ↗</button>
   </div>
 </aside>
