@@ -1,0 +1,33 @@
+# Import through StayLively server Settings; fill in private values there.
+# Keep populated configuration out of Git and Docker images.
+APP_ENVIRONMENT=beta
+AUTH_MODE=discord
+SESSION_SECRET=
+# Preserve the previous deployment's stable encryption key, when configured.
+# If blank, saved provider credentials use SESSION_SECRET instead.
+INTEGRATIONS_ENCRYPTION_KEY=
+DATABASE_SSL=disable
+APP_ALLOW_MIGRATIONS=false
+
+# Connect the existing PostgreSQL database through StayLively's database panel.
+# The connection supplies DATABASE_URL; do not overwrite its managed value.
+
+# Default role-based admission requires all five Discord role IDs.
+# Existing beta guild preview deployments may use beta-guild instead;
+# beta-guild requires APP_ENVIRONMENT=beta and admits every guild member.
+DISCORD_ACCESS_POLICY=roles
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_GUILD_ID=
+DISCORD_REDIRECT_URI=https://synergymodule.dev/auth/discord/callback
+DISCORD_ROLE_DEVELOPER_ID=
+DISCORD_ROLE_ADMIN_ID=
+DISCORD_ROLE_OS_ID=
+DISCORD_ROLE_INDICATORS_ID=
+DISCORD_ROLE_JOURNAL_ID=
+DISCORD_ROLE_REFRESH_MINUTES=5
+
+# Preserve this key if restoring existing encrypted Robinhood tokens.
+ROBINHOOD_TOKEN_ENCRYPTION_KEY=
+ROBINHOOD_LIVE_TRADING_ENABLED=false
+TRADER_PAID_AI_ENABLED=false
