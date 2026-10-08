@@ -12,20 +12,20 @@ APP_ALLOW_MIGRATIONS=false
 # Connect the existing PostgreSQL database through StayLively's database panel.
 # The connection supplies DATABASE_URL; do not overwrite its managed value.
 
-# Default role-based admission requires all five Discord role IDs.
-# Existing beta guild preview deployments may use beta-guild instead;
-# beta-guild requires APP_ENVIRONMENT=beta and admits every guild member.
-DISCORD_ACCESS_POLICY=roles
+# Only SynergyModule role holders in the SynergyModule server can enter.
+# beta-role preserves beta workspace permissions and requires the role below.
+DISCORD_ACCESS_POLICY=beta-role
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
-DISCORD_GUILD_ID=
+DISCORD_GUILD_ID=1554634103997861889
+DISCORD_REQUIRED_ROLE_ID=1554903899343814857
 DISCORD_REDIRECT_URI=https://synergymodule.dev/auth/discord/callback
 DISCORD_ROLE_DEVELOPER_ID=
 DISCORD_ROLE_ADMIN_ID=
 DISCORD_ROLE_OS_ID=
 DISCORD_ROLE_INDICATORS_ID=
 DISCORD_ROLE_JOURNAL_ID=
-DISCORD_ROLE_REFRESH_MINUTES=5
+DISCORD_ROLE_REFRESH_MINUTES=1
 
 # Preserve this key if restoring existing encrypted Robinhood tokens.
 ROBINHOOD_TOKEN_ENCRYPTION_KEY=

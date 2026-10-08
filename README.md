@@ -142,6 +142,10 @@ Users authorize only the `identify` and `guilds.members.read` OAuth2 scopes. Syn
 
 `DISCORD_ACCESS_POLICY=roles` is the default and requires the five role IDs. An existing beta deployment that admits every guild member can explicitly select `DISCORD_ACCESS_POLICY=beta-guild` with `APP_ENVIRONMENT=beta`. This preserves the former gateway's full preview access, including Admin, after a successful live Discord membership check; no role IDs are needed. Membership is rechecked at least every five minutes, and removed members or failed Discord checks lose access. This policy is rejected outside the beta environment.
 
+To require one specific role before any permission mapping, set `DISCORD_REQUIRED_ROLE_ID`. Developer and Admin roles cannot bypass this requirement. Existing sessions without a matching guild/role/policy grant must sign in again. Role checks still fail closed when Discord is unavailable.
+
+The Synergy Module beta deployment uses `DISCORD_ACCESS_POLICY=beta-role`, `DISCORD_GUILD_ID=1554634103997861889`, `DISCORD_REQUIRED_ROLE_ID=1554903899343814857`, and `DISCORD_ROLE_REFRESH_MINUTES=1`. This admits only SynergyModule role holders in that server, preserving the existing beta workspace permissions. The policy requires `APP_ENVIRONMENT=beta` and a nonblank role ID; missing configuration stops startup. Role removal is enforced on the next protected request after the one-minute snapshot expires. Login, OAuth callbacks, static assets, and the minimal readiness endpoint remain public so sign-in and deployment can work; workspace pages and APIs require admission.
+
 Role behavior is modular:
 
 - `Developer` and `Admin` grant base access, Indicators, Journal, and Admin capabilities.

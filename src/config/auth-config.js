@@ -27,12 +27,19 @@ function readRoleRefreshMs(env) {
 }
 
 function readDiscordConfig(env) {
-  const accessPolicy = readValue(env, "DISCORD_ACCESS_POLICY") || "roles";
-  if (!["roles", "beta-guild"].includes(accessPolicy)) {
-    throw new Error("DISCORD_ACCESS_POLICY must be roles or beta-guild");
+  const requiredRoleId = readValue(env, "DISCORD_REQUIRED_ROLE_ID");
+  if (requiredRoleId && !/^\d{17,20}$/.test(requiredRoleId)) {
+    throw new Error("DISCORD_REQUIRED_ROLE_ID must be a Discord role ID");
   }
-  if (accessPolicy === "beta-guild" && readValue(env, "APP_ENVIRONMENT") !== "beta") {
-    throw new Error("DISCORD_ACCESS_POLICY=beta-guild is only allowed with APP_ENVIRONMENT=beta");
+  const accessPolicy = readValue(env, "DISCORD_ACCESS_POLICY") || "roles";
+  if (!["roles", "beta-guild", "beta-role"].includes(accessPolicy)) {
+    throw new Error("DISCORD_ACCESS_POLICY must be roles, beta-guild, or beta-role");
+  }
+  if (accessPolicy.startsWith("beta-") && readValue(env, "APP_ENVIRONMENT") !== "beta") {
+    throw new Error(`DISCORD_ACCESS_POLICY=${accessPolicy} is only allowed with APP_ENVIRONMENT=beta`);
+  }
+  if (accessPolicy === "beta-role" && !requiredRoleId) {
+    throw new Error("DISCORD_REQUIRED_ROLE_ID is required for DISCORD_ACCESS_POLICY=beta-role");
   }
   const requiredKeys = accessPolicy === "roles" ? [...DISCORD_KEYS, ...DISCORD_ROLE_KEYS] : DISCORD_KEYS;
   const missingKeys = requiredKeys.filter((key) => !readValue(env, key));
@@ -46,6 +53,7 @@ function readDiscordConfig(env) {
     clientSecret: readValue(env, "DISCORD_CLIENT_SECRET"),
     redirectUri: readValue(env, "DISCORD_REDIRECT_URI"),
     guildId: readValue(env, "DISCORD_GUILD_ID"),
+    ...(requiredRoleId ? { requiredRoleId } : {}),
     roleIds: {
       [ROLES.DEVELOPER]: readValue(env, "DISCORD_ROLE_DEVELOPER_ID"),
       [ROLES.ADMIN]: readValue(env, "DISCORD_ROLE_ADMIN_ID"),
@@ -102,6 +110,7 @@ export function normalizeAuthConfig(config, {
       DISCORD_CLIENT_SECRET: discord.clientSecret,
       DISCORD_REDIRECT_URI: discord.redirectUri,
       DISCORD_GUILD_ID: discord.guildId,
+      DISCORD_REQUIRED_ROLE_ID: discord.requiredRoleId,
       DISCORD_ROLE_DEVELOPER_ID: discord.roleIds?.[ROLES.DEVELOPER],
       DISCORD_ROLE_ADMIN_ID: discord.roleIds?.[ROLES.ADMIN],
       DISCORD_ROLE_OS_ID: discord.roleIds?.[ROLES.OS],

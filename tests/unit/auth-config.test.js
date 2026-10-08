@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readAuthConfig } from "../../src/config/auth-config.js";
+import { readAuthConfig, normalizeAuthConfig } from "../../src/config/auth-config.js";
 
 const discordEnvironment = {
   AUTH_MODE: "discord",
@@ -125,4 +125,17 @@ test("beta guild preview requires explicit beta selection and still requires Dis
   assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_CLIENT_SECRET: "" } }), /DISCORD_CLIENT_SECRET/);
   assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_ACCESS_POLICY: "roles" } }), /DISCORD_ROLE_DEVELOPER_ID/);
   assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_ACCESS_POLICY: "public" } }), /DISCORD_ACCESS_POLICY must be/);
+});
+
+test("role-gated beta requires a valid role and retains it through programmatic normalization", () => {
+  const env = { ...discordEnvironment, APP_ENVIRONMENT: "beta", DISCORD_ACCESS_POLICY: "beta-role",
+    DISCORD_GUILD_ID: "1554634103997861889", DISCORD_REQUIRED_ROLE_ID: " 1554903899343814857 ", DISCORD_ROLE_REFRESH_MINUTES: "1" };
+  const config = readAuthConfig({ env, nodeEnvironment: "production" });
+  assert.equal(config.discord.requiredRoleId, "1554903899343814857");
+  assert.equal(config.roleRefreshMs, 60_000);
+  assert.deepEqual(normalizeAuthConfig(config, { appEnvironment: "beta", nodeEnvironment: "production" }), config);
+  for (const invalid of ["", "SynergyModule", "1554903899343814857,other"]) {
+    assert.throws(() => readAuthConfig({ env: { ...env, DISCORD_REQUIRED_ROLE_ID: invalid } }), /DISCORD_REQUIRED_ROLE_ID/);
+  }
+  assert.throws(() => readAuthConfig({ env: { ...env, APP_ENVIRONMENT: "production" } }), /only allowed with APP_ENVIRONMENT=beta/);
 });

@@ -24,6 +24,8 @@ export function createAuthService({
   mode = "discord",
   discordProvider,
   discordAccessPolicy = "roles",
+  discordGuildId,
+  requiredDiscordRoleId,
   rolePolicy = createRolePolicy({ roleIds: {} }),
   userRepository = { upsert: (record) => record },
   banRepository = { isBanned: () => false },
@@ -32,6 +34,9 @@ export function createAuthService({
   if (mode !== "discord") {
     throw new Error("Discord authentication is required; AUTH_MODE must be discord");
   }
+  if (requiredDiscordRoleId && !discordGuildId) throw new Error("A required Discord role needs a guild ID");
+  if (discordAccessPolicy === "beta-role" && !requiredDiscordRoleId) throw new Error("The beta-role policy requires a Discord role ID");
+  const requiredRoleGrant = requiredDiscordRoleId ? `${discordGuildId}:${requiredDiscordRoleId}:${discordAccessPolicy}` : null;
   function buildOperator({ identity, authMode, roles, capabilities, discordAuth, rolesSyncedAt, lastSignedInAt }) {
     return {
       id: identity.id,
@@ -42,6 +47,7 @@ export function createAuthService({
       roles,
       capabilities,
       rolesSyncedAt: rolesSyncedAt ?? toIsoTimestamp(now()),
+      ...(requiredRoleGrant ? { requiredRoleGrant } : {}),
       ...(lastSignedInAt ? { lastSignedInAt } : {}),
       discordAuth,
     };
@@ -49,7 +55,7 @@ export function createAuthService({
 
   async function persistSafeSnapshot(operator) {
     const { discordAuth: _discordAuth, ...snapshot } = operator;
-    await userRepository.upsert(snapshot);
+    await userRepository.upsert({ ...snapshot, requiredRoleGrant: requiredRoleGrant ?? null });
   }
 
   async function rejectIfBanned(id) {
@@ -69,14 +75,23 @@ export function createAuthService({
       throw createAuthError("ACCESS_REVOKED", "Sign in through Discord to continue");
     }
     await rejectIfBanned(operator.id);
+    // A session admitted under another guild/role policy must sign in again,
+    // even when its old role snapshot is still fresh or privileged.
+    if (requiredRoleGrant && operator.requiredRoleGrant !== requiredRoleGrant) {
+      throw createAuthError("ACCESS_REVOKED", "Verify the required Discord role to continue");
+    }
     rejectIfNoBaseAccess(operator);
     return operator;
   }
 
   function discordAccess(member) {
+    // This gate precedes every permission mapping, including beta preview and Admin.
+    if (requiredDiscordRoleId && (!Array.isArray(member?.roles) || !member.roles.includes(requiredDiscordRoleId))) {
+      throw createAuthError("ACCESS_REVOKED", "The required Discord role is not present");
+    }
     // This opt-in beta policy preserves the former gateway's full guild preview.
     // Only call it after Discord's live member endpoint confirms membership.
-    return discordAccessPolicy === "beta-guild"
+    return ["beta-guild", "beta-role"].includes(discordAccessPolicy)
       ? rolePolicy.fromRoleNames(["Developer"])
       : rolePolicy.fromDiscordRoleIds(member.roles);
   }

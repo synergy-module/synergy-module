@@ -96,7 +96,7 @@ test("journal entries and identity snapshots persist with account isolation and 
   let time = Date.parse("2026-09-24T12:00:00Z");
   const { open } = await fixture(t, { now: () => new Date(time) });
   let runtime = open();
-  await runtime.userRepository.upsert({ id: "a", username: "trader", roles: ["OS"], discordAuth: { accessToken: "must-not-copy" } });
+  await runtime.userRepository.upsert({ id: "a", username: "trader", roles: ["OS"], requiredRoleGrant: "guild:role:beta-role", discordAuth: { accessToken: "must-not-copy" } });
   time += 1000;
   const identity = await runtime.userRepository.upsert({ id: "a", displayName: "Trader", roles: ["OS", "Journal"] });
   const entry = { id: "entry-1", direction: "long", entryPrice: "100", exitPrice: "102", notes: "Saved note", createdAt: new Date(time).toISOString() };
@@ -105,6 +105,7 @@ test("journal entries and identity snapshots persist with account isolation and 
   await runtime.close();
   runtime = open();
   assert.equal((await runtime.userRepository.findById("a")).username, "trader");
+  assert.equal((await runtime.userRepository.findById("a")).requiredRoleGrant, "guild:role:beta-role");
   assert.equal((await runtime.userRepository.findById("a")).firstSeenAt, "2026-09-24T12:00:00.000Z");
   assert.equal(identity.lastSeenAt, "2026-09-24T12:00:01.000Z");
   assert.doesNotMatch(JSON.stringify(await runtime.userRepository.list()), /must-not-copy|discordAuth/);

@@ -4,7 +4,7 @@ const iso = (value) => new Date(value).toISOString();
 
 // Identity snapshots never duplicate the OAuth credentials held in the session store.
 function safeIdentity(input) {
-  const fields = ["username", "displayName", "avatarUrl", "authMode", "rolesSyncedAt", "lastSignedInAt"];
+  const fields = ["username", "displayName", "avatarUrl", "authMode", "rolesSyncedAt", "lastSignedInAt", "requiredRoleGrant"];
   return {
     ...Object.fromEntries(fields.filter((name) => input[name] !== undefined).map((name) => [name, input[name]])),
     id: String(input.id), roles: [...(input.roles ?? [])], capabilities: [...(input.capabilities ?? [])],

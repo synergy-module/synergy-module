@@ -11,7 +11,7 @@ const unpack = (row) => row ? JSON.parse(row.payload) : null;
 
 // Keep identity snapshots separate from the OAuth credentials in the session store.
 function safeIdentity(input) {
-  const fields = ["username", "displayName", "avatarUrl", "authMode", "rolesSyncedAt", "lastSignedInAt"];
+  const fields = ["username", "displayName", "avatarUrl", "authMode", "rolesSyncedAt", "lastSignedInAt", "requiredRoleGrant"];
   return {
     ...Object.fromEntries(fields.filter((name) => input[name] !== undefined).map((name) => [name, input[name]])),
     id: String(input.id), roles: [...(input.roles ?? [])], capabilities: [...(input.capabilities ?? [])],
