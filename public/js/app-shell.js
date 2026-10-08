@@ -63,7 +63,7 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     disposeActiveRoute();
     disposeActiveRoute = () => {};
     documentRef.querySelector("[data-app-shell]").dataset.activeRoute = route.key;
-    setActiveNavigation(documentRef, route.key === "market-news" ? "research" : route.key === "admin" ? "settings" : route.key);
+    setActiveNavigation(documentRef, route.key === "market-news" ? "research" : route.key);
     drawer.close();
     const journalCount = hydrateJournalCount(root, service);
     journalCount?.catch?.(() => showTerminalToast(documentRef, "JOURNAL DATA UNAVAILABLE"));
