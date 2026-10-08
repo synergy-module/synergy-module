@@ -36,7 +36,7 @@ function canvasHarness({ reducedMotion = false } = {}) {
       window.cancelAnimationFrame = (id) => frames.delete(id);
       window.ResizeObserver = class { observe() {} disconnect() { disconnected.push("resize"); } };
       window.IntersectionObserver = class { constructor(callback) { intersection = callback; } observe() {} disconnect() { disconnected.push("intersection"); } };
-      window.matchMedia = () => ({ matches: reducedMotion, addEventListener(type, callback) { motionChange = callback; }, removeEventListener() { motionChange = null; } });
+      window.matchMedia = (query) => ({ matches: query.includes('reduced-motion') && reducedMotion, addEventListener(type, callback) { if (query.includes('reduced-motion')) motionChange = callback; }, removeEventListener() { if (query.includes('reduced-motion')) motionChange = null; } });
       Object.defineProperty(window.document, "hidden", { get: () => hidden, configurable: true });
     },
     step(time) {
@@ -145,8 +145,8 @@ test('polling preserves keyboard focus and never opens a dismissed detail panel'
 test('zoom changes the projection and reset restores the original within bounds', (t) => {
   const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, harness.install), original = harness.snapshot();
   app.find('[aria-label="Zoom in"]').click(); assert.equal(app.find('.brain-network-zoom').textContent, '110%'); assert.notEqual(harness.snapshot(), original);
-  for (let index = 0; index < 20; index++) app.find('[aria-label="Zoom in"]').click();
-  assert.equal(app.find('.brain-network-zoom').textContent, '165%'); assert.equal(app.find('[aria-label="Zoom in"]').disabled, true);
+  for (let index = 0; index < 40; index++) app.find('[aria-label="Zoom in"]').click();
+  assert.equal(app.find('.brain-network-zoom').textContent, '320%'); assert.equal(app.find('[aria-label="Zoom in"]').disabled, true);
   app.find('[aria-label="Reset network view"]').click(); assert.equal(harness.snapshot(), original); assert.equal(app.find('.brain-network-zoom').textContent, '100%');
 });
 
@@ -170,19 +170,113 @@ test('broker region uses observed connection state and routes to Accounts', (t) 
   assert.deepEqual(navigations, ['robinhood']);
 });
 
-test('narrow labels remain separated across a full dragged orbit', (t) => {
+test('all eight sections stay in a stable left rail throughout a full orbit', (t) => {
   const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, (window) => {
     harness.install(window);
     window.HTMLElement.prototype.getBoundingClientRect = () => ({ width: 342, height: 500, left: 0, top: 0 });
   });
   const stage = app.find('.brain-network-stage');
+  const ids = [...app.host.querySelectorAll('.brain-network-rail [data-lobe-node]')].map((item) => item.dataset.lobeNode);
+  assert.equal(ids.length, 8);
+  assert.equal(app.host.querySelectorAll('[aria-label="Agents"] [data-lobe-node]').length, 4);
+  assert.equal(app.host.querySelectorAll('[aria-label="Modules"] [data-lobe-node]').length, 4);
+  assert.equal(stage.querySelectorAll('[data-lobe-node]').length, 0);
   stage.dispatchEvent(new app.dom.window.MouseEvent('pointerdown', { button: 0, clientX: 0, clientY: 0, bubbles: true }));
   for (let index = 0; index <= 32; index++) {
     stage.dispatchEvent(new app.dom.window.MouseEvent('pointermove', { clientX: index * 2 * Math.PI / 32 / .008, clientY: 0, bubbles: true }));
-    const sides = new Map();
-    for (const item of app.host.querySelectorAll('[data-lobe-node]')) { const positions = sides.get(item.style.left) ?? []; positions.push(parseFloat(item.style.top)); sides.set(item.style.left, positions); }
-    for (const positions of sides.values()) { positions.sort((a, b) => a - b); for (let index = 1; index < positions.length; index++) assert.ok(positions[index] - positions[index - 1] >= 40, 'region buttons must not overlap'); }
+    assert.deepEqual([...app.host.querySelectorAll('.brain-network-rail [data-lobe-node]')].map((item) => item.dataset.lobeNode), ids);
   }
+});
+
+test('mobile section navigation excludes hidden controls and restores visible keyboard focus', (t) => {
+  const app = fixture(t, {}, (window) => {
+    window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
+  });
+  const rail = app.find('.brain-network-rail'), toggle = app.find('.brain-network-sections-toggle');
+  assert.equal(rail.hasAttribute('inert'), true);
+  toggle.click(); assert.equal(rail.hasAttribute('inert'), false);
+  assert.equal(app.dom.window.document.activeElement, app.find('.brain-network-overview'));
+  app.find('[data-lobe-node="module:memory"]').click();
+  assert.equal(rail.hasAttribute('inert'), true); assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(app.dom.window.document.activeElement, toggle);
+  app.find('[data-network-close]').focus(); app.find('[data-network-close]').click();
+  assert.equal(app.dom.window.document.activeElement, toggle);
+  toggle.click();
+  rail.dispatchEvent(new app.dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(rail.hasAttribute('inert'), true); assert.equal(app.dom.window.document.activeElement, toggle);
+});
+
+test('wheel zoom consumes only canvas scrolling, normalizes deltas and respects both bounds', (t) => {
+  const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, harness.install), stage = app.find('.brain-network-stage');
+  const scroll = (target, deltaY, deltaMode = 0) => {
+    const event = new app.dom.window.WheelEvent('wheel', { deltaY, deltaMode, bubbles: true, cancelable: true });
+    target.dispatchEvent(event); return event.defaultPrevented;
+  };
+  assert.equal(scroll(stage, -100), true); assert.equal(app.find('.brain-network-zoom').textContent, '116%');
+  app.find('[aria-label="Reset network view"]').click();
+  scroll(stage, -6.25, 1); assert.equal(app.find('.brain-network-zoom').textContent, '116%');
+  assert.equal(scroll(app.find('.brain-network-rail'), 100), false);
+  app.find('[data-lobe-node="module:risk"]').click();
+  const zoom = app.find('.brain-network-zoom').textContent;
+  assert.equal(scroll(app.find('.brain-network-inspector'), 100), false); assert.equal(app.find('.brain-network-zoom').textContent, zoom);
+  for (let index = 0; index < 20; index++) scroll(stage, -250);
+  assert.equal(app.find('.brain-network-zoom').textContent, '320%');
+  for (let index = 0; index < 30; index++) scroll(stage, 250);
+  assert.equal(app.find('.brain-network-zoom').textContent, '45%');
+});
+
+test('vertical and horizontal drag can pass both poles and return through a full rotation', (t) => {
+  const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, harness.install), stage = app.find('.brain-network-stage');
+  const send = (type, x, y) => stage.dispatchEvent(new app.dom.window.MouseEvent(type, { button: 0, clientX: x, clientY: y, bubbles: true }));
+  for (const vertical of [true, false]) {
+    app.find('[aria-label="Reset network view"]').click();
+    const original = harness.lobeAnchors(); send('pointerdown', 0, 0);
+    send('pointermove', vertical ? 0 : 200, vertical ? 200 : 0); const beforePole = harness.lobeAnchors();
+    send('pointermove', vertical ? 0 : 400, vertical ? 400 : 0); assert.notDeepEqual(harness.lobeAnchors(), beforePole);
+    const turn = Math.PI * 2 / .008; send('pointermove', vertical ? 0 : turn, vertical ? turn : 0); send('pointerup', vertical ? 0 : turn, vertical ? turn : 0);
+    for (const [index, point] of harness.lobeAnchors().entries()) for (let axis = 0; axis < 2; axis++) assert.ok(Math.abs(point[axis] - original[index][axis]) < .000001);
+  }
+});
+
+test('selection eases a section into the foreground while decorative motion is paused', (t) => {
+  const harness = canvasHarness(), app = fixture(t, {}, harness.install);
+  app.find('[aria-label="Pause network motion"]').click();
+  const original = harness.lobeAnchors(); app.find('[data-lobe-node="module:memory"]').click();
+  assert.equal(app.find('.brain-network-shell').dataset.camera, 'focusing');
+  assert.deepEqual(harness.lobeAnchors(), original, 'selection must not teleport the camera');
+  harness.step(0); harness.step(100); harness.step(200);
+  assert.notDeepEqual(harness.lobeAnchors(), original);
+  for (let time = 300; time <= 900; time += 100) harness.step(time);
+  assert.equal(harness.frames.size, 0); assert.equal(app.find('.brain-network-shell').dataset.camera, 'focused');
+  assert.equal(app.find('.brain-network-zoom').textContent, '150%');
+  const point = harness.lobeAnchors()[BRAIN_REGIONS.indexOf('cerebellum')];
+  assert.ok(Math.abs(point[0] + 1.5 - 356) < .000001);
+  assert.ok(Math.abs(point[1] + 1.5 - 308) < .000001);
+});
+
+test('new selections retarget from the current view and manual input cancels focus animation', (t) => {
+  const harness = canvasHarness(), app = fixture(t, {}, harness.install), stage = app.find('.brain-network-stage');
+  app.find('[aria-label="Pause network motion"]').click(); app.find('[data-lobe-node="agent:planner"]').click();
+  harness.step(0); harness.step(100); const current = harness.lobeAnchors();
+  app.find('[data-lobe-node="module:risk"]').click(); assert.deepEqual(harness.lobeAnchors(), current);
+  harness.step(200);
+  stage.dispatchEvent(new app.dom.window.MouseEvent('pointerdown', { button: 0, clientX: 50, clientY: 50, bubbles: true }));
+  const interrupted = harness.lobeAnchors(); assert.equal(harness.frames.size, 0);
+  stage.dispatchEvent(new app.dom.window.MouseEvent('pointermove', { clientX: 80, clientY: 90, bubbles: true }));
+  assert.notDeepEqual(harness.lobeAnchors(), interrupted);
+  stage.dispatchEvent(new app.dom.window.MouseEvent('pointerup', { clientX: 80, clientY: 90, bubbles: true }));
+  const held = harness.lobeAnchors(); app.instance.refresh(); assert.deepEqual(harness.lobeAnchors(), held);
+  assert.equal(app.find('.brain-network-shell').dataset.camera, 'manual');
+});
+
+test('reduced motion selects immediately and a preference change finishes pending focus', (t) => {
+  const harness = canvasHarness({ reducedMotion: true }), app = fixture(t, {}, harness.install);
+  app.find('[data-lobe-node="agent:critic"]').click();
+  assert.equal(harness.frames.size, 0); assert.equal(app.find('.brain-network-shell').dataset.camera, 'focused');
+  harness.setReducedMotion(false); app.find('[data-lobe-node="agent:researcher"]').click();
+  assert.equal(app.find('.brain-network-shell').dataset.camera, 'focusing');
+  harness.setReducedMotion(true);
+  assert.equal(harness.frames.size, 0); assert.equal(app.find('.brain-network-shell').dataset.camera, 'focused');
 });
 
 test('reduced motion and disposal suspend rendering and remove handlers', (t) => {

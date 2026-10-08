@@ -1,8 +1,11 @@
+import { defaultBrainView, rotatePoint } from './brain-camera.js';
+
 // Volumetric neural topology in the Redline binary palette.
 const TAU = Math.PI * 2;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 export const BRAIN_REGIONS = ['frontal-l', 'frontal-r', 'parietal', 'temporal-l', 'temporal-r', 'occipital', 'cerebellum', 'stem'];
 const CENTERS = [[-1.12, .67, .6], [.94, .73, -.74], [.02, 1.23, .04], [-.81, -.72, .82], [1.02, -.68, -.5], [1.4, .06, .55], [-1.38, -.13, -.56], [.02, -1.24, -.24]];
+export const BRAIN_REGION_CENTERS = Object.fromEntries(BRAIN_REGIONS.map((region, index) => [region, CENTERS[index]]));
 function random(seed) { let value = seed >>> 0; return () => { value = (value * 1664525 + 1013904223) >>> 0; return value / 4294967296; }; }
 const depthLayer = (depth) => Math.max(0, Math.min(5, Math.floor((depth + 1.8) / .6)));
 
@@ -95,19 +98,18 @@ export function createBrainNetworkRenderer(context, colors = {}) {
   const decorated = binaryFilaments(topology, 6400, 42).map((point) => ({ ...point, glyph: r() < .5 ? 0 : 1, delay: r() * 6 }));
   const projected = decorated.map((point) => ({ x: 0, y: 0, glyph: point.glyph, region: point.region }));
   let anchors = new Map(), projectionKey, neuronPoints, binaryPoints, edgeBuckets;
-  const render = ({ width, height, zoom = 1, time = 0, yaw = -.28, pitch = .14, panX = 0, panY = 0, selectedRegion }) => {
+  const render = ({ width, height, zoom = 1, time = 0, orientation = defaultBrainView().orientation, panX = 0, panY = 0, selectedRegion }) => {
     context.clearRect(0, 0, width, height);
     const seconds = time / 1000;
     // Reproject only on user interaction or resize; idle activity reuses fixed geometry.
-    const key = [width, height, zoom, yaw, pitch, panX, panY, selectedRegion].join(':');
+    const key = [width, height, zoom, ...orientation, panX, panY, selectedRegion].join(':');
     if (key !== projectionKey) {
       projectionKey = key;
       const cx = width * (.5 + panX), cy = height * (.46 + panY);
       const scale = Math.min(width * (width < 600 ? .17 : .205), height * .205) * zoom;
-      const cosine = Math.cos(yaw), sine = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
       const project = (point) => {
-        const xx = point.x * cosine + point.z * sine, zz = -point.x * sine + point.z * cosine;
-        const yy = point.y * cp - zz * sp, depth = point.y * sp + zz * cp, perspective = 4.6 / (4.6 - depth);
+        const [xx, yy, depth] = rotatePoint(orientation, [point.x, point.y, point.z]);
+        const perspective = 4.6 / (4.6 - depth);
         return { x: cx + xx * scale * perspective, y: cy - yy * scale * perspective, depth, perspective };
       };
       neuronPoints = topology.nodes.map(project);
@@ -126,6 +128,7 @@ export function createBrainNetworkRenderer(context, colors = {}) {
       context.strokeStyle = selected ? glow : weight ? red : line;
       context.lineWidth = (.35 + weight * .45 + layer * .08) * Math.max(.8, zoom);
       context.globalAlpha = selected ? .55 + layer * .05 : (weight ? .12 : .2) + layer * .06;
+      if (selectedRegion && !selected) context.globalAlpha *= .45;
       context.beginPath();
       for (const [from, to] of items) { const a = neuronPoints[from], b = neuronPoints[to]; context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); }
       context.stroke();
@@ -134,6 +137,7 @@ export function createBrainNetworkRenderer(context, colors = {}) {
     for (const [index, point] of neuronPoints.entries()) {
       const hub = topology.nodes[index].hub, layer = depthLayer(point.depth);
       context.globalAlpha = hub ? .9 : .14 + layer * .05;
+      if (selectedRegion && topology.nodes[index].region !== selectedRegion) context.globalAlpha *= .45;
       if (hub) {
         const radius = 7 * zoom * point.perspective;
         context.strokeStyle = topology.nodes[index].region === selectedRegion ? glow : red;
@@ -141,7 +145,7 @@ export function createBrainNetworkRenderer(context, colors = {}) {
         context.beginPath(); context.arc(point.x, point.y, radius, 0, TAU); context.stroke();
         context.globalAlpha = .4;
         context.beginPath(); context.ellipse(point.x, point.y, radius * 1.6, radius * .5, -.5, 0, TAU); context.stroke();
-        context.fillRect(point.x - 1.2, point.y - 1.2, 2.4, 2.4);
+        context.fillRect(point.x - 1.5, point.y - 1.5, 3, 3);
       } else {
         const size = .6 + layer * .2;
         context.fillRect(point.x - size / 2, point.y - size / 2, size, size);
@@ -165,6 +169,7 @@ export function createBrainNetworkRenderer(context, colors = {}) {
       context.font = `${kind === 2 ? '600 ' : ''}${((4.2 + layer * .64) * Math.max(.8, zoom)).toFixed(1)}px ${mono}`;
       context.fillStyle = kind ? glow : red;
       context.globalAlpha = Math.min(.9, .1 + layer * .09 + (kind ? .24 : 0));
+      if (selectedRegion && kind !== 2) context.globalAlpha *= .45;
       for (const p of items) context.fillText(String(p.glyph), p.x, p.y);
     }
     context.globalCompositeOperation = 'source-over'; context.globalAlpha = 1;

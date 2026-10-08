@@ -6,7 +6,7 @@ import { createTestApp } from "../helpers/auth-test-helpers.js";
 import { initializeLoginController } from "../../public/js/login-controller.js";
 
 for (const reducedMotion of [false, true]) {
-  test(`Cortex login preserves Discord access without an idle animation loop (reduced motion: ${reducedMotion})`, async (t) => {
+  test(`branded login preserves Discord access without an idle animation loop (reduced motion: ${reducedMotion})`, async (t) => {
     const app = createTestApp();
     const response = await request(app).get("/login").expect(200);
     const dom = new JSDOM(response.text, { url: "http://localhost/login" });
@@ -17,9 +17,9 @@ for (const reducedMotion of [false, true]) {
     const document = dom.window.document;
     const art = document.querySelector(".cortex-login-art");
     assert.ok(art);
-    assert.equal(art.getAttribute("alt"), "");
-    assert.match(art.getAttribute("src"), /\/assets\/redline-signal\.svg$/);
-    await request(app).get(art.getAttribute("src")).expect(200).expect("Content-Type", /image\/svg\+xml/);
+    assert.match(art.getAttribute("alt"), /Synergy Module emblem/);
+    assert.match(art.getAttribute("src"), /\/assets\/synergy-terminal\.png$/);
+    await request(app).get(art.getAttribute("src")).expect(200).expect("Content-Type", /image\/png/);
     assert.equal(document.querySelector("[data-sphere]"), null);
     assert.equal(document.querySelector('input[type="password"], [data-login-user], [data-login-passkey]'), null);
     assert.equal(document.querySelector("[data-discord-login]").getAttribute("href"), "/auth/discord");

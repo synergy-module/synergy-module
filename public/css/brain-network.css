@@ -1,18 +1,29 @@
-/* Quiet Redline neural canvas: navigation lives in the application's left rail. */
-.brain-network-shell { position: relative; width: 100%; height: 100%; min-height: 500px; overflow: hidden; color: var(--ink); background: var(--void); font-family: var(--font-sans); }
-.brain-network-stage { position: relative; width: 100%; height: 100%; min-height: 500px; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at 50% 48%, color-mix(in srgb, var(--red-tint) 25%, transparent), transparent 63%), var(--void); cursor: grab; touch-action: none; }
+/* A stable section rail beside a freely controlled neural canvas. */
+.brain-network-shell { position: relative; display: grid; grid-template-columns: 220px minmax(0, 1fr); width: 100%; height: 100%; min-height: 500px; overflow: hidden; color: var(--ink); background: var(--void); font-family: var(--font-sans); }
+.brain-network-rail { min-width: 0; min-height: 0; height: 100%; padding: 26px 14px; overflow-y: auto; overscroll-behavior: contain; border-right: 1px solid var(--line); background: var(--surface-sunken); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.brain-network-rail-header { position: relative; padding: 0 8px 20px; }
+.brain-network-rail-header h1 { margin: 0 0 8px; font: 600 26px/1.2 var(--font-display); }
+.brain-network-rail-header p { margin: 0; color: var(--ink-muted); font: 12px/1.6 var(--font-sans); }
+.brain-network-group { margin-top: 22px; }
+.brain-network-group > h2 { margin: 0 8px 8px; color: var(--ink-faint); font: 500 10px/1.5 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.brain-network-overview { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--line); background: transparent; color: var(--ink-muted); text-align: left; font: 500 12px/1.5 var(--font-sans); cursor: pointer; }
+.brain-network-overview[aria-pressed='true'] { color: var(--ink); border-color: var(--line-strong); background: var(--surface); }
+.brain-network-sections-toggle, .brain-network-rail-close { display: none; }
+.brain-network-announcement { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.brain-network-stage { position: relative; min-width: 0; width: 100%; height: 100%; min-height: 500px; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at 50% 48%, color-mix(in srgb, var(--red-tint) 25%, transparent), transparent 63%), var(--void); cursor: grab; touch-action: none; }
 .brain-network-stage.brain-network-dragging { cursor: grabbing; }
 .brain-network-grid { position: absolute; inset: 0; pointer-events: none; opacity: .11; background-image: radial-gradient(var(--ink-faint) .7px, transparent .8px); background-size: 28px 28px; mask-image: radial-gradient(ellipse at center, black 15%, transparent 75%); }
-.brain-network-canvas, .brain-network-labels { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.brain-network-labels { z-index: 2; }
-.brain-network-lobe { position: absolute; display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px; border: 1px solid transparent; background: color-mix(in srgb, var(--void) 83%, transparent); color: var(--ink-muted); text-align: left; cursor: pointer; pointer-events: auto; transition: color .15s ease, border-color .15s ease; }
-.brain-network-lobe strong { font: 500 10px/1.4 var(--font-mono); letter-spacing: .07em; }
-.brain-network-lobe-dot { flex: 0 0 4px; height: 4px; background: var(--red); opacity: .8; }
-.brain-network-lobe:hover, .brain-network-lobe[aria-pressed='true'] { border-color: var(--red-deep); color: var(--ink); background: var(--surface); }
+.brain-network-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.brain-network-lobe { position: relative; display: grid; grid-template-columns: 4px minmax(0, 1fr); column-gap: 10px; align-items: center; width: 100%; min-height: 50px; margin: 3px 0; padding: 9px 11px; border: 1px solid transparent; border-left: 2px solid transparent; background: transparent; color: var(--ink-muted); text-align: left; cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.brain-network-lobe strong { grid-column: 2; overflow-wrap: anywhere; font: 500 11px/1.5 var(--font-mono); letter-spacing: .04em; }
+.brain-network-lobe-status { grid-column: 2; color: var(--ink-faint); font: 10px/1.5 var(--font-sans); text-transform: capitalize; }
+.brain-network-lobe-dot { grid-column: 1; grid-row: 1 / span 2; width: 4px; height: 4px; background: var(--red); opacity: .8; }
+.brain-network-lobe:hover, .brain-network-lobe[aria-pressed='true'] { border-color: var(--line); border-left-color: var(--red); color: var(--ink); background: var(--red-tint); }
 .brain-network-lobe[data-active='true'] .brain-network-lobe-dot { box-shadow: 0 0 12px var(--red-glow); }
+.brain-network-target { position: absolute; z-index: 2; padding: 5px 8px; transform: translate(-50%, -100%); border-bottom: 1px solid var(--red); color: var(--ink); background: color-mix(in srgb, var(--void) 85%, transparent); font: 500 10px/1.4 var(--font-mono); letter-spacing: .08em; pointer-events: none; }
 .brain-network-coordinate, .brain-network-mode { position: absolute; top: 28px; pointer-events: none; z-index: 3; font: 9px var(--font-mono); letter-spacing: .1em; }
-.brain-network-coordinate { left: 32px; color: var(--ink-muted); }
-.brain-network-mode { right: 32px; color: var(--red); }
+.brain-network-coordinate { left: 24px; color: var(--ink-muted); }
+.brain-network-mode { right: 24px; color: var(--red); }
 .brain-network-controls { position: absolute; bottom: 58px; left: 50%; display: flex; align-items: center; justify-content: center; gap: 3px; z-index: 3; transform: translateX(-50%); padding: 5px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 92%, transparent); }
 .brain-network-controls button { min-height: 36px; min-width: 36px; padding: 7px 9px; border: 1px solid transparent; background: transparent; color: var(--ink-muted); cursor: pointer; font: 10px var(--font-mono); white-space: nowrap; }
 .brain-network-controls button[aria-pressed='true'] { color: var(--red); background: var(--red-tint); }
@@ -21,7 +32,8 @@
 .brain-network-zoom { min-width: 36px; color: var(--ink-faint); text-align: center; font: 9px var(--font-mono); }
 .brain-network-hint, .brain-network-decoration-note { position: absolute; left: 14px; right: 14px; text-align: center; bottom: 35px; color: var(--ink-muted); font: 9px/1.4 var(--font-mono); pointer-events: none; }
 .brain-network-decoration-note { bottom: 17px; font-size: 8px; color: var(--ink-faint); }
-.brain-network-inspector { position: absolute; z-index: 5; right: 28px; top: 70px; width: min(310px, calc(100% - 32px)); max-height: calc(100% - 195px); padding: 24px; overflow: auto; color: var(--ink); background: color-mix(in srgb, var(--surface) 97%, transparent); border: 1px solid var(--line-strong); box-shadow: 0 16px 50px #0005; }
+.brain-network-inspector { position: absolute; z-index: 5; right: 20px; top: 70px; width: 260px; max-height: calc(100% - 195px); padding: 22px; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; cursor: auto; color: var(--ink); background: color-mix(in srgb, var(--surface) 97%, transparent); border: 1px solid var(--line-strong); box-shadow: 0 16px 50px #0005; animation: brain-detail-enter .24s ease-out; }
+@keyframes brain-detail-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .brain-network-inspector[hidden] { display: none; }
 .brain-network-inspector-close { position: absolute; right: 8px; top: 8px; width: 36px; height: 36px; border: 0; color: var(--ink-muted); background: transparent; cursor: pointer; font-size: 23px; }
 .brain-network-inspector-meta { margin-bottom: 12px; color: var(--ink-faint); font: 9px var(--font-mono); letter-spacing: .1em; }
@@ -33,18 +45,29 @@
 .brain-network-open { display: block; width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink); cursor: pointer; text-align: left; font: 11px var(--font-mono); }
 .brain-network-open:hover { border-color: var(--red); }
 .brain-network-shell button:focus-visible, .brain-network-stage:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
+/* Use the available canvas width, including when the application sidebar is present. */
+.brain-network-stage { container-type: inline-size; }
+@container (max-width: 759px) {
+  .brain-network-inspector { top: auto; bottom: 122px; right: 16px; width: calc(100% - 32px); max-height: min(280px, calc(100% - 280px)); padding: 16px 20px; }
+  .brain-network-inspector h2 { font-size: 20px; }
+  .brain-network-inspector-meta { margin-bottom: 6px; }
+  .brain-network-state { margin-bottom: 10px; }
+  .brain-network-inspector p { margin-bottom: 10px; }
+}
 @media (max-width: 760px) {
+  .brain-network-shell { grid-template-columns: minmax(0, 1fr); }
+  .brain-network-rail { position: absolute; inset: 0 auto 0 0; z-index: 8; width: min(260px, 85%); box-shadow: 16px 0 40px #0005; transition: transform .22s ease; }
+  .brain-network-shell[data-sections-open='false'] .brain-network-rail { visibility: hidden; transform: translateX(-100%); }
+  .brain-network-sections-toggle { display: block; position: absolute; z-index: 4; left: 16px; top: 16px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 11px var(--font-mono); cursor: pointer; }
+  .brain-network-rail-close { display: block; position: absolute; right: 0; top: -8px; width: 40px; height: 40px; border: 0; background: transparent; color: var(--ink-muted); font-size: 24px; cursor: pointer; }
   .brain-network-shell, .brain-network-stage { min-height: 500px; }
-  .brain-network-coordinate { left: 18px; top: 22px; font-size: 8px; }
-  .brain-network-mode { right: 18px; top: 22px; font-size: 8px; }
-  .brain-network-lobe { gap: 5px; padding: 6px; }
-  .brain-network-lobe strong { font-size: 8px; letter-spacing: .035em; }
-  .brain-network-inspector { top: auto; bottom: 118px; right: 16px; width: calc(100% - 32px); max-height: calc(100% - 175px); padding: 22px; }
+  .brain-network-coordinate { display: none; }
+  .brain-network-mode { right: 18px; top: 32px; font-size: 8px; }
   .brain-network-controls { gap: 0; padding: 4px; }
   .brain-network-controls button { min-width: 34px; padding-inline: 8px; }
   .brain-network-hint { font-size: 8px; }
 }
-@media (prefers-reduced-motion: reduce) { .brain-network-shell * { scroll-behavior: auto; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .brain-network-shell * { scroll-behavior: auto; transition: none; animation: none; } }
 /* Higher specificity preserves this theme after the legacy brain.css import. */
 .route.brain { background: var(--void); padding: 24px; }
 .route.brain .brain-header { align-items: center; gap: 22px; margin-bottom: 18px; }
