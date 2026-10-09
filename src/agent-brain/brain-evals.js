@@ -194,7 +194,7 @@ const CASES = [
     run: () => fixture(async (f) => {
       await rejectsCode(() => f.execute("broker.place_order", {}), "BRAIN_TOOL_DENIED");
       await rejectsCode(() => f.execute("risk.check", { thesis: structuredClone(THESIS) }, { role: "planner" }), "BRAIN_TOOL_DENIED");
-      check(!f.tools.definitions("researcher").some((tool) => tool.name === "risk.check"), "A restricted tool was exposed to the researcher.");
+      check(!(await f.tools.definitions("researcher")).some((tool) => tool.name === "risk.check"), "A restricted tool was exposed to the researcher.");
     }),
   },
   {

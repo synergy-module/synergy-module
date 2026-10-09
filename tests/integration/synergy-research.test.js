@@ -5,6 +5,7 @@ import { randomUUID, createHash } from "node:crypto";
 import pg from "pg";
 import request from "supertest";
 import { createSynergyResearch } from "../../src/agent-brain/synergy-research.js";
+import { defaultBrainToolPolicy } from "../../src/agent-brain/brain-tool-policy.js";
 import { createBrainTools } from "../../src/agent-brain/brain-tools.js";
 import { createTestApp, loginTestOperator } from "../helpers/auth-test-helpers.js";
 
@@ -74,9 +75,11 @@ test("PostgreSQL shared researcher reads cited sources with database and applica
   await assert.rejects(lowPrivilege.query("SELECT * FROM synergy_archive.artifacts"), { code: "42501" });
   assert.equal((await lowPrivilege.query("SHOW default_transaction_read_only")).rows[0].default_transaction_read_only, "on");
   await assert.rejects(lowPrivilege.query("DELETE FROM synergy_module_research.artifacts"), error => ["42501", "25006"].includes(error.code));
-  const tools = createBrainTools({ synergyResearch: service });
-  assert.ok(tools.definitions("researcher").some(tool => tool.name === "synergy.read"));
-  assert.ok(!tools.definitions("strategist").some(tool => tool.name.startsWith("synergy.")));
+  const policy = defaultBrainToolPolicy();
+  policy.assignments["agent:researcher"].push("synergy-mcp"); policy.assignments["module:retrieval"].push("synergy-mcp");
+  const tools = createBrainTools({ synergyResearch: service, toolPolicy: { read: async () => policy } });
+  assert.ok((await tools.definitions("researcher")).some(tool => tool.name === "synergy.read"));
+  assert.ok(!(await tools.definitions("strategist")).some(tool => tool.name.startsWith("synergy.")));
   const input = { mode: "analysis", provider: "gemini", symbol: "NQ", timeframe: "5m", context: "Historical research context only; no current market prices are supplied.", accountSize: 50000, riskPercent: 0.5, pointValue: 20, minRewardRisk: 2 };
   const observation = await tools.execute({ name: "synergy.read", arguments: { kind: "artifact", id }, ownerId: "alice", role: "researcher", input });
   assert.match(observation.citations[0].id, /^synergy:artifact:/);
@@ -84,7 +87,7 @@ test("PostgreSQL shared researcher reads cited sources with database and applica
   const app = createTestApp({ synergyResearch: service });
   await request(app).get("/api/brain/synergy/search?query=NQ").expect(401);
   const agent = await loginTestOperator(app);
-  const state = await agent.get("/api/brain/state").expect(200);
+  const state = await agent.get("/api/brain/tools").expect(200);
   assert.equal(state.body.synergyResearch.connected, true);
   assert.doesNotMatch(JSON.stringify(state.body.synergyResearch), /postgres:|fixture-only/);
   await agent.get("/api/brain/synergy/search?query=NQ").expect(200).expect("Cache-Control", "no-store");

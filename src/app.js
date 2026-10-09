@@ -33,6 +33,8 @@ import { createBrainKnowledge } from "./agent-brain/brain-knowledge.js";
 import { createBrainModelGateway } from "./agent-brain/brain-model-gateway.js";
 import { createBrainTools } from "./agent-brain/brain-tools.js";
 import { createBrainService } from "./agent-brain/brain-service.js";
+import { createBrainToolPolicy } from "./agent-brain/brain-tool-policy.js";
+import { createMemoryBrainToolPolicyRepository } from "./agent-brain/brain-tool-policy-repository.js";
 import { createBrainRoutes } from "./routes/brain-routes.js";
 import { createRobinhoodService } from "./brokers/robinhood-service.js";
 import { createRobinhoodRoutes } from "./routes/robinhood-routes.js";
@@ -74,6 +76,7 @@ export function createApp({
   brainTools,
   brainService,
   brainEvaluator,
+  brainToolPolicyRepository = createMemoryBrainToolPolicyRepository(),
   synergyResearch,
   robinhoodService,
   brokerRepository,
@@ -157,10 +160,12 @@ export function createApp({
       return true;
     } catch { return false; }
   };
+  const toolPolicy = createBrainToolPolicy({ repository: brainToolPolicyRepository });
   const resolvedBrainTools = brainTools ?? createBrainTools({
     knowledge: resolvedBrainKnowledge, journalRepository, marketNewsService, canReadJournal: canReadBrainJournal,
     robinhoodService: resolvedRobinhoodService,
     synergyResearch,
+    toolPolicy,
   });
   const resolvedBrainService = brainService ?? createBrainService({
     repository: brainRepository, knowledge: resolvedBrainKnowledge,
@@ -182,6 +187,7 @@ export function createApp({
   app.locals.brainRepository = brainRepository;
   app.locals.brainKnowledge = resolvedBrainKnowledge;
   app.locals.brainTools = resolvedBrainTools;
+  app.locals.brainToolPolicy = toolPolicy;
   app.locals.synergyResearch = synergyResearch;
   app.locals.robinhoodService = resolvedRobinhoodService;
   app.locals.workspaceSettingsService = resolvedSettingsService;
@@ -286,7 +292,7 @@ export function createApp({
   }));
   app.use(createBrainRoutes({
     brainService: resolvedBrainService, brainKnowledge: resolvedBrainKnowledge,
-    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, synergyResearch, logger,
+    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, synergyResearch, toolPolicy, logger,
   }));
   app.use(createJournalRoutes({ journalRepository }));
 

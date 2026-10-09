@@ -8,6 +8,7 @@ import { createSqliteBrokerRepository } from "./brokers/broker-repository.js";
 import { createSqliteWorkspaceRepository } from "./settings/workspace-repository.js";
 import { readSynergyResearchConfig } from "./config/synergy-research-config.js";
 import { createSynergyResearch } from "./agent-brain/synergy-research.js";
+import { createSqliteBrainToolPolicyRepository } from "./agent-brain/brain-tool-policy-repository.js";
 
 const port = process.env.PORT ?? 3000;
 const host = process.env.HOST || "127.0.0.1";
@@ -20,12 +21,14 @@ const runtime = postgresRuntime ?? createSqliteRuntime({
   filename: workspaceFilename,
 });
 const workspaceRepository = postgresRuntime?.workspaceRepository ?? createSqliteWorkspaceRepository(workspaceFilename);
+const brainToolPolicyRepository = postgresRuntime?.brainToolPolicyRepository ?? createSqliteBrainToolPolicyRepository(workspaceFilename);
 const brainRepository = postgresRuntime?.brainRepository ?? createSqliteBrainRepository({
   filename: process.env.BRAIN_DB_PATH?.trim() || "data/agent-brain.sqlite",
 });
 const app = createApp({
   authConfig,
   synergyResearch,
+  brainToolPolicyRepository,
   brainRepository,
   workspaceRepository,
   brokerRepository: postgresRuntime?.brokerRepository ?? createSqliteBrokerRepository("data/robinhood.sqlite"),
@@ -54,6 +57,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
     await app.locals.robinhoodService?.close?.();
     await brainRepository.close();
     await workspaceRepository.close();
+    await brainToolPolicyRepository.close();
     await runtime.close();
     process.exit(0);
   });

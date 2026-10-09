@@ -1,6 +1,6 @@
 # Agent Brain
 
-The researcher also connects directly to the shared Synergy MCP PostgreSQL library when configured. See [Synergy MCP research](synergy-research.md) for connection setup, source browsing, citations and retrieval limits.
+Synergy MCP is an optional tool in the admin-only Brain tool manager, unassigned by default. See [Synergy MCP research](synergy-research.md) for connection setup, source browsing, citations and retrieval limits.
 
 Open `/brain` from the terminal sidebar. The brain connects a planner, researcher, strategist and critic to the existing trader's provider adapters, risk engine, calendar and journal. Gemini is the default. Each role can route to Gemini, OpenAI or Claude independently.
 
@@ -21,6 +21,7 @@ The network continuously animates locally while visible, including between missi
 | Agentic RAG | Agents choose search queries and may refine them. `brain-knowledge.js` chunks documents and ranks lexical matches with BM25-style scoring. Each returned excerpt has a stable citation. |
 | Memory persistence | SQLite locally and PostgreSQL when configured store runs, traces, documents, approval checkpoints and caches. Accepted proposals become idempotent memory records. |
 | Prompt caching | The gateway supplies stable provider prefix hints, Claude ephemeral cache control, and Gemini's implicit caching structure. It separately supports an owner-scoped exact-response cache with a maximum 60-second TTL. Actual cache usage is reported when the provider supplies it. |
+| Tool assignments | Site admins manage agent permissions and support-module gates from each Brain section. Both must allow a tool. Assignments persist site-wide with version checks and a bounded audit history; the next tool invocation rechecks current access. See [tool access](brain-tool-access.md). |
 | Tool sandbox | The capability boundary denies unknown tools, role violations, extra arguments and owner overrides. Time and output bounds apply. Risk checking runs in a separate worker with memory limits and termination. No model-generated code is evaluated. |
 | Multi-agent system | Four role-specific agents have separate working histories, shared cited evidence, assigned tasks and individual provider routes. Execution is sequential within a mission. |
 | Routing and handoffs | Research and strategy can hand off work using validated target roles. Handoffs and provider selection are recorded; repeated handoffs are bounded. |

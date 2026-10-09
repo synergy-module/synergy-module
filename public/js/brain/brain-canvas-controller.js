@@ -1,10 +1,14 @@
 import { createBrainNetwork } from "./brain-network.js";
 import { createWorkspaceRequest } from "../workspace-client.js";
+import { createBrainToolManager } from "./brain-tool-manager.js";
 
 export function initializeBrainCanvas(root, { fetchImpl, windowRef = root.ownerDocument.defaultView, navigate = (url) => windowRef.location.assign(url) }) {
   const destinations = { mission: "/research", knowledge: "/research?view=knowledge", checks: "/settings?section=system", robinhood: "/accounts", network: "/brain" };
-  const network = createBrainNetwork(root.querySelector("[data-brain-network]"), { onNavigate: (section) => navigate(destinations[section] ?? "/research") });
   const request = createWorkspaceRequest(root, fetchImpl), feedback = root.querySelector("[data-canvas-feedback]");
+  const manager = createBrainToolManager(root, { request });
+  const network = createBrainNetwork(root.querySelector("[data-brain-network]"), {
+    onNavigate: (section) => navigate(destinations[section] ?? "/research"), onManageTools: section => void manager.open(section),
+  });
   let disposed = false, timer;
   async function refresh() {
     try {
@@ -15,5 +19,5 @@ export function initializeBrainCanvas(root, { fetchImpl, windowRef = root.ownerD
     } catch { if (!disposed) { feedback.hidden = false; feedback.textContent = "Network view available. Saved activity could not be loaded; refresh to retry."; } }
   }
   void refresh();
-  return { dispose() { disposed = true; windowRef.clearTimeout(timer); network.dispose(); } };
+  return { dispose() { disposed = true; windowRef.clearTimeout(timer); manager.dispose(); network.dispose(); } };
 }

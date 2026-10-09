@@ -1,10 +1,14 @@
 import { runBrainEvaluations } from "../agent-brain/brain-evals.js";
 import { buildBrainReadiness, summarizeOfflineEvaluation } from "../agent-brain/brain-readiness.js";
 import { brainPage, readBrainPage } from "./brain-pagination.js";
+import { CAPABILITIES } from "../models/access.js";
+import { BRAIN_SECTIONS, BRAIN_TOOL_CATALOG } from "../agent-brain/brain-tool-policy.js";
 
 let evaluating = false;
 
 const ERRORS = Object.freeze({
+  BRAIN_TOOL_POLICY_INPUT: [400, "Choose valid tools for this section and include the current version."],
+  BRAIN_TOOL_POLICY_CONFLICT: [409, "Tool access changed in another session. Reload assignments before saving."],
   SYNERGY_RESEARCH_INPUT: [400, "Use a search of 2–300 characters or a valid source ID and byte offset."],
   SYNERGY_RESEARCH_UNAVAILABLE: [503, "Synergy MCP research is temporarily unavailable."],
   SYNERGY_RESEARCH_NOT_FOUND: [404, "This research source is unavailable."],
@@ -49,7 +53,7 @@ const ERRORS = Object.freeze({
   TRADER_OUTPUT_INVALID: [502, "The AI returned an incomplete response."],
 });
 
-export function createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator = runBrainEvaluations, robinhoodService, synergyResearch, logger = console }) {
+export function createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator = runBrainEvaluations, robinhoodService, synergyResearch, toolPolicy, logger = console }) {
   // Fixture results contain no operator data and apply only to this server instance.
   // A restart requires a fresh check, so stale results never imply a new build passed.
   let lastEvaluation = null;
@@ -65,6 +69,11 @@ export function createBrainController({ brainService, brainKnowledge, brainTools
     catch (error) { return fail(res, error); }
   };
   return {
+    toolAccess: handle(async (req, res) => res.json({ policy: await toolPolicy.read(), sections: BRAIN_SECTIONS,
+      catalog: BRAIN_TOOL_CATALOG.map(tool => ({ ...tool, configured: tool.id === "synergy-mcp" ? Boolean(synergyResearch) : tool.id === "robinhood" ? Boolean(robinhoodService) : true })),
+      synergyResearch: await synergyResearch?.status() ?? { configured: false, connected: false },
+    })),
+    updateToolAccess: handle(async (req, res, actorId) => res.json({ policy: await toolPolicy.update(req.params.section, req.body, actorId) })),
     synergySearch: handle(async (req, res) => {
       if (!synergyResearch) return fail(res, { code: "SYNERGY_RESEARCH_UNAVAILABLE" });
       if (Object.keys(req.query).some(key => key !== "query")) return fail(res, { code: "SYNERGY_RESEARCH_INPUT" });
@@ -106,8 +115,8 @@ export function createBrainController({ brainService, brainKnowledge, brainTools
         },
       } : null;
       return res.json({ ...state, runs: runsPage.runs, runsNextCursor: runsPage.nextCursor,
-        documents, documentsNextCursor: documentsPage.nextCursor, toolDefinitions: brainTools?.definitions("strategist") ?? [],
-        robinhoodState, synergyResearch: await synergyResearch?.status() ?? { configured: false, connected: false, readOnly: true, name: "Synergy MCP" },
+        documents, documentsNextCursor: documentsPage.nextCursor, toolDefinitions: await brainTools?.definitions("strategist") ?? [],
+        robinhoodState, canManageTools: req.session.operator.capabilities?.includes(CAPABILITIES.ADMIN) === true,
         readiness: buildBrainReadiness({ state, documents, lastEvaluation, broker }) });
     }),
     runs: handle(async (req, res, ownerId) => {

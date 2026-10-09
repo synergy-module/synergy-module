@@ -152,3 +152,30 @@
 }
 .synergy-source-link { display: block; max-width: 100%; margin: 8px 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
 .synergy-source-text { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; border: 1px solid currentColor; font-size: 12px; }
+.brain-tool-dialog { box-sizing: border-box; width: min(780px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 0; color: var(--ink); background: var(--surface, var(--void)); border: 1px solid var(--line-strong); border-radius: 4px; box-shadow: 0 20px 100px #0008; }
+.brain-tool-dialog::backdrop { background: #050508bb; backdrop-filter: blur(5px); }
+.brain-tool-heading { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; padding: 24px 28px; border-bottom: 1px solid var(--line); }
+.brain-tool-heading > span { color: var(--red); }
+.brain-tool-heading h2 { grid-column: 1; margin: 0; font: 600 28px var(--font-display); }
+.brain-tool-heading > button { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+.brain-tool-body { padding: 0 28px 28px; }
+.brain-tool-body > .field { display: block; margin: 22px 0 12px; }
+.brain-tool-body select { display: block; width: 100%; margin-top: 8px; }
+.brain-tool-body .trader-help { font-size: 12px; line-height: 1.7; }
+.brain-tool-choices { margin: 20px 0; border-top: 1px solid var(--line); }
+.brain-tool-choice { display: flex; align-items: flex-start; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.brain-tool-choice input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--red); }
+.brain-tool-choice > span { min-width: 0; flex: 1; }
+.brain-tool-choice-title { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.brain-tool-choice-title strong { font: 600 16px var(--font-sans); }
+.brain-tool-choice small { color: var(--ink-muted); font: 10px/1.7 var(--font-mono); }
+.brain-tool-description { display: block; margin: 6px 0; font: 12px/1.65 var(--font-sans); color: var(--ink-muted); }
+.brain-tool-audit, .brain-tool-library { padding: 18px 0 4px; border-top: 1px solid var(--line); margin-top: 16px; }
+.brain-tool-dialog summary { cursor: pointer; font: 13px var(--font-sans); }
+.brain-tool-audit li { overflow-wrap: anywhere; color: var(--ink-muted); font: 11px/1.8 var(--font-mono); }
+.brain-tool-dialog .trader-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.brain-tool-library .field { flex: 1 1 240px; }
+.brain-tool-library input { width: 100%; }
+.brain-tool-library .trader-help { overflow-wrap: anywhere; }
+.brain-tool-dialog :focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+@media (max-width: 600px) { .brain-tool-heading { padding: 18px; } .brain-tool-body { padding: 0 18px 20px; } .brain-tool-choice-title { display: grid; } }

@@ -6,7 +6,7 @@ import { readDatabaseConfig } from "../src/config/database-config.js";
 
 export const MIGRATION_FILES = Object.freeze([
   "001_initial.sql", "002_agent_brain.sql", "003_admin_persistence.sql", "004_robinhood.sql",
-  "005_user_workspaces.sql", "006_brain_query_indexes.sql", "007_broker_records.sql",
+  "005_user_workspaces.sql", "006_brain_query_indexes.sql", "007_broker_records.sql", "008_brain_tool_policy.sql",
 ]);
 
 async function migrationSources() {

@@ -61,3 +61,13 @@ test("late network state cannot modify a disposed page", async (t) => {
   resolve(response({ runs: [{ id: "r", status: "running" }] })); await tick();
   assert.equal(app.root.outerHTML, before);
 });
+
+
+test("only an admin sees tool controls on every brain section", async t => {
+  const app=fixture(t,async()=>response({canManageTools:true}));await tick();
+  assert.equal(app.root.querySelector('[aria-label="Manage brain tools"]').hidden,false);
+  for(const button of app.root.querySelectorAll('[data-lobe-node]')){button.click();assert.equal(app.root.querySelector('[data-network-tools]').dataset.networkTools,button.dataset.lobeNode);}
+  const member=fixture(t,async()=>response({canManageTools:false}));await tick();
+  assert.equal(member.root.querySelector('[aria-label="Manage brain tools"]').hidden,true);
+  member.root.querySelector('[data-lobe-node]').click();assert.equal(member.root.querySelector('[data-network-tools]'),null);
+});

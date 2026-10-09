@@ -1,6 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { createHash } from "node:crypto";
 import { normalizeBrainCalendar, normalizeTraderInput, traderThesisSchema, validateTraderThesis } from "../services/trader-service.js";
+import { defaultBrainToolPolicy, policyAllows } from "./brain-tool-policy.js";
 
 const emptySchema = { type: "object", properties: {}, required: [], additionalProperties: false };
 const searchSchema = {
@@ -107,17 +108,17 @@ function riskWorker(input, thesis, signal) {
   });
 }
 
-export function createBrainTools({ knowledge, journalRepository, marketNewsService, robinhoodService, synergyResearch, canReadJournal = () => false, now = () => new Date(), timeoutMs = 5000, maxOutputBytes = 64000 } = {}) {
+export function createBrainTools({ knowledge, journalRepository, marketNewsService, robinhoodService, synergyResearch, toolPolicy, canReadJournal = () => false, now = () => new Date(), timeoutMs = 5000, maxOutputBytes = 64000 } = {}) {
   let active = 0;
   return {
-    definitions(role) {
+    async definitions(role) {
       if (!Object.hasOwn(ROLE_TOOLS, role)) return [];
-      return structuredClone([...DEFINITIONS.filter((definition) => ROLE_TOOLS[role]?.includes(definition.name)),
-        ...(synergyResearch && role === "researcher" ? SYNERGY_DEFINITIONS : []),
-        ...(robinhoodService ? BROKER_DEFINITIONS.filter((definition) => definition.name !== "robinhood.propose" || role === "strategist") : [])]);
+      const policy = toolPolicy ? await toolPolicy.read() : defaultBrainToolPolicy();
+      return structuredClone([...DEFINITIONS, ...(synergyResearch ? SYNERGY_DEFINITIONS : []),
+        ...(robinhoodService ? BROKER_DEFINITIONS : [])].filter(definition => policyAllows(policy, role, definition.name)));
     },
     async execute({ name, arguments: args = {}, ownerId, role, input, signal } = {}) {
-      if (!Object.hasOwn(ROLE_TOOLS, role) || !this.definitions(role).some((tool) => tool.name === name)) throw fail("BRAIN_TOOL_DENIED", "This agent cannot use that tool.", 403);
+      if (!Object.hasOwn(ROLE_TOOLS, role) || !(await this.definitions(role)).some((tool) => tool.name === name)) throw fail("BRAIN_TOOL_DENIED", "This agent cannot use that tool.", 403);
       if (typeof ownerId !== "string" || !ownerId.trim()) throw fail("BRAIN_AUTH_REQUIRED", "Sign in to use tools.", 401);
       validateArguments(name, args);
       const safeInput = normalizeTraderInput(input, input?.provider ?? "gemini");

@@ -33,18 +33,18 @@ function harness(t, options = {}) {
   };
 }
 
-test("tool definitions are cloned and inherited or unknown role names reveal no capabilities", (t) => {
+test("tool definitions are cloned and inherited or unknown role names reveal no capabilities", async (t) => {
   const { tools } = harness(t);
-  assert.deepEqual(tools.definitions("__proto__"), []);
-  assert.deepEqual(tools.definitions("constructor"), []);
-  assert.deepEqual(tools.definitions("unknown"), []);
-  const planner = tools.definitions("planner");
+  assert.deepEqual((await tools.definitions("__proto__")), []);
+  assert.deepEqual((await tools.definitions("constructor")), []);
+  assert.deepEqual((await tools.definitions("unknown")), []);
+  const planner = (await tools.definitions("planner"));
   assert.ok(planner.some((tool) => tool.name === "context.read"));
   assert.ok(!planner.some((tool) => tool.name === "risk.check"));
   planner[0].inputSchema.additionalProperties = true;
   planner[0].name = "broker.place_order";
-  assert.equal(tools.definitions("planner")[0].name, "context.read");
-  assert.equal(tools.definitions("planner")[0].inputSchema.additionalProperties, false);
+  assert.equal((await tools.definitions("planner"))[0].name, "context.read");
+  assert.equal((await tools.definitions("planner"))[0].inputSchema.additionalProperties, false);
 });
 
 test("unknown tools, inherited roles and unauthorized role/tool combinations are rejected before dependencies", async (t) => {
@@ -186,9 +186,9 @@ test("Robinhood tools isolate accounts, preserve dated evidence, and deny demos 
   } });
   const live = { input: { ...INPUT, mode: "analysis" } };
   for (const role of ["planner", "researcher", "critic"]) {
-    assert.ok(!f.tools.definitions(role).some((tool) => tool.name === "robinhood.propose"));
+    assert.ok(!(await f.tools.definitions(role)).some((tool) => tool.name === "robinhood.propose"));
   }
-  assert.ok(!f.tools.definitions("strategist").some((tool) => /decide|execute|place_order/.test(tool.name)));
+  assert.ok(!(await f.tools.definitions("strategist")).some((tool) => /decide|execute|place_order/.test(tool.name)));
   await assert.rejects(f.execute("robinhood.read", { tool: "get_equity_quotes", argumentsJson: "{}" }), { code: "BRAIN_TOOL_DENIED" });
   await assert.rejects(f.execute("robinhood.read", { tool: "get_equity_quotes", argumentsJson: "{}", ownerId: "bob" }, live), { code: "BRAIN_TOOL_INVALID" });
   assert.deepEqual(calls, []);

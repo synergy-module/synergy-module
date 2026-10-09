@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createBrainService } from "../../src/agent-brain/brain-service.js";
 import { createMemoryBrainRepository } from "../../src/agent-brain/brain-repository.js";
 import { createBrainKnowledge } from "../../src/agent-brain/brain-knowledge.js";
+import { defaultBrainToolPolicy } from "../../src/agent-brain/brain-tool-policy.js";
 import { createBrainTools } from "../../src/agent-brain/brain-tools.js";
 import { createBrainModelGateway } from "../../src/agent-brain/brain-model-gateway.js";
 import { evaluateTraderRisk } from "../../src/services/trader-service.js";
@@ -30,14 +31,14 @@ const toolAction = (tool, args = {}) => action("tool", { tool, argumentsJson: JS
 const handoff = (handoffRole) => action("handoff", { handoffRole });
 const finish = (thesis = THESIS) => action("finish", { thesis });
 
-function harness({ queues = {}, generate, executeTool, realTools = false, synergyResearch, paidCallsEnabled = true, repository: providedRepository, rates = { inputPerMillion: 1, outputPerMillion: 2, cachedInputPerMillion: 0.1, cacheCreationInputPerMillion: 1.25 }, usage = { inputTokens: 100, outputTokens: 50, cachedInputTokens: 0, totalTokens: 150 }, ...serviceOptions } = {}) {
+function harness({ queues = {}, generate, executeTool, realTools = false, synergyResearch, toolPolicy, paidCallsEnabled = true, repository: providedRepository, rates = { inputPerMillion: 1, outputPerMillion: 2, cachedInputPerMillion: 0.1, cacheCreationInputPerMillion: 1.25 }, usage = { inputTokens: 100, outputTokens: 50, cachedInputTokens: 0, totalTokens: 150 }, ...serviceOptions } = {}) {
   const repository = providedRepository ?? createMemoryBrainRepository({ now: () => TIME });
   const knowledge = createBrainKnowledge({ repository });
   const calls = [];
   const toolCalls = [];
   let calendarRequests = 0;
   let ids = 0;
-  const actualTools = createBrainTools({ knowledge, synergyResearch, journalRepository: { list: async () => [] }, canReadJournal: () => true,
+  const actualTools = createBrainTools({ knowledge, synergyResearch, toolPolicy, journalRepository: { list: async () => [] }, canReadJournal: () => true,
     marketNewsService: { getCurrentWeek: async () => { calendarRequests += 1; return { state: "live", updatedAt: TIME.toISOString(), events: [] }; } }, now: () => TIME });
   const scripts = {
     planner: [PLAN], researcher: [toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")],
@@ -84,7 +85,7 @@ async function until(predicate) {
   throw new Error("Condition was not reached.");
 }
 
-test("analysis searches Synergy MCP before research, reads cited bytes, and keeps demos offline", async () => {
+test("Synergy MCP requires assignment and an explicit agent tool call; normal research and demos never auto-search", async () => {
   const id = "00000000-0000-0000-0000-000000000001";
   const citation = { id: `synergy:artifact:${id}:0:abcdef123456`, title: "NQ archived study", excerpt: "Archived study describes an earlier liquidity setup." };
   const sharedCalls = [];
@@ -92,14 +93,19 @@ test("analysis searches Synergy MCP before research, reads cited bytes, and keep
     async search(query) { sharedCalls.push(["search", query]); return { matches: [{ kind: "artifact", id, title: citation.title }], citations: [] }; },
     async read() { sharedCalls.push(["read"]); return { excerpt: citation.excerpt, citations: [citation] }; },
   };
-  const f = harness({ realTools: true, synergyResearch, queues: {
-    researcher: [toolAction("synergy.read", { kind: "artifact", id }), toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")],
+  const unassigned = harness({ realTools: true, synergyResearch });
+  await run(unassigned); assert.deepEqual(sharedCalls, []);
+  const policy = defaultBrainToolPolicy();
+  policy.assignments["agent:researcher"].push("synergy-mcp");
+  policy.assignments["module:retrieval"].push("synergy-mcp");
+  const f = harness({ realTools: true, synergyResearch, toolPolicy: { read: async () => policy }, queues: {
+    researcher: [toolAction("synergy.search", { query: "NQ archived" }), toolAction("synergy.read", { kind: "artifact", id }), toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")],
     strategist: [finish({ ...THESIS, evidence: [...THESIS.evidence, `Earlier archived setup provides historical context. [${citation.id}]`] })],
   } });
   const result = await run(f);
   assert.equal(result.status, "awaiting_approval");
   assert.equal(f.toolCalls[0].name, "synergy.search");
-  assert.equal(sharedCalls[0][1], `${INPUT.symbol} ${INPUT.objective}`);
+  assert.equal(sharedCalls[0][1], "NQ archived");
   assert.deepEqual(sharedCalls.map(call => call[0]), ["search", "read"]);
   assert.ok(result.trace.some(item => item.details?.citationIds?.includes(citation.id)));
   const demo = harness({ realTools: true, synergyResearch });
@@ -499,7 +505,7 @@ test("repeated missions reuse the durable planner cache while market roles recei
       backendCalls.push({ role, ...request });
       const researchScript = [toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")];
       const data = role === "planner" ? PLAN : role === "researcher" ? researchScript[researchActions++ % researchScript.length] : role === "strategist" ? finish() : REVIEW;
-      return { data: structuredClone(data), provider: request.provider, model: `test-${request.provider}`,
+      return { data: structuredClone(["planner", "critic"].includes(role) ? { ...data, tool: "", argumentsJson: "{}" } : data), provider: request.provider, model: `test-${request.provider}`,
         usage: { inputTokens: 100, outputTokens: 50, cachedInputTokens: 0, cacheCreationInputTokens: 0, totalTokens: 150 }, latencyMs: 1 };
     },
   };
@@ -532,4 +538,36 @@ test("repeated missions reuse the durable planner cache while market roles recei
   }
   assert.ok(requests.every((request) => request.cacheTtlMs === 60000));
   await secondService.close();
+});
+
+
+test("assigned Synergy MCP tools execute in Planner and Critic stages before their final outputs", async () => {
+  const policy = defaultBrainToolPolicy();
+  for (const section of ["agent:planner", "agent:critic", "module:retrieval"]) policy.assignments[section].push("synergy-mcp");
+  const f = harness({ toolPolicy: { read: async () => policy }, synergyResearch: { search: async () => ({matches:[]}) }, queues: {
+    planner: [{tasks:[],tool:"synergy.search",argumentsJson:'{"query":"NQ"}'}, {...PLAN,tool:"",argumentsJson:"{}"}],
+    critic: [{verdict:"",reason:"",revisionInstruction:"",tool:"synergy.search",argumentsJson:'{"query":"NQ"}'}, {...REVIEW,tool:"",argumentsJson:"{}"}],
+  } });
+  const result = await run(f);
+  assert.equal(result.status,"awaiting_approval",JSON.stringify(result.error));
+  assert.deepEqual(f.toolCalls.filter(call=>call.name==="synergy.search").map(call=>call.role),["planner","critic"]);
+  assert.equal(result.metrics.modelCalls,8);
+});
+
+test("revocation while a model request is pending blocks its next tool call", async () => {
+  const policy = defaultBrainToolPolicy();
+  for (const section of ["agent:researcher","module:retrieval"]) policy.assignments[section].push("synergy-mcp");
+  let calls=0;
+  const f=harness({toolPolicy:{read:async()=>policy},synergyResearch:{},generate:async(owner,request)=>{
+    if(request.system.includes("Current role: planner"))return {data:PLAN};
+    policy.assignments["module:retrieval"]=[];
+    return {data:toolAction("synergy.search",{query:"NQ"})};
+  },executeTool:()=>{calls++;}});
+  const result=await run(f);assert.equal(result.status,"failed");assert.equal(result.error.code,"BRAIN_TOOL_REJECTED");assert.equal(calls,0);
+});
+
+test("disabling the risk module cannot turn off the final risk gate", async () => {
+  const policy=defaultBrainToolPolicy();policy.assignments["module:risk"]=[];
+  const f=harness({toolPolicy:{read:async()=>policy}});const result=await run(f);
+  assert.equal(result.status,"awaiting_approval");assert.equal(result.result.proposalStatus,"wait");assert.equal(result.result.risk.passed,false);
 });

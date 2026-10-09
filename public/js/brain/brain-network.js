@@ -68,13 +68,13 @@ export function buildBrainNetworkData(state = {}) {
 // Retain the view across in-app route changes, never across a document refresh.
 const documentViews = new WeakMap();
 
-export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
+export function createBrainNetwork(host, { onNavigate = () => {}, onManageTools = () => {} } = {}) {
   if (!host?.ownerDocument) return { update() {}, refresh() {}, dispose() {} };
   const document = host.ownerDocument, window = document.defaultView;
   const view = documentViews.get(document) ?? defaultBrainView(); documentViews.set(document, view);
   const el = (tag, text, className) => { const item = document.createElement(tag); if (text !== undefined) item.textContent = text; if (className) item.className = className; return item; };
   const button = (text, className, ariaLabel) => { const item = el('button', text, className); item.type = 'button'; if (ariaLabel) item.setAttribute('aria-label', ariaLabel); return item; };
-  let data = buildBrainNetworkData(), selectedId = null, disposed = false, frame = null, lastPaint = null, lastFrameTime = null, sceneTime = 0;
+  let data = buildBrainNetworkData(), canManageTools = false, selectedId = null, disposed = false, frame = null, lastPaint = null, lastFrameTime = null, sceneTime = 0;
   let width = 1000, height = 700, drag = null, intersecting = true, moveMode = false, transition = null;
   const motionQuery = window?.matchMedia?.('(prefers-reduced-motion: reduce)');
   const narrowQuery = window?.matchMedia?.('(max-width: 760px)');
@@ -93,6 +93,8 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
     const group = el('div', undefined, 'brain-network-group'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', name);
     group.append(el('h2', name)); groups.set(kind, group); rail.append(group);
   }
+  const manageTools = button('Tools · Admin', 'brain-network-overview', 'Manage brain tools'); manageTools.hidden = true; rail.append(manageTools);
+  listen(manageTools, 'click', () => { if (canManageTools) onManageTools(selectedId ?? 'agent:researcher'); });
   const stage = el('div', undefined, 'brain-network-stage'); stage.tabIndex = 0;
   stage.setAttribute('aria-label', 'Neural network. Drag to rotate freely in any direction. Scroll to zoom. Shift-drag to move. Arrow keys rotate, Shift-arrow keys move, plus and minus zoom.');
   const canvas = el('canvas', undefined, 'brain-network-canvas'); canvas.setAttribute('aria-hidden', 'true');
@@ -152,6 +154,7 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
     if (node.id === 'module:robinhood') inspector.append(el('p', !data.brokerState ? 'Open Accounts to check your connection and review queue.' : data.brokerState.connected ? 'Your account connection is saved. Every trading action requires its own review.' : 'Add your Robinhood connection in Settings.', 'brain-network-inspector-note'));
     const actionLabel = node.panel === 'robinhood' ? 'Open Accounts ↗' : node.panel === 'knowledge' ? 'Open Knowledge ↗' : node.panel === 'checks' ? 'Open Settings ↗' : 'Open Research ↗';
     const navigate = button(actionLabel, 'brain-network-open'); navigate.dataset.networkNavigate = node.panel ?? 'mission'; inspector.append(navigate);
+    if (canManageTools) { const access = button('Manage tool access ↗', 'brain-network-open'); access.dataset.networkTools = node.id; inspector.append(access); }
     for (const [id, item] of lobeButtons) item.setAttribute('aria-pressed', String(id === selectedId));
     if (focusedAction) (focusedAction === 'close' ? close : navigate).focus({ preventScroll: true });
   }
@@ -242,6 +245,8 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
   listen(sectionsToggle, 'click', () => { setSectionsOpen(true); (lobeButtons.get(selectedId) ?? overview).focus({ preventScroll: true }); });
   listen(railClose, 'click', () => setSectionsOpen(false, { restoreFocus: true }));
   listen(inspector, 'click', (event) => {
+    const toolButton = event.target.closest('[data-network-tools]');
+    if (toolButton && canManageTools) { onManageTools(toolButton.dataset.networkTools); return; }
     if (event.target.closest('[data-network-close]')) { closeInspector({ restoreFocus: true }); return; }
     const item = event.target.closest('[data-network-navigate]');
     if (item && ['mission', 'knowledge', 'checks', 'network', 'robinhood'].includes(item.dataset.networkNavigate)) onNavigate(item.dataset.networkNavigate);
@@ -323,6 +328,7 @@ export function createBrainNetwork(host, { onNavigate = () => {} } = {}) {
   function update(state = {}) {
     if (disposed) return;
     data = buildBrainNetworkData(state);
+    canManageTools = state.canManageTools === true; manageTools.hidden = !canManageTools;
     mode.textContent = data.run ? `${data.run.input?.mode === 'demo' ? 'DEMO' : 'RESEARCH'} / ${label(data.run.status).toUpperCase()}` : 'IDLE';
     renderNodes(); if (selectedId) renderInspector(); refresh();
   }
