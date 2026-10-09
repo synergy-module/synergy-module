@@ -1,0 +1,94 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { randomUUID, createHash } from "node:crypto";
+import pg from "pg";
+import request from "supertest";
+import { createSynergyResearch } from "../../src/agent-brain/synergy-research.js";
+import { createBrainTools } from "../../src/agent-brain/brain-tools.js";
+import { createTestApp, loginTestOperator } from "../helpers/auth-test-helpers.js";
+
+const connectionString = process.env.TEST_SYNERGY_RESEARCH_DATABASE_URL;
+test("PostgreSQL shared researcher reads cited sources with database and application isolation", { skip: !connectionString }, async t => {
+  assert.equal(new URL(connectionString).pathname, "/synergy_reader_test", "Use only the disposable synergy_reader_test database");
+  const admin = new pg.Pool({ connectionString });
+  t.after(() => admin.end());
+  await admin.query(`DROP SCHEMA IF EXISTS synergy_module_research CASCADE; DROP SCHEMA IF EXISTS synergy_trading CASCADE; DROP SCHEMA IF EXISTS synergy_archive CASCADE; DROP SCHEMA IF EXISTS synergy_auth CASCADE;
+    CREATE SCHEMA synergy_trading; CREATE SCHEMA synergy_archive; CREATE SCHEMA synergy_auth;
+    CREATE TABLE synergy_auth.secrets(value text);
+    CREATE TABLE synergy_trading.programs(id text,root text,name text,benchmark text,minimum_trades int,champion_id text,champion_revision int,created_at text);
+    CREATE TABLE synergy_trading.strategies(id text,program_id text,name text,rules text,parent_id text,content_hash text,created_at text);
+    CREATE TABLE synergy_trading.trades(id text,program_id text,strategy_id text,external_id text,kind text,payload text,close_payload text,gross_r float,cost_r float,version int,created_at text);
+    CREATE TABLE synergy_trading.evaluations(strategy_id text,program_id text,payload text,payload_hash text,completed_at text);
+    CREATE TABLE synergy_archive.artifacts(id text,root text,path text,source text,created_at text,verified_sha256 text,received_bytes bigint,payload text,completed_at text);
+    CREATE TABLE synergy_archive.artifact_chunks(artifact_id text,byte_offset bigint,byte_length int,content bytea);`);
+  const id = randomUUID(), program = randomUUID(), strategy = randomUUID();
+  const body = Buffer.from("NQ research evidence: <script>untrusted()</script> " + "x".repeat(8142) + "€ next excerpt " + "z".repeat(9000));
+  const hash = createHash("sha256").update(body).digest("hex");
+  async function artifact(path, root = "/workspace", completed = true, mediaType = "application/octet-stream", bytes = body) {
+    const key = path === "research/NQ/OVERVIEW.md" ? id : randomUUID();
+    await admin.query("INSERT INTO synergy_archive.artifacts VALUES($1,$2,$3,'shared-fixture','2026-10-08',$4,$5,$6,$7)", [key, root, path, hash, bytes.length, JSON.stringify({ mediaType }), completed ? "2026-10-08" : null]);
+    // A read window spans two independent stored chunks.
+    for (let offset = 0; offset < bytes.length; offset += 5000) {
+      const content = bytes.subarray(offset, offset + 5000);
+      await admin.query("INSERT INTO synergy_archive.artifact_chunks VALUES($1,$2,$3,$4)", [key, offset, content.length, content]);
+    }
+    return key;
+  }
+  await artifact("research/NQ/OVERVIEW.md");
+  const other = await artifact("NQ/private.md", "/private");
+  await artifact("NQ/incomplete.md", "/workspace", false);
+  await artifact(".env.production");
+  const binary = await artifact("NQ/data.zip", "/workspace", true, "application/octet-stream", Buffer.from([0, 1, 2, 3]));
+  const invalid = await artifact("NQ/invalid.txt", "/workspace", true, "text/plain", Buffer.from([255, 254, 0]));
+  await admin.query("INSERT INTO synergy_trading.programs VALUES($1,'/workspace','NQ benchmark','{}',20,$2,1,'2026-10-08')", [program, strategy]);
+  await admin.query("INSERT INTO synergy_trading.strategies VALUES($1,$2,'NQ strategy','Historical rules',NULL,'stable-hash','2026-10-08')", [strategy, program]);
+  await admin.query(readFileSync(new URL("../../scripts/synergy-research-views.sql", import.meta.url), "utf8"));
+  await admin.query("DROP ROLE IF EXISTS synergy_fixture_reader; CREATE ROLE synergy_fixture_reader LOGIN PASSWORD 'fixture-only' NOSUPERUSER NOCREATEDB NOCREATEROLE; GRANT USAGE ON SCHEMA synergy_module_research TO synergy_fixture_reader; GRANT SELECT ON ALL TABLES IN SCHEMA synergy_module_research TO synergy_fixture_reader; ALTER ROLE synergy_fixture_reader SET default_transaction_read_only=on;");
+  const url = new URL(connectionString); url.username = "synergy_fixture_reader"; url.password = "fixture-only";
+  const service = createSynergyResearch({ config: { configured: true, connectionString: url.href } });
+  t.after(() => service.close());
+  assert.equal((await service.status()).connected, true);
+  const results = await service.search("NQ OVERVIEW", { limit: 5 });
+  assert.equal(results.matches[0].id, id);
+  assert.equal(results.citations.length, 0, "Names alone cannot be cited as source evidence");
+  assert.doesNotMatch(JSON.stringify(results), /private|incomplete|env.production/);
+  let offset = 0, recovered = "";
+  do {
+    const value = await service.read({ kind: "artifact", id, offset });
+    assert.ok(Buffer.byteLength(value.excerpt) <= 8192);
+    assert.match(value.citations[0].id, /^synergy:artifact:/);
+    recovered += value.excerpt; offset = value.nextOffset;
+  } while (offset !== null);
+  assert.equal(recovered, body.toString());
+  await assert.rejects(service.read({ kind: "artifact", id: other }), { code: "SYNERGY_RESEARCH_NOT_FOUND" });
+  await assert.rejects(service.read({ kind: "artifact", id: invalid }), { code: "SYNERGY_RESEARCH_BINARY" });
+  assert.equal((await service.read({ kind: "artifact", id: binary })).readable, false);
+  assert.match((await service.read({ kind: "strategy", id: strategy })).excerpt, /Historical rules/);
+  await assert.rejects(service.read({ kind: "artifact", id, offset: -1 }), { code: "SYNERGY_RESEARCH_INPUT" });
+  await assert.rejects(service.search("SELECT secrets", { limit: 99 }), { code: "SYNERGY_RESEARCH_INPUT" });
+  assert.deepEqual((await service.search("' OR 1=1 --")).matches, []);
+  const lowPrivilege = new pg.Pool({ connectionString: url.href });
+  t.after(() => lowPrivilege.end());
+  await assert.rejects(lowPrivilege.query("SELECT * FROM synergy_auth.secrets"), { code: "42501" });
+  await assert.rejects(lowPrivilege.query("SELECT * FROM synergy_archive.artifacts"), { code: "42501" });
+  assert.equal((await lowPrivilege.query("SHOW default_transaction_read_only")).rows[0].default_transaction_read_only, "on");
+  await assert.rejects(lowPrivilege.query("DELETE FROM synergy_module_research.artifacts"), error => ["42501", "25006"].includes(error.code));
+  const tools = createBrainTools({ synergyResearch: service });
+  assert.ok(tools.definitions("researcher").some(tool => tool.name === "synergy.read"));
+  assert.ok(!tools.definitions("strategist").some(tool => tool.name.startsWith("synergy.")));
+  const input = { mode: "analysis", provider: "gemini", symbol: "NQ", timeframe: "5m", context: "Historical research context only; no current market prices are supplied.", accountSize: 50000, riskPercent: 0.5, pointValue: 20, minRewardRisk: 2 };
+  const observation = await tools.execute({ name: "synergy.read", arguments: { kind: "artifact", id }, ownerId: "alice", role: "researcher", input });
+  assert.match(observation.citations[0].id, /^synergy:artifact:/);
+  await assert.rejects(tools.execute({ name: "synergy.search", arguments: { query: "NQ" }, ownerId: "alice", role: "researcher", input: { ...input, mode: "demo" } }), { code: "BRAIN_TOOL_DENIED" });
+  const app = createTestApp({ synergyResearch: service });
+  await request(app).get("/api/brain/synergy/search?query=NQ").expect(401);
+  const agent = await loginTestOperator(app);
+  const state = await agent.get("/api/brain/state").expect(200);
+  assert.equal(state.body.synergyResearch.connected, true);
+  assert.doesNotMatch(JSON.stringify(state.body.synergyResearch), /postgres:|fixture-only/);
+  await agent.get("/api/brain/synergy/search?query=NQ").expect(200).expect("Cache-Control", "no-store");
+  await agent.get(`/api/brain/synergy/read?kind=artifact&id=${id}`).expect(200);
+  await agent.get(`/api/brain/synergy/read?kind=artifact&id=${id}&offset=bad`).expect(400);
+  await agent.get("/api/brain/synergy/search?query=NQ&ownerId=other").expect(400);
+});

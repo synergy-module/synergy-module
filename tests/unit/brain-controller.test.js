@@ -46,6 +46,28 @@ test("loading older missions appends beyond twenty and selecting one preserves t
   assert.equal(app.find("status").textContent, "COMPLETED");
 });
 
+test("shared research browsing renders source text safely and follows continuation offsets", async t => {
+  const source = { kind: "artifact", id: "source-id", title: "<img src=x onerror=alert(1)>", recordedAt: "2026-10-08" };
+  const calls = [];
+  const app = fixture(t, async url => {
+    calls.push(url);
+    if (url === "/api/brain/state") return response({ ...state, synergyResearch: { connected: true, counts: { artifact: 4399 } } });
+    if (url.startsWith("/api/brain/synergy/search?")) return response({ matches: [source] });
+    return response({ source, excerpt: "<script>untrusted source</script>", citations: [{ id: "source-citation" }], nextOffset: url.includes("offset=0") ? 8192 : null, truncated: url.includes("offset=0") });
+  });
+  await tick();
+  assert.match(app.find("synergy-status").textContent, /Connected/);
+  app.find("synergy-form").elements.namedItem("query").value = "NQ overview";
+  app.find("synergy-form").dispatchEvent(new app.dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await tick(); app.find("synergy-results").querySelector("button").click(); await tick();
+  assert.equal(app.find("synergy-title").querySelector("img"), null);
+  assert.equal(app.find("synergy-excerpt").querySelector("script"), null);
+  assert.match(app.find("synergy-excerpt").textContent, /untrusted source/);
+  app.find("synergy-next").click(); await tick();
+  assert.ok(calls.some(url => url.includes("offset=8192")));
+  assert.equal(app.find("synergy-next").hidden, true);
+});
+
 test("an old pagination response cannot replace a refreshed history or the selected mission", async (t) => {
   let finishPage, stateReads = 0;
   const current = run({ status: "completed" });

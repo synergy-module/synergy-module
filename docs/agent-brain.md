@@ -1,5 +1,7 @@
 # Agent Brain
 
+The researcher also connects directly to the shared Synergy MCP PostgreSQL library when configured. See [Synergy MCP research](synergy-research.md) for connection setup, source browsing, citations and retrieval limits.
+
 Open `/brain` from the terminal sidebar. The brain connects a planner, researcher, strategist and critic to the existing trader's provider adapters, risk engine, calendar and journal. Gemini is the default. Each role can route to Gemini, OpenAI or Claude independently.
 
 The control panel opens on an interactive network view inspired by the supplied AI operating-system reference. Select agents, tools, sources or saved missions to inspect their actual configuration and recorded activity. Filters, zoom, view reset and motion controls affect only the visualization. The glowing connections illustrate the application's architecture; they do not expose model weights or claim a neuron count. Mission, Knowledge and Checks tabs retain the run composer, approval workflow, source library, readiness checklist and offline evaluations. The Robinhood tab adds brokerage connection, dated research, previews, separate action review, and audit history for stocks, options, and crypto; see [Robinhood setup and limits](robinhood.md).

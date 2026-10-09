@@ -26,6 +26,7 @@ export function initializeBrainPage(root, { fetchImpl = root.ownerDocument.defau
   let providers = [], runs = [], savedDocuments = [], toolDefinitions = [], selected = null, brokerState = null, ready = false, paidCallsEnabled = false, disposed = false, busy = false, timer, loading = false, generation = 0;
   const pages = { runs: { cursor: null, loading: false, generation: 0 }, documents: { cursor: null, loading: false, generation: 0 } };
   const requests = new Set(), listeners = [];
+  let synergyGeneration = 0, synergySource;
   const viewButtons = [...root.querySelectorAll("[data-brain-view]")];
   const viewPanels = [...root.querySelectorAll("[data-brain-panel]")];
   const network = find("network") ? createBrainNetwork(find("network"), { onNavigate: (view) => selectView(view) }) : null;
@@ -245,6 +246,12 @@ export function initializeBrainPage(root, { fetchImpl = root.ownerDocument.defau
       const state = await request("/api/brain/state"); if (disposed) return;
       providers = state.providers ?? []; runs = state.runs ?? []; paidCallsEnabled = state.paidCallsEnabled === true; brokerState = state.robinhoodState ?? null;
       toolDefinitions = state.toolDefinitions ?? [];
+      if (find("synergy-status")) {
+        const shared = state.synergyResearch;
+        find("synergy-status").textContent = shared?.connected
+          ? `Connected · ${number(shared.counts?.artifact ?? 0)} archived files · read-only researcher access`
+          : shared?.configured ? "Synergy MCP is temporarily unavailable. Shared sources cannot be read right now." : "Synergy MCP has not been connected yet.";
+      }
       if (!ready && !workspaceLoaded && state.defaultProvider) field("provider").value = state.defaultProvider;
       pages.runs.cursor = state.runsNextCursor ?? null;
       ready = true;
@@ -338,6 +345,38 @@ export function initializeBrainPage(root, { fetchImpl = root.ownerDocument.defau
       if (draftStatus) draftStatus.textContent = settings.storage?.persistent ? "Your drafts are saved automatically" : "Temporary storage · configure persistence in Settings";
     } catch { if (draftStatus && !disposed) draftStatus.textContent = "Saved defaults unavailable. Refresh before starting paid research."; }
   }
+  async function readSynergy(item, offset = 0) {
+    const current = ++synergyGeneration;
+    find("synergy-feedback").textContent = "Reading source…";
+    try {
+      const result = await request(`/api/brain/synergy/read?${new URLSearchParams({ kind: item.kind, id: item.id, offset })}`);
+      if (disposed || current !== synergyGeneration) return;
+      synergySource = result;
+      find("synergy-source").hidden = false;
+      find("synergy-title").textContent = result.source.title;
+      find("synergy-citation").textContent = result.citations?.[0] ? `[${result.citations[0].id}] · Recorded ${date(result.source.recordedAt)}` : "Metadata only";
+      find("synergy-excerpt").textContent = result.excerpt || result.note || "This source is empty.";
+      find("synergy-next").hidden = result.nextOffset === null;
+      find("synergy-feedback").textContent = result.truncated ? "Showing a bounded excerpt. Continue to read more." : "Source read from Synergy MCP.";
+    } catch (error) { if (!disposed && current === synergyGeneration) find("synergy-feedback").textContent = error.message; }
+  }
+  on(find("synergy-form"), "submit", async event => {
+    event.preventDefault(); const current = ++synergyGeneration;
+    find("synergy-feedback").textContent = "Searching shared research…";
+    find("synergy-source").hidden = true;
+    try {
+      const result = await request(`/api/brain/synergy/search?query=${encodeURIComponent(event.currentTarget.elements.namedItem("query").value)}`);
+      if (disposed || current !== synergyGeneration) return;
+      find("synergy-results").replaceChildren();
+      for (const item of result.matches) {
+        const button = el("button", item.title, "btn synergy-source-link"); button.type = "button";
+        button.addEventListener("click", () => void readSynergy(item));
+        find("synergy-results").append(button);
+      }
+      find("synergy-feedback").textContent = result.matches.length ? "Select a source to inspect its contents." : "No matching names found. Try a symbol, strategy, or file name.";
+    } catch (error) { if (!disposed && current === synergyGeneration) find("synergy-feedback").textContent = error.message; }
+  });
+  on(find("synergy-next"), "click", () => { if (synergySource?.nextOffset != null) void readSynergy(synergySource.source, synergySource.nextOffset); });
   on(form, "input", () => { formTouched = true; });
   instances.set(root, instance); void loadWorkspace().then(() => { if (!disposed) return loadState(); }); return instance;
 }

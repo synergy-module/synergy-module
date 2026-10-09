@@ -6,12 +6,14 @@ import { ROUTE_BY_KEY } from "../models/navigation.js";
 import { requireCapability } from "../middleware/require-capability.js";
 import { requireCsrf } from "../security/csrf.js";
 
-export function createBrainRoutes({ brainService, brainKnowledge, brainTools, brainEvaluator, robinhoodService, logger }) {
+export function createBrainRoutes({ brainService, brainKnowledge, brainTools, brainEvaluator, robinhoodService, synergyResearch, logger }) {
   const router = Router();
   const access = requireCapability(CAPABILITIES.BASE);
-  const controller = createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator, robinhoodService, logger });
+  const controller = createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator, robinhoodService, synergyResearch, logger });
   router.get("/brain", access, createPageController().show(ROUTE_BY_KEY.brain));
   router.get("/api/brain/state", access, controller.state);
+  router.get("/api/brain/synergy/search", access, controller.synergySearch);
+  router.get("/api/brain/synergy/read", access, controller.synergyRead);
   router.post("/api/brain/evals", access, requireCsrf, controller.evaluations);
   router.get("/api/brain/runs", access, controller.runs);
   router.get("/api/brain/runs/:id", access, controller.getRun);

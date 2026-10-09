@@ -30,14 +30,14 @@ const toolAction = (tool, args = {}) => action("tool", { tool, argumentsJson: JS
 const handoff = (handoffRole) => action("handoff", { handoffRole });
 const finish = (thesis = THESIS) => action("finish", { thesis });
 
-function harness({ queues = {}, generate, executeTool, realTools = false, paidCallsEnabled = true, repository: providedRepository, rates = { inputPerMillion: 1, outputPerMillion: 2, cachedInputPerMillion: 0.1, cacheCreationInputPerMillion: 1.25 }, usage = { inputTokens: 100, outputTokens: 50, cachedInputTokens: 0, totalTokens: 150 }, ...serviceOptions } = {}) {
+function harness({ queues = {}, generate, executeTool, realTools = false, synergyResearch, paidCallsEnabled = true, repository: providedRepository, rates = { inputPerMillion: 1, outputPerMillion: 2, cachedInputPerMillion: 0.1, cacheCreationInputPerMillion: 1.25 }, usage = { inputTokens: 100, outputTokens: 50, cachedInputTokens: 0, totalTokens: 150 }, ...serviceOptions } = {}) {
   const repository = providedRepository ?? createMemoryBrainRepository({ now: () => TIME });
   const knowledge = createBrainKnowledge({ repository });
   const calls = [];
   const toolCalls = [];
   let calendarRequests = 0;
   let ids = 0;
-  const actualTools = createBrainTools({ knowledge, journalRepository: { list: async () => [] }, canReadJournal: () => true,
+  const actualTools = createBrainTools({ knowledge, synergyResearch, journalRepository: { list: async () => [] }, canReadJournal: () => true,
     marketNewsService: { getCurrentWeek: async () => { calendarRequests += 1; return { state: "live", updatedAt: TIME.toISOString(), events: [] }; } }, now: () => TIME });
   const scripts = {
     planner: [PLAN], researcher: [toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")],
@@ -83,6 +83,29 @@ async function until(predicate) {
   }
   throw new Error("Condition was not reached.");
 }
+
+test("analysis searches Synergy MCP before research, reads cited bytes, and keeps demos offline", async () => {
+  const id = "00000000-0000-0000-0000-000000000001";
+  const citation = { id: `synergy:artifact:${id}:0:abcdef123456`, title: "NQ archived study", excerpt: "Archived study describes an earlier liquidity setup." };
+  const sharedCalls = [];
+  const synergyResearch = {
+    async search(query) { sharedCalls.push(["search", query]); return { matches: [{ kind: "artifact", id, title: citation.title }], citations: [] }; },
+    async read() { sharedCalls.push(["read"]); return { excerpt: citation.excerpt, citations: [citation] }; },
+  };
+  const f = harness({ realTools: true, synergyResearch, queues: {
+    researcher: [toolAction("synergy.read", { kind: "artifact", id }), toolAction("context.read"), toolAction("calendar.read"), handoff("strategist")],
+    strategist: [finish({ ...THESIS, evidence: [...THESIS.evidence, `Earlier archived setup provides historical context. [${citation.id}]`] })],
+  } });
+  const result = await run(f);
+  assert.equal(result.status, "awaiting_approval");
+  assert.equal(f.toolCalls[0].name, "synergy.search");
+  assert.equal(sharedCalls[0][1], `${INPUT.symbol} ${INPUT.objective}`);
+  assert.deepEqual(sharedCalls.map(call => call[0]), ["search", "read"]);
+  assert.ok(result.trace.some(item => item.details?.citationIds?.includes(citation.id)));
+  const demo = harness({ realTools: true, synergyResearch });
+  await run(demo, { ...INPUT, mode: "demo" });
+  assert.equal(sharedCalls.length, 2);
+});
 
 test("actual ReAct research tools, role handoff, deterministic risk and critique reach approval", async () => {
   const fixture = harness();

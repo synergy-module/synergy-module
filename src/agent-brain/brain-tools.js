@@ -29,6 +29,15 @@ const BROKER_DEFINITIONS = [
   { name: "robinhood.propose", description: "Prepare an exact Robinhood action for separate human approval. Order requests obtain a broker preview. No order is submitted. Requires a valid risk-checked thesis, discovered broker arguments, and a short reason. Research memory approval never confirms this broker action.", inputSchema: { type: "object", additionalProperties: false, required: ["tool", "argumentsJson", "reason", "thesis"], properties: { tool: { type: "string" }, argumentsJson: { type: "string" }, reason: { type: "string" }, thesis: traderThesisSchema } } },
 ];
 const fail = (code, message, status = 422) => Object.assign(new Error(message), { code, status });
+const SYNERGY_DEFINITIONS = [
+  { name: "synergy.search", description: "Find shared Synergy MCP research by symbol, strategy, or file name. Searches file/record metadata, not all archived file contents. Read matching IDs with synergy.read before citing their contents.", inputSchema: searchSchema },
+  { name: "synergy.read", description: "Read up to 8 KiB of a shared research source with a stable citation. Use kind/id from synergy.search. Continue at nextOffset when truncated. Archived research is not a live quote. Binary files return metadata only.", inputSchema: {
+    type: "object", additionalProperties: false, required: ["kind", "id"], properties: {
+      kind: { type: "string", enum: ["artifact", "program", "strategy", "trade", "evaluation"] },
+      id: { type: "string" }, offset: { type: "integer", minimum: 0 },
+    },
+  } },
+];
 
 function validateArguments(name, args) {
   if (!args || typeof args !== "object" || Array.isArray(args) || Buffer.byteLength(JSON.stringify(args)) > 16000) {
@@ -49,6 +58,9 @@ function validateArguments(name, args) {
         try { validateTraderThesis(args.thesis); } catch { throw fail("BRAIN_TOOL_INVALID", "A valid thesis is required."); }
       }
     }
+  } else if (name === "synergy.read") {
+    if (keys.some(key => !["kind", "id", "offset"].includes(key)) || typeof args.id !== "string" || typeof args.kind !== "string"
+      || (args.offset !== undefined && (!Number.isSafeInteger(args.offset) || args.offset < 0))) throw fail("BRAIN_TOOL_INVALID", "Use a source kind, ID, and optional byte offset.");
   } else if (name.endsWith(".search")) {
     if (keys.some((key) => !["query", "limit"].includes(key)) || typeof args.query !== "string" ||
       args.query.trim().length < 2 || args.query.length > 300 ||
@@ -95,12 +107,13 @@ function riskWorker(input, thesis, signal) {
   });
 }
 
-export function createBrainTools({ knowledge, journalRepository, marketNewsService, robinhoodService, canReadJournal = () => false, now = () => new Date(), timeoutMs = 5000, maxOutputBytes = 64000 } = {}) {
+export function createBrainTools({ knowledge, journalRepository, marketNewsService, robinhoodService, synergyResearch, canReadJournal = () => false, now = () => new Date(), timeoutMs = 5000, maxOutputBytes = 64000 } = {}) {
   let active = 0;
   return {
     definitions(role) {
       if (!Object.hasOwn(ROLE_TOOLS, role)) return [];
       return structuredClone([...DEFINITIONS.filter((definition) => ROLE_TOOLS[role]?.includes(definition.name)),
+        ...(synergyResearch && role === "researcher" ? SYNERGY_DEFINITIONS : []),
         ...(robinhoodService ? BROKER_DEFINITIONS.filter((definition) => definition.name !== "robinhood.propose" || role === "strategist") : [])]);
     },
     async execute({ name, arguments: args = {}, ownerId, role, input, signal } = {}) {
@@ -119,7 +132,14 @@ export function createBrainTools({ knowledge, journalRepository, marketNewsServi
         let citations = [];
         let truncated = false;
         const demo = safeInput.mode === "demo";
-        if (name.startsWith("robinhood.")) {
+        if (name.startsWith("synergy.")) {
+          if (demo) throw fail("BRAIN_TOOL_DENIED", "Offline demos cannot read Synergy MCP.", 403);
+          data = name === "synergy.search"
+            ? await synergyResearch.search(args.query, { limit: args.limit ?? 5, signal: controller.signal })
+            : await synergyResearch.read(args, { signal: controller.signal });
+          citations = data.citations ?? [];
+          truncated = data.truncated === true;
+        } else if (name.startsWith("robinhood.")) {
           if (demo) throw fail("BRAIN_TOOL_DENIED", "Offline demos cannot access Robinhood.", 403);
           if (name === "robinhood.tools") data = await robinhoodService.catalog(ownerId, args.group);
           else if (name === "robinhood.read") {

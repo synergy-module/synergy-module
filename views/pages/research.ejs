@@ -59,6 +59,17 @@
   </section>
 
   <section id="brain-panel-knowledge" class="brain-view" data-brain-panel="knowledge" role="tabpanel" aria-labelledby="brain-tab-knowledge" tabindex="0" hidden>
+    <section class="panel brain-library" aria-labelledby="synergy-research-heading">
+      <header class="trader-panel-head"><h2 id="synergy-research-heading">SYNERGY MCP</h2><span class="trader-micro">SHARED RESEARCH</span></header>
+      <div class="brain-library-body">
+        <p class="trader-help" data-brain-synergy-status role="status">Checking the shared research library…</p>
+        <p class="trader-help">The researcher searches this library when you start an analysis and can cite its archived sources. Find files by symbol, strategy, or file name. Archived results are historical observations.</p>
+        <form data-brain-synergy-form class="trader-actions"><label class="field">FIND SHARED SOURCES<input name="query" required minlength="2" maxlength="300" placeholder="NQ, IFVG, or OVERVIEW.md"></label><button class="btn" type="submit">Search library ↗</button></form>
+        <p class="brain-feedback" data-brain-synergy-feedback role="status"></p>
+        <div data-brain-synergy-results></div>
+        <div data-brain-synergy-source hidden><h3 data-brain-synergy-title></h3><p class="trader-help" data-brain-synergy-citation></p><pre class="synergy-source-text" data-brain-synergy-excerpt></pre><button type="button" class="btn" data-brain-synergy-next hidden>Read next excerpt →</button></div>
+      </div>
+    </section>
     <section class="panel brain-library" aria-labelledby="brain-memory-title">
       <header class="trader-panel-head"><h2 id="brain-memory-title">KNOWLEDGE & MEMORY</h2><span class="trader-micro" data-brain-document-count>0 SOURCES</span></header>
       <div class="brain-library-body">

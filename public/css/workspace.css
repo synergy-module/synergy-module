@@ -150,3 +150,5 @@
   .settings-defaults-form > .provider-feedback { display: block; margin: 12px 0; }
   .connection-card { padding: 20px; }
 }
+.synergy-source-link { display: block; max-width: 100%; margin: 8px 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.synergy-source-text { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; border: 1px solid currentColor; font-size: 12px; }

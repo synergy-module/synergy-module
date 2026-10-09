@@ -386,10 +386,15 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
   async function react(control, initialRole = "researcher", revisionInstruction = "") {
     let role = initialRole;
     let handoffs = 0;
+    if (role === "researcher" && control.run.input.mode !== "demo" && !control.synergySearched
+      && tools.definitions(role).some(tool => tool.name === "synergy.search")) {
+      control.synergySearched = true;
+      await executeTool(control, role, "synergy.search", { query: `${control.run.input.symbol} ${control.run.input.objective}`.slice(0, 300), limit: 5 });
+    }
     while (true) {
       await step(control, role, revisionInstruction ? "Choose the next action to revise the proposal." : "Observe the current evidence and choose one bounded action.");
       const value = control.run.input.mode === "demo" ? scriptedAction(control, role) : await modelCall(control, role, {
-        task: role === "researcher" ? "Gather snapshot and calendar context plus relevant knowledge, memory and journal evidence using tools, then hand off to strategist. Tool failures are observations: choose a corrective action if useful." : "Develop a source-cited thesis. Use permitted tools or request more research as needed, then finish with the full thesis. Do not fabricate tool results.",
+        task: role === "researcher" ? "Gather snapshot and calendar context plus relevant knowledge, memory and journal evidence using tools. When Synergy MCP tools are available, inspect the initial synergy.search results, refine names/symbols if needed, and use synergy.read on relevant IDs before citing file contents. Continue with nextOffset when needed; metadata matches alone do not establish a trading claim. Archived research is historical, not a live quote. Then hand off to strategist. Report unavailable or missing sources; tool failures are observations." : "Develop a source-cited thesis. Use permitted tools or request more research as needed, then finish with the full thesis. Do not fabricate tool results.",
         objective: control.run.input.objective, context: getBrainRoleContext(control.run.context, role),
         tools: tools.definitions(role), actionRules: "Use kind tool with a registered name and JSON-object argumentsJson; kind handoff with a role; or kind finish with a thesis. Set unused tool/handoffRole to empty strings, unused argumentsJson to '{}', and unused thesis to null.",
         revisionInstruction, priorProposal: revisionInstruction ? control.run.result?.thesis ?? null : null,

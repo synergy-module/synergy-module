@@ -74,6 +74,7 @@ export function createApp({
   brainTools,
   brainService,
   brainEvaluator,
+  synergyResearch,
   robinhoodService,
   brokerRepository,
   workspaceRepository = createMemoryWorkspaceRepository(),
@@ -159,6 +160,7 @@ export function createApp({
   const resolvedBrainTools = brainTools ?? createBrainTools({
     knowledge: resolvedBrainKnowledge, journalRepository, marketNewsService, canReadJournal: canReadBrainJournal,
     robinhoodService: resolvedRobinhoodService,
+    synergyResearch,
   });
   const resolvedBrainService = brainService ?? createBrainService({
     repository: brainRepository, knowledge: resolvedBrainKnowledge,
@@ -180,6 +182,7 @@ export function createApp({
   app.locals.brainRepository = brainRepository;
   app.locals.brainKnowledge = resolvedBrainKnowledge;
   app.locals.brainTools = resolvedBrainTools;
+  app.locals.synergyResearch = synergyResearch;
   app.locals.robinhoodService = resolvedRobinhoodService;
   app.locals.workspaceSettingsService = resolvedSettingsService;
   app.locals.workspaceRepository = workspaceRepository;
@@ -283,7 +286,7 @@ export function createApp({
   }));
   app.use(createBrainRoutes({
     brainService: resolvedBrainService, brainKnowledge: resolvedBrainKnowledge,
-    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, logger,
+    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, synergyResearch, logger,
   }));
   app.use(createJournalRoutes({ journalRepository }));
 

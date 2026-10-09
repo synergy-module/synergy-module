@@ -7,6 +7,9 @@ SESSION_SECRET=
 # If blank, saved provider credentials use SESSION_SECRET instead.
 INTEGRATIONS_ENCRYPTION_KEY=
 DATABASE_SSL=disable
+# Dedicated read-only connection to the synergy-mcp research views.
+SYNERGY_RESEARCH_DATABASE_URL=
+SYNERGY_RESEARCH_DATABASE_SSL=disable
 APP_ALLOW_MIGRATIONS=false
 
 # Connect the existing PostgreSQL database through StayLively's database panel.

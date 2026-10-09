@@ -5,6 +5,10 @@ import { brainPage, readBrainPage } from "./brain-pagination.js";
 let evaluating = false;
 
 const ERRORS = Object.freeze({
+  SYNERGY_RESEARCH_INPUT: [400, "Use a search of 2–300 characters or a valid source ID and byte offset."],
+  SYNERGY_RESEARCH_UNAVAILABLE: [503, "Synergy MCP research is temporarily unavailable."],
+  SYNERGY_RESEARCH_NOT_FOUND: [404, "This research source is unavailable."],
+  SYNERGY_RESEARCH_BINARY: [422, "This source is not readable UTF-8 text."],
   TRADER_PAID_AI_LOCKED: [423, "Paid AI calls are locked. Offline demos and evaluations remain available."],
   BRAIN_EVAL_BUSY: [429, "An evaluation is already running. Try again shortly."],
   BRAIN_INVALID_INPUT: [400, "Check the request fields and size, then try again."],
@@ -45,7 +49,7 @@ const ERRORS = Object.freeze({
   TRADER_OUTPUT_INVALID: [502, "The AI returned an incomplete response."],
 });
 
-export function createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator = runBrainEvaluations, robinhoodService, logger = console }) {
+export function createBrainController({ brainService, brainKnowledge, brainTools, brainEvaluator = runBrainEvaluations, robinhoodService, synergyResearch, logger = console }) {
   // Fixture results contain no operator data and apply only to this server instance.
   // A restart requires a fresh check, so stale results never imply a new build passed.
   let lastEvaluation = null;
@@ -61,6 +65,17 @@ export function createBrainController({ brainService, brainKnowledge, brainTools
     catch (error) { return fail(res, error); }
   };
   return {
+    synergySearch: handle(async (req, res) => {
+      if (!synergyResearch) return fail(res, { code: "SYNERGY_RESEARCH_UNAVAILABLE" });
+      if (Object.keys(req.query).some(key => key !== "query")) return fail(res, { code: "SYNERGY_RESEARCH_INPUT" });
+      return res.json(await synergyResearch.search(req.query.query));
+    }),
+    synergyRead: handle(async (req, res) => {
+      if (!synergyResearch) return fail(res, { code: "SYNERGY_RESEARCH_UNAVAILABLE" });
+      if (Object.keys(req.query).some(key => !["kind", "id", "offset"].includes(key))
+        || (req.query.offset !== undefined && (typeof req.query.offset !== "string" || !/^\d+$/.test(req.query.offset)))) return fail(res, { code: "SYNERGY_RESEARCH_INPUT" });
+      return res.json(await synergyResearch.read({ kind: req.query.kind, id: req.query.id, offset: Number(req.query.offset ?? 0) }));
+    }),
     evaluations: handle(async (req, res) => {
       if (evaluating) return fail(res, { code: "BRAIN_EVAL_BUSY" });
       evaluating = true;
@@ -92,7 +107,7 @@ export function createBrainController({ brainService, brainKnowledge, brainTools
       } : null;
       return res.json({ ...state, runs: runsPage.runs, runsNextCursor: runsPage.nextCursor,
         documents, documentsNextCursor: documentsPage.nextCursor, toolDefinitions: brainTools?.definitions("strategist") ?? [],
-        robinhoodState,
+        robinhoodState, synergyResearch: await synergyResearch?.status() ?? { configured: false, connected: false, readOnly: true, name: "Synergy MCP" },
         readiness: buildBrainReadiness({ state, documents, lastEvaluation, broker }) });
     }),
     runs: handle(async (req, res, ownerId) => {
