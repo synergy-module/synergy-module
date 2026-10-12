@@ -1,5 +1,6 @@
 import { createWorkspaceRequest } from "./workspace-client.js";
 import { applyWorkspaceExperience } from "./redline-theme.js";
+import { renderBrokerSetupHelp } from "./broker-setup-help.js";
 
 export function initializeSetup(root, { fetchImpl, windowRef = root.ownerDocument.defaultView, navigate = (path) => windowRef.location.assign(path) } = {}) {
   const request = createWorkspaceRequest(root, fetchImpl), doc = root.ownerDocument, listeners = [], steps = ["welcome", "connections", "preferences", "review"];
@@ -33,24 +34,24 @@ export function initializeSetup(root, { fetchImpl, windowRef = root.ownerDocumen
     ai.querySelector('[type="submit"]').disabled = !value.credentialStorageAvailable || aiBusy;
     providerStatus();
     const connected = value.providers.filter((provider) => provider.configured).map((provider) => provider.label);
-    say("review-summary", `${value.profile?.displayName || "Your workspace"} · ${value.preferences.symbol} research · ${connected.length ? `AI available: ${connected.join(", ")}.` : "You can add an AI provider any time in Settings."}`);
+    say("review-summary", `${value.profile?.displayName || "Your workspace"} · ${value.preferences.symbol} · ${connected.length ? `Optional AI available: ${connected.join(", ")}.` : "Ready to use without an AI key. Optional connections are available in Settings whenever you need them."}`);
   }
   function providerStatus() {
     if (!state) return;
     const provider = state.providers.find((entry) => entry.id === ai.elements.provider.value);
-    say("ai-status", !state.credentialStorageAvailable ? "Ask your server administrator to enable encrypted credential storage before saving a key." : provider?.configured ? `${provider.label} is connected${provider.source === "server" ? " through your server" : " with a saved key"}. You can add or replace a key below.` : "Your key is encrypted. Saving it does not make a paid AI call.");
+    say("ai-status", !state.credentialStorageAvailable ? "Optional key storage is unavailable on this server. Continue setup without a key; public market browsing and public-feed paper trading remain available." : provider?.configured ? `${provider.label} is connected${provider.source === "server" ? " through your server" : " with a saved key"}. You can add or replace a key below.` : "Your key is encrypted. Saving it does not make a paid AI call. This connection is optional.");
   }
   async function transition(step, work) {
     if (stepBusy || !state) return;
     stepBusy = true;
-    for (const button of root.querySelectorAll('.setup-actions button')) button.disabled = true;
+    for (const button of root.querySelectorAll('.setup-actions button,[data-setup-skip]')) button.disabled = true;
     say("feedback", "Saving your progress…");
     try {
       await work?.();
       const value = await request("/api/settings/onboarding", { step }, "PATCH");
       if (!disposed) { render(value); show(step, true); say("feedback", "Progress saved. You can come back to setup any time."); }
     } catch (error) { say("feedback", error.message); }
-    finally { stepBusy = false; if (!disposed) for (const button of root.querySelectorAll('.setup-actions button')) button.disabled = false; }
+    finally { stepBusy = false; if (!disposed) for (const button of root.querySelectorAll('.setup-actions button,[data-setup-skip]')) button.disabled = false; }
   }
   on(welcome, "submit", (event) => {
     event.preventDefault(); if (!welcome.reportValidity()) return;
@@ -59,6 +60,10 @@ export function initializeSetup(root, { fetchImpl, windowRef = root.ownerDocumen
   });
   for (const button of root.querySelectorAll("[data-setup-back]")) on(button, "click", () => void transition(button.dataset.setupBack));
   for (const button of root.querySelectorAll("[data-setup-next]")) on(button, "click", () => void transition(button.dataset.setupNext));
+  on(find("skip"), "click", () => {
+    ai.elements.apiKey.value = ""; poly.elements.keyId.value = ""; poly.elements.secretKey.value = "";
+    void transition("preferences");
+  });
   on(defaults, "submit", (event) => {
     event.preventDefault(); if (!defaults.reportValidity()) return;
     const preferences = {}; for (const name of ["theme", "defaultLanding", "timezone", "symbol", "timeframe"]) preferences[name] = defaults.elements.namedItem(name).value;
@@ -76,8 +81,9 @@ export function initializeSetup(root, { fetchImpl, windowRef = root.ownerDocumen
   });
   function renderBroker(value) {
     if (disposed) return; broker = value;
-    say("robinhood-status", value.connected ? "Connected" : "Not connected");
-    say("robinhood-detail", value.connected ? "Your account authorization is saved. Account balances and orders belong to your live workspace." : value.configured ? "Authorize access directly with Robinhood. You will return to Synergy after connecting." : "Your server administrator needs to enable the Robinhood connection. You can continue setup now.");
+    say("robinhood-status", value.connected ? "Connected" : value.configured ? "Not connected" : "Connection unavailable");
+    say("robinhood-detail", value.connected ? "Your account authorization is saved. Account balances and orders belong to your live workspace." : value.configured ? "Authorize access directly with Robinhood. You will return to Synergy after connecting. This connection is optional." : "This server is not ready to connect Robinhood. See the connection details below, or continue setup without a brokerage connection.");
+    renderBrokerSetupHelp(root, value);
     find("robinhood-connect").disabled = !value.configured || robinhoodBusy;
   }
   on(find("robinhood-connect"), "click", async () => {

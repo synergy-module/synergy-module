@@ -32,6 +32,9 @@ APP_MIGRATION_COMMAND=npm run migrate
 TRADER_AI_PROVIDER=gemini
 # Keep false until setup is reviewed and paid calls are explicitly activated.
 TRADER_PAID_AI_ENABLED=false
+# Optional dedicated 64-hex Robinhood key. Preserve any existing value.
+# Otherwise uses a separate derived key from the first nonempty INTEGRATIONS_ENCRYPTION_KEY
+# or SESSION_SECRET (at least 32 characters). Do not rotate the source secret casually.
 ROBINHOOD_TOKEN_ENCRYPTION_KEY=
 ROBINHOOD_REDIRECT_URI=
 # Optional public client supplied or approved by Robinhood for this exact callback.

@@ -1,9 +1,9 @@
     <div data-poly-us>
       <div class="poly-section-heading"><h2>Polymarket US account</h2><span data-poly-us-status>CHECKING CONNECTION</span></div>
-      <p class="poly-model-note">Connect your existing account to view balances, positions, and open orders. Account sync does not place trades; the trading bot remains in paper mode.</p>
+      <p class="poly-model-note">This optional connection reads your Polymarket US balances, positions, and open orders. Public market browsing and public-feed paper trading need no Polymarket sign-in or credentials. Account sync does not place trades.</p>
       <p data-poly-us-details class="poly-muted"></p>
       <ol class="poly-us-steps"><li>Complete identity verification in Polymarket US.</li><li>Open <a href="https://polymarket.us/developer" target="_blank" rel="noopener noreferrer">the Polymarket US developer portal</a> and use the same Google, Apple, or email sign-in as your account.</li><li>Create an API key and enter its Key ID and Secret Key below. The secret is shown once in the portal.</li></ol>
-      <details data-poly-us-credentials open><summary>Connection credentials</summary>
+      <p class="poly-model-note">Sign in on the official portal, then use the API Key ID and Secret Key here. Synergy does not connect through a Polymarket sign-in button and does not ask for your account password. International Polymarket credentials belong to the separate optional data feed.</p><details data-poly-us-credentials open><summary>Connection credentials</summary>
         <form data-poly-us-form class="poly-us-form" autocomplete="off">
           <label class="field">Key ID<input name="keyId" type="text" maxlength="36" autocomplete="off" spellcheck="false" placeholder="Key ID from the developer portal" required disabled></label>
           <label class="field">Secret Key<input name="secretKey" type="password" maxlength="88" autocomplete="new-password" spellcheck="false" placeholder="Secret Key from the developer portal" required disabled></label>

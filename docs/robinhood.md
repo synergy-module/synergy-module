@@ -14,13 +14,17 @@ The integration uses the capabilities published in Robinhood's [agentic trading 
 
    | Variable | Value |
    | --- | --- |
-   | `ROBINHOOD_TOKEN_ENCRYPTION_KEY` | A durable, random 32-byte key encoded as 64 hexadecimal characters. Generate securely, retain in the vault, and back it up separately from the database. Never put it in Git or a client bundle. |
+   | `ROBINHOOD_TOKEN_ENCRYPTION_KEY` | Optional dedicated random 32-byte key encoded as 64 hexadecimal characters. Preserve an existing value exactly. If blank, the app derives a separate Robinhood key with HKDF-SHA256 from the first nonempty `INTEGRATIONS_ENCRYPTION_KEY` or `SESSION_SECRET`; that source must be at least 32 characters. An invalid explicit override blocks connection rather than silently selecting a different key. Never put populated keys in Git or a client bundle. |
    | `ROBINHOOD_REDIRECT_URI` | Planned examples: `https://synergymodule.dev/auth/robinhood/callback` for development/beta and `https://synergymodule.app/auth/robinhood/callback` for production. Use the exact callback accepted by Robinhood for the deployment; these examples do not establish approval. If omitted, the app derives the callback origin from `DISCORD_REDIRECT_URI`. |
    | `ROBINHOOD_CLIENT_ID` | Optional public OAuth client ID issued or explicitly approved by Robinhood for this application and its exact callback. When set, the app skips dynamic registration and uses this client with PKCE S256 and no client secret. Leave unset until Robinhood supplies or approves an appropriate client. Setting an ID does not grant callback approval. |
    | `ROBINHOOD_LIVE_TRADING_ENABLED` | `false` during setup. This is independent of the AI billing flag. |
    | `TRADER_PAID_AI_ENABLED` | Keep `false` until paid model validation is authorized. |
 
    Deployments sharing the same broker workspace database must retain the same Robinhood encryption key. A lost or replaced key makes existing credentials unreadable and requires reconnection; it must not silently fall back to plaintext. Production and beta already share identity-owned application records, so plan broker data and key sharing before promoting this integration to production.
+
+   **No LLM API key is required** to finish setup or authorize Robinhood. Public-feed forward paper trading also needs no brokerage connection. Only features that explicitly run an AI model need a configured AI provider. External assistants use separate optional Synergy access tokens; these are not model-provider keys.
+
+   The setup screen's **Connection setup details** explains missing encryption, callback or durable-storage settings without displaying any secret values. Most normally configured deployments can use their existing strong, stable application secret and Discord callback origin. This makes Synergy ready to start authorization; it does not establish that Robinhood has approved a custom hosted callback.
 
 4. In **Settings → Connections**, choose **Connect Robinhood**. The server uses the configured public client ID or requests dynamic registration when no ID is configured. Both paths use state validation and PKCE S256. Complete sign-in and review authorization on Robinhood. Any account opening, agreements, funding, and options permissions are completed by the account holder on Robinhood. Robinhood must accept the application's callback before this connection can finish; see the hosted callback issue below.
 5. Once returned to Synergy Module, open **Accounts**, sync the tool catalog, and fetch accounts, positions, quotes, and order history for the desired markets. Each result is saved with its retrieval time. Check any observation timestamp inside the result too: retrieval time does not establish quote freshness.

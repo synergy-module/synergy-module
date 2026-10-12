@@ -1,5 +1,6 @@
 import { createWorkspaceRequest } from "./workspace-client.js";
 import { initializeExperienceSettings } from "./settings-experience-controller.js";
+import { renderBrokerSetupHelp } from "./broker-setup-help.js";
 
 const roles = ["planner", "researcher", "strategist", "critic"];
 export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocument.defaultView }) {
@@ -84,8 +85,9 @@ export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocu
   });
   function renderConnection(value) {
     if (disposed) return; connection = value;
-    say("connection-state", value.connected ? "Connected" : "Not connected");
-    say("connection-detail", value.connected ? "Your Robinhood authorization is saved. Open Accounts for portfolio data, market tools, and reviewed broker requests." : !value.configured ? `Server setup required: ${(value.missing ?? []).join(", ") || "durable broker storage"}.` : "Continue to Robinhood to authorize your account. Your password stays with Robinhood.");
+    say("connection-state", value.connected ? "Connected" : value.configured ? "Not connected" : "Connection unavailable");
+    say("connection-detail", value.connected ? "Your Robinhood authorization is saved. Open Accounts for portfolio data, market tools, and reviewed broker requests." : !value.configured ? "This server is not ready to connect Robinhood. Review the connection details below. Your workspace and public-feed paper trading remain available." : "Continue to Robinhood to authorize your account. Your password stays with Robinhood. Connecting is optional.");
+    renderBrokerSetupHelp(root, value);
     find("connection-connect").disabled = connectionBusy || !value.configured;
     find("connection-connect").textContent = value.connected ? "Reconnect Robinhood ↗" : "Connect Robinhood ↗";
     find("connection-disconnect").disabled = connectionBusy || !value.connected;

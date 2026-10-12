@@ -33,6 +33,29 @@ function findTool(tools, name) {
   if (!tool) throw brokerError("ROBINHOOD_TOOL_UNAVAILABLE", "This tool is unavailable for your Robinhood connection. Refresh the connection.", 422);
   return tool;
 }
+function connectionSetup(config, storage) {
+  const missing = new Set(config.missing ?? []);
+  const encryptionReady = /^[a-fA-F0-9]{64}$/.test(config.encryptionKey ?? "");
+  const callbackReady = Boolean(config.redirectUri) && !missing.has("ROBINHOOD_REDIRECT_URI");
+  const clientReady = !missing.has("ROBINHOOD_CLIENT_ID");
+  return {
+    ready: config.configured === true && storage.persistent === true,
+    encryptionKeySource: config.encryptionKeySource ?? (encryptionReady ? "ROBINHOOD_TOKEN_ENCRYPTION_KEY" : null),
+    redirectSource: config.redirectSource ?? null,
+    redirectUri: callbackReady ? config.redirectUri : null,
+    supportUrl: "https://robinhood.com/us/en/support/articles/onboarding-an-external-agent/",
+    checks: [
+      { id: "encryption", label: "Encrypted account storage", ready: encryptionReady,
+        message: encryptionReady ? "Account credentials can be saved with this server's stable encryption settings." : "Add a stable credential-encryption secret in the hosting settings, then restart the app. Existing saved keys must be preserved." },
+      { id: "callback", label: "Return address after sign-in", ready: callbackReady,
+        message: callbackReady ? "A return address is configured. Robinhood must also accept it when you authorize access." : "Configure the site's HTTPS sign-in return address in the hosting settings, then restart the app. Local development can use localhost." },
+      { id: "client", label: "Robinhood application registration", ready: clientReady,
+        message: clientReady ? "The app can begin authorization. Custom hosted callbacks may require Robinhood approval." : "Correct the configured Robinhood public client ID in the hosting settings, or remove an invalid optional override." },
+      { id: "storage", label: "Persistent account storage", ready: storage.persistent === true,
+        message: storage.persistent ? "Saved account authorization survives application restarts." : "Connect a persistent database before linking a brokerage account. Temporary previews can still complete workspace setup." },
+    ],
+  };
+}
 export function createRobinhoodService({ repository = createMemoryBrokerRepository(), config = readRobinhoodConfig(), client = createRobinhoodClient(), now = () => Date.now(), agenticAuthorizer, agenticEnabled = false } = {}) {
   const cipher = config.configured ? createBrokerCipher(config.encryptionKey) : null;
   const active = new Map();
@@ -84,15 +107,16 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
   const service = {
     async state(owner) {
       const state = await repository.read(owner);
+      const storage = repository.getStorageStatus(), setup = connectionSetup(config, storage);
       const actions = state.actions.map((action) => ({ ...action,
         status: action.status === "awaiting_approval" && action.expiresAt <= now() ? "expired"
           : action.status === "submitting" && action.submittedAt + 30000 < now() ? "unknown" : action.status }));
       const policyActive = agenticEnabled === true && config.liveEnabled === true && !state.paused
         && state.agentic?.mode === "autonomous" && state.agentic.consent?.version === state.agentic.version
         && state.agentic.worker?.enabled && Date.parse(state.agentic.worker.leaseUntil) > now();
-      return { broker: "robinhood", configured: config.configured && repository.getStorageStatus().persistent,
+      return { broker: "robinhood", configured: setup.ready, setup,
         missing: config.missing ?? [], connected: Boolean(state.connection), connectedAt: state.connection?.connectedAt ?? null,
-        storage: repository.getStorageStatus(), liveEnabled: config.liveEnabled === true, paused: state.paused,
+        storage, liveEnabled: config.liveEnabled === true, paused: state.paused,
         tools: state.tools, snapshots: state.snapshots, actions, events: state.events, discoveryAt: state.discoveryAt ?? null,
         groups: Object.keys(ROBINHOOD_GROUPS), approvalMode: policyActive ? "operator_policy" : "every_action", unattendedTrading: Boolean(policyActive) };
     },

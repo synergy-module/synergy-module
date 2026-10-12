@@ -31,7 +31,13 @@ DISCORD_ROLE_JOURNAL_ID=
 DISCORD_ROLE_REFRESH_MINUTES=1
 
 # Preserve this key if restoring existing encrypted Robinhood tokens.
+# If blank, a separate key is derived from the first nonempty INTEGRATIONS_ENCRYPTION_KEY
+# or SESSION_SECRET (at least 32 characters). No AI provider key is needed.
 ROBINHOOD_TOKEN_ENCRYPTION_KEY=
+# Optional override; defaults to this site's Discord callback origin.
+ROBINHOOD_REDIRECT_URI=
+# Only set a public client ID supplied or approved by Robinhood for this callback.
+ROBINHOOD_CLIENT_ID=
 ROBINHOOD_LIVE_TRADING_ENABLED=false
 ROBINHOOD_AUTONOMOUS_TRADING_ENABLED=false
 XAI_API_KEY=

@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { ROBINHOOD_MCP_URL, brokerError } from "./robinhood-catalog.js";
@@ -9,12 +9,26 @@ const REGISTER = "https://agent.robinhood.com/oauth/trading/register";
 const TOKEN = "https://api.robinhood.com/oauth2/token/";
 const OAUTH_SCOPE = "internal";
 export function readRobinhoodConfig(env = process.env) {
-  const key = env.ROBINHOOD_TOKEN_ENCRYPTION_KEY?.trim() ?? "";
+  let key = env.ROBINHOOD_TOKEN_ENCRYPTION_KEY?.trim() ?? "";
+  let encryptionKeySource = key ? "ROBINHOOD_TOKEN_ENCRYPTION_KEY" : null;
+  if (!key) {
+    const source = ["INTEGRATIONS_ENCRYPTION_KEY", "SESSION_SECRET"]
+      .find((name) => typeof env[name] === "string" && env[name].trim());
+    encryptionKeySource = source ?? null;
+    if (source && env[source].trim().length >= 32) {
+      // Stable, domain-separated derivation; never reuse a session key directly or generate a transient key.
+      key = Buffer.from(hkdfSync("sha256", env[source].trim(), "synergy-robinhood-v1", "broker-token-encryption", 32)).toString("hex");
+    }
+  }
   const clientId = env.ROBINHOOD_CLIENT_ID?.trim() ?? "";
   const validClientId = !clientId || /^[\x21-\x7e]{1,1024}$/.test(clientId);
   let redirectUri = env.ROBINHOOD_REDIRECT_URI?.trim();
+  let redirectSource = redirectUri ? "ROBINHOOD_REDIRECT_URI" : null;
   if (!redirectUri && env.DISCORD_REDIRECT_URI) {
-    try { redirectUri = new URL("/auth/robinhood/callback", env.DISCORD_REDIRECT_URI).href; } catch {}
+    try {
+      redirectUri = new URL("/auth/robinhood/callback", env.DISCORD_REDIRECT_URI).href;
+      redirectSource = "DISCORD_REDIRECT_URI";
+    } catch {}
   }
   let validRedirect = false;
   try {
@@ -22,7 +36,7 @@ export function readRobinhoodConfig(env = process.env) {
     validRedirect = !url.username && !url.password && !url.hash && !url.search && url.pathname === "/auth/robinhood/callback"
       && (url.protocol === "https:" || (env.NODE_ENV !== "production" && url.protocol === "http:" && ["127.0.0.1", "localhost"].includes(url.hostname)));
   } catch {}
-  return { encryptionKey: key, redirectUri, clientId, configured: /^[a-fA-F0-9]{64}$/.test(key) && validRedirect && validClientId,
+  return { encryptionKey: key, encryptionKeySource, redirectUri, redirectSource, clientId, configured: /^[a-fA-F0-9]{64}$/.test(key) && validRedirect && validClientId,
     liveEnabled: env.ROBINHOOD_LIVE_TRADING_ENABLED === "true",
     missing: [...(!/^[a-fA-F0-9]{64}$/.test(key) ? ["ROBINHOOD_TOKEN_ENCRYPTION_KEY"] : []), ...(!validRedirect ? ["ROBINHOOD_REDIRECT_URI"] : []), ...(!validClientId ? ["ROBINHOOD_CLIENT_ID"] : [])] };
 }

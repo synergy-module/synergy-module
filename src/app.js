@@ -37,6 +37,7 @@ import { createBrainToolPolicy } from "./agent-brain/brain-tool-policy.js";
 import { createMemoryBrainToolPolicyRepository } from "./agent-brain/brain-tool-policy-repository.js";
 import { createBrainRoutes } from "./routes/brain-routes.js";
 import { createRobinhoodService } from "./brokers/robinhood-service.js";
+import { readRobinhoodConfig } from "./brokers/robinhood-client.js";
 import { createRobinhoodRoutes } from "./routes/robinhood-routes.js";
 import { createAssetManifest } from "./runtime/asset-manifest.js";
 import { createMemoryWorkspaceRepository } from "./settings/workspace-repository.js";
@@ -169,6 +170,10 @@ export function createApp({
   });
   const resolvedAIProvider = createWorkspaceAIProvider({ settingsService: resolvedSettingsService, fallbackProvider: baseAIProvider });
   const resolvedRobinhoodService = robinhoodService ?? createRobinhoodService({ repository: brokerRepository,
+    config: readRobinhoodConfig({ ...process.env, NODE_ENV: environment, SESSION_SECRET: secret,
+      DISCORD_REDIRECT_URI: resolvedAuthConfig.discord.redirectUri,
+      ...(integrationsEncryptionKey === undefined ? {} : { INTEGRATIONS_ENCRYPTION_KEY: integrationsEncryptionKey }),
+    }),
     agenticEnabled: robinhoodAutonomousEnabled === true,
     agenticAuthorizer: (state, action, at) => authorizeRobinhoodBrain(state, action, at, robinhoodAutonomousEnabled === true),
   });

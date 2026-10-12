@@ -4,7 +4,7 @@
 
 1. Sign in with the existing Discord membership flow. New accounts open **Set up your workspace**.
 2. Choose a display name and the areas you want to use.
-3. Add only the connections you need. Manual crypto and international prediction-market paper accounts use public feeds and need no trading-account credentials. AI research requires a provider key and the deployment's paid-call setting. Equity research additionally needs Robinhood authorization and verified read-tool mappings.
+3. Add only the connections you need, or choose **Continue without connections**. An LLM provider API key and an external-assistant token are both optional. Manual crypto and international prediction-market paper accounts use public feeds and need no trading-account credentials. Features that call an AI model need a configured provider and the deployment's paid-call setting. AI equity research additionally needs Robinhood authorization and verified read-tool mappings.
 4. Choose a theme, timezone and starting page. Review the paper/live separation and finish setup. Revisit these choices in **Settings**.
 
 The application uses the existing workspace repository. SQLite and PostgreSQL retain these settings and virtual ledgers; a memory-only deployment displays a temporary-storage notice. A stable integration encryption key is needed for credentials and agent authorization.
