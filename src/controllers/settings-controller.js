@@ -3,6 +3,8 @@ const ERRORS = Object.freeze({
   SETTINGS_AUTH_REQUIRED: [401, "Sign in to manage your workspace."],
   SETTINGS_ENCRYPTION_UNAVAILABLE: [503, "Configure a stable integration encryption key before saving API credentials."],
   SETTINGS_CREDENTIAL_UNAVAILABLE: [503, "A saved credential could not be read. Restore the integration encryption key or replace the credential."],
+  SETUP_REVIEW_REQUIRED: [422, "Confirm that you understand practice and live trading are separate."],
+  SETUP_PROFILE_REQUIRED: [422, "Add your display name before finishing setup."],
 });
 export function createSettingsController({ settingsService, logger = console }) {
   const handle = (operation) => async (req, res) => {
@@ -20,6 +22,10 @@ export function createSettingsController({ settingsService, logger = console }) 
     saveProvider: handle((req, owner) => settingsService.saveProvider(owner, req.params.provider, { apiKey: req.body?.apiKey })),
     removeProvider: handle((req, owner) => settingsService.removeProvider(owner, req.params.provider)),
     preferences: handle((req, owner) => { const { _csrf, ...preferences } = req.body ?? {}; return settingsService.savePreferences(owner, preferences); }),
+    profile: handle((req, owner) => { const { _csrf, ...profile } = req.body ?? {}; return settingsService.saveProfile(owner, profile); }),
+    onboarding: handle((_req, owner) => settingsService.getExperience(owner)),
+    saveOnboarding: handle((req, owner) => { const { _csrf, ...value } = req.body ?? {}; return settingsService.saveOnboarding(owner, value); }),
+    completeOnboarding: handle((req, owner) => { const { _csrf, ...value } = req.body ?? {}; return settingsService.completeOnboarding(owner, value); }),
     saveDraft: handle((req, owner) => settingsService.saveDraft(owner, req.params.name, req.body?.fields)),
     removeDraft: handle((req, owner) => settingsService.removeDraft(owner, req.params.name)),
   };

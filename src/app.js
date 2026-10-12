@@ -49,6 +49,16 @@ import { createPolymarketUsService } from "./polymarket/polymarket-us-service.js
 import { createPolymarketUsRoutes } from "./routes/polymarket-us-routes.js";
 import { createRobinhoodBrainService, authorizeRobinhoodBrain } from "./robinhood-brain/brain-service.js";
 import { createRobinhoodBrainRoutes } from "./routes/robinhood-brain-routes.js";
+import { createPracticeService } from "./practice/practice-service.js";
+import { createPracticeMarketData } from "./practice/market-data.js";
+import { createPracticeRoutes } from "./routes/practice-routes.js";
+import { createPracticeFeedService } from "./practice/feed-service.js";
+import { createPracticeFeedRoutes } from "./routes/practice-feed-routes.js";
+import { createEquityPaperBroker } from "./practice/equity-paper-broker.js";
+import { createPlatformTokenService } from "./platform-api/token-service.js";
+import { createPlatformApiGateway } from "./platform-api/gateway.js";
+import { createPlatformApiRoutes } from "./platform-api/routes.js";
+import { createPlatformSessionDelegation } from "./platform-api/session-delegation.js";
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const publicDirectory = path.join(sourceDirectory, "..", "public");
@@ -94,6 +104,10 @@ export function createApp({
   polymarketUsService,
   polymarketUsClient,
   robinhoodBrainService,
+  equityPaperService,
+  practiceService,
+  practiceMarketData,
+  practiceFeedService,
   robinhoodAutonomousEnabled = process.env.ROBINHOOD_AUTONOMOUS_TRADING_ENABLED?.trim() === "true",
   readinessCheck = async () => true,
   configureRoutes,
@@ -201,8 +215,10 @@ export function createApp({
       } catch { return false; }
     },
   });
+  const equityPaperBroker = createEquityPaperBroker({ broker: resolvedRobinhoodService, repository: workspaceRepository });
   const resolvedRobinhoodBrainService = robinhoodBrainService ?? createRobinhoodBrainService({
     broker: resolvedRobinhoodService, ai: resolvedAIProvider, autonomousEnabled: robinhoodAutonomousEnabled === true,
+    environment: "live", paperQualification: owner => equityPaperBroker.readBrainWorkspace(owner),
     canOperate: async (owner) => {
       try {
         const operator = await userRepository.findById(owner);
@@ -213,6 +229,47 @@ export function createApp({
       } catch { return false; }
     },
   });
+
+  const canOperatePractice = async owner => {
+      try {
+        const operator = await userRepository.findById(owner);
+        if (!operator?.capabilities?.includes(CAPABILITIES.BASE) || operator.authMode !== resolvedAuthConfig.mode
+          || await banRepository.isBanned?.(owner) || typeof resolvedAuthService.assertOperatorAdmission !== "function") return false;
+        await resolvedAuthService.assertOperatorAdmission(operator);
+        const age = Date.now() - Date.parse(operator.rolesSyncedAt);
+        return Number.isFinite(age) && age >= 0 && age <= MAX_ROLE_SNAPSHOT_AGE_MS;
+      } catch { return false; }
+  };
+  const resolvedPracticeFeedService = practiceFeedService ?? createPracticeFeedService({ repository: workspaceRepository,
+    encryptionSecret: credentialSecret, canOperate: canOperatePractice });
+  const resolvedEquityPaperService = equityPaperService ?? createRobinhoodBrainService({
+    broker: equityPaperBroker, ai: resolvedAIProvider, autonomousEnabled: false,
+    environment: "paper", canOperate: canOperatePractice,
+  });
+  const resolvedPracticeService = practiceService ?? createPracticeService({ repository: workspaceRepository,
+    marketData: practiceMarketData ?? createPracticeMarketData({ ...(polymarketClient ? { polymarketClient } : {}) }),
+    referenceFeeds: resolvedPracticeFeedService, canOperate: canOperatePractice,
+  });
+  const resolvedPlatformTokenService = createPlatformTokenService({ repository: workspaceRepository, userRepository, banRepository,
+    authService: resolvedAuthService, authMode: resolvedAuthConfig.mode, encryptionSecret: credentialSecret });
+  // Browser and agent requests share exactly the same business handlers.
+  const authenticatedRouter = express.Router();
+  authenticatedRouter.use(createAdminRoutes({ adminService: resolvedAdminService }));
+  authenticatedRouter.use(createRobinhoodRoutes({ robinhoodService: resolvedRobinhoodService }));
+  authenticatedRouter.use(createSettingsRoutes({ settingsService: resolvedSettingsService, logger }));
+  authenticatedRouter.use(createPolymarketUsRoutes({ service: resolvedPolymarketUsService, logger }));
+  authenticatedRouter.use(createPolymarketRoutes({ service: resolvedPolymarketService, logger }));
+  authenticatedRouter.use(createRobinhoodBrainRoutes({ service: resolvedRobinhoodBrainService, broker: resolvedRobinhoodService, logger }));
+  authenticatedRouter.use(createRobinhoodBrainRoutes({ service: resolvedEquityPaperService, broker: equityPaperBroker, logger, paper: true }));
+  authenticatedRouter.use(createPageRoutes({ marketNewsService, logger }));
+  authenticatedRouter.use(createTraderRoutes({ traderService: traderService ?? createTraderService({ aiProvider: resolvedAIProvider, marketNewsService }), logger }));
+  authenticatedRouter.use(createBrainRoutes({ brainService: resolvedBrainService, brainKnowledge: resolvedBrainKnowledge,
+    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, synergyResearch, toolPolicy, logger }));
+  authenticatedRouter.use(createJournalRoutes({ journalRepository }));
+  authenticatedRouter.use(createPracticeRoutes({ service: resolvedPracticeService, logger }));
+  authenticatedRouter.use(createPracticeFeedRoutes({ service: resolvedPracticeFeedService }));
+  authenticatedRouter.use(createPlatformApiRoutes({ tokenService: resolvedPlatformTokenService, adminService: resolvedAdminService,
+    indicatorAccessService: resolvedIndicatorAccessService, robinhoodService: resolvedRobinhoodService }));
 
   const app = express();
   app.locals.assetPath = assetManifest.assetPath;
@@ -237,6 +294,10 @@ export function createApp({
   app.locals.polymarketService = resolvedPolymarketService;
   app.locals.polymarketUsService = resolvedPolymarketUsService;
   app.locals.robinhoodBrainService = resolvedRobinhoodBrainService;
+  app.locals.equityPaperService = resolvedEquityPaperService;
+  app.locals.practiceService = resolvedPracticeService;
+  app.locals.practiceFeedService = resolvedPracticeFeedService;
+  app.locals.platformTokenService = resolvedPlatformTokenService;
   app.set("trust proxy", trustProxy ?? (environment === "production" ? 1 : false));
   app.set("view engine", "ejs");
   app.set("views", path.join(sourceDirectory, "..", "views"));
@@ -244,8 +305,10 @@ export function createApp({
     res.set("Cache-Control", "no-store");
     next();
   });
-  app.use(express.json());
+  app.use(express.json({ limit: "2mb" }));
   app.use(express.urlencoded({ extended: false }));
+  app.use("/api", (_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
+  app.use("/api/v1", createPlatformApiGateway({ router: authenticatedRouter, tokenService: resolvedPlatformTokenService }));
   app.use(`/assets/${assetManifest.version}`, express.static(publicDirectory, {
     maxAge: environment === "production" ? "1y" : 0, immutable: environment === "production", index: false,
   }));
@@ -312,7 +375,7 @@ export function createApp({
     logger,
   }));
   configureRoutes?.(app);
-  app.use(requireAuth, refreshRoles);
+  app.use(requireAuth, createPlatformSessionDelegation({ tokenService: resolvedPlatformTokenService, refreshRoles }));
   // Populate durable identity records for valid sessions created before the storage migration.
   app.use(async (req, res, next) => {
     if (userRepository.getStorageStatus?.().persistent && req.session.operator) {
@@ -324,25 +387,19 @@ export function createApp({
     }
     next();
   });
-  app.use(createAdminRoutes({ adminService: resolvedAdminService }));
-  app.use(createRobinhoodRoutes({ robinhoodService: resolvedRobinhoodService }));
-  app.use(createSettingsRoutes({ settingsService: resolvedSettingsService, logger }));
-  app.use(createPolymarketUsRoutes({ service: resolvedPolymarketUsService, logger }));
-  app.use(createPolymarketRoutes({ service: resolvedPolymarketService, logger }));
-  app.use(createRobinhoodBrainRoutes({ service: resolvedRobinhoodBrainService, broker: resolvedRobinhoodService, logger }));
-  app.use(createPageRoutes({ marketNewsService, logger }));
-  app.use(createTraderRoutes({
-    traderService: traderService ?? createTraderService({
-      aiProvider: resolvedAIProvider,
-      marketNewsService,
-    }),
-    logger,
-  }));
-  app.use(createBrainRoutes({
-    brainService: resolvedBrainService, brainKnowledge: resolvedBrainKnowledge,
-    brainTools: resolvedBrainTools, brainEvaluator, robinhoodService: resolvedRobinhoodService, synergyResearch, toolPolicy, logger,
-  }));
-  app.use(createJournalRoutes({ journalRepository }));
+  app.use(async (req, res, next) => {
+    if (req.path.startsWith("/api/") || !["GET", "HEAD"].includes(req.method)) return next();
+    const experience = await resolvedSettingsService.getExperience(req.session.operator.id);
+    res.locals.workspaceExperience = experience;
+    res.set("Cache-Control", "no-store");
+    if (!experience.onboarding.completedAt && !["/setup", "/settings", "/accounts", "/live/polymarket"].includes(req.path) && !req.path.startsWith("/auth/")) return res.redirect("/setup");
+    if (experience.onboarding.completedAt && !req.session.experienceEntered) {
+      req.session.experienceEntered = true;
+      if (req.path === "/home" && experience.preferences.defaultLanding !== "/home") return res.redirect(experience.preferences.defaultLanding);
+    }
+    next();
+  });
+  app.use(authenticatedRouter);
 
   app.use((req, res) => res.status(404).render("pages/error", {
     fragment: req.isSynergyModuleFragment, status: 404, heading: "ROUTE NOT FOUND",
@@ -363,6 +420,10 @@ export function createApp({
       if (error?.type === "entity.parse.failed") return res.status(400).json({ error: "BRAIN_INVALID_INPUT", message: "The request body must be valid JSON." });
       if (error?.type === "entity.too.large") return res.status(413).json({ error: "BRAIN_INVALID_INPUT", message: "The request body exceeds the size limit." });
       return res.status(500).json({ error: "BRAIN_UNAVAILABLE", message: "The agent brain is unavailable. Try again." });
+    }
+    if (req.path.startsWith("/api/")) {
+      const status = error?.type === "entity.parse.failed" ? 400 : error?.type === "entity.too.large" ? 413 : 500;
+      return res.status(status).json({ error: "API_REQUEST_FAILED", message: status === 500 ? "The request could not be completed." : "Check the request body and size." });
     }
     res.status(500).render("pages/error", {
       fragment: req.isSynergyModuleFragment, status: 500, heading: "INTERNAL TERMINAL ERROR",

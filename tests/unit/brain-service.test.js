@@ -85,6 +85,21 @@ async function until(predicate) {
   throw new Error("Condition was not reached.");
 }
 
+test("research-only run removes broker proposal tools before model dispatch and rejects a forged action", async t => {
+  let proposals = 0;
+  const f = harness({ queues: { researcher: [toolAction("robinhood.propose", {})] }, tools: {
+    definitions: async () => [{ name: "robinhood.propose", inputSchema: { type: "object" } }],
+    execute: async () => { proposals++; return { ok: true, data: {}, citations: [] }; },
+  } });
+  t.after(() => f.service.close());
+  const started = await f.service.start("alice", { ...INPUT, allowBrokerProposals: true }, { allowBrokerProposals: false });
+  const finished = await f.service.waitForRun("alice", started.id);
+  assert.equal(finished.status, "failed"); assert.equal(finished.error.code, "BRAIN_TOOL_REJECTED");
+  assert.equal(proposals, 0);
+  const researcherPrompt = JSON.parse(f.calls.find(call => call.system.includes("Current role: researcher")).prompt);
+  assert.deepEqual(researcherPrompt.tools, []);
+});
+
 test("Synergy MCP requires assignment and an explicit agent tool call; normal research and demos never auto-search", async () => {
   const id = "00000000-0000-0000-0000-000000000001";
   const citation = { id: `synergy:artifact:${id}:0:abcdef123456`, title: "NQ archived study", excerpt: "Archived study describes an earlier liquidity setup." };

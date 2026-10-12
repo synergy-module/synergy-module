@@ -3,14 +3,10 @@ import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import ejs from "ejs";
 import { initializePolymarketUs } from "../../public/js/polymarket-us-controller.js";
-import { initializePolymarket } from "../../public/js/polymarket-controller.js";
-import { createPolymarketService } from "../../src/polymarket/polymarket-service.js";
-import { createMemoryWorkspaceRepository } from "../../src/settings/workspace-repository.js";
-import { POLY_NOW, polyFixture } from "../helpers/polymarket-test-helpers.js";
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 async function page() {
-  return new JSDOM(`<meta name="csrf-token" content="csrf-fixture">${await ejs.renderFile("views/pages/polymarket.ejs", {})}`, { url: "http://localhost/polymarket?view=account" });
+  return new JSDOM(`<meta name="csrf-token" content="csrf-fixture">${await ejs.renderFile("views/pages/polymarket-account.ejs", {})}`, { url: "http://localhost/live/polymarket" });
 }
 const account = connected => ({ configured: true, connected, needsReplacement: false, connectedAt: connected ? "2026-10-12T15:30:00Z" : null,
   snapshot: connected ? { syncedAt: "2026-10-12T15:30:00Z", balances: { items: [{ currency: "USD", currentBalance: 125, buyingPower: 100, assetNotional: 25 }], observedAt: "2026-10-12T15:30:00Z" },
@@ -49,17 +45,15 @@ test("US connection errors leave credentials blank and are scoped to the account
   assert.equal(root.querySelector("[data-poly-us-sync]").disabled, true);
 });
 
-test("US account opens independently of an unavailable international feed and outer controls cannot enable unavailable connections", async t => {
-  const dom = await page(), service = createPolymarketService({ repository: createMemoryWorkspaceRepository(), client: polyFixture().client, now: () => POLY_NOW });
-  const state = await service.state("alice");
-  const controller = initializePolymarket(dom.window.document.querySelector("[data-polymarket]"), { fetchImpl: async url => {
-    if (url === "/api/polymarket/us/state") return Response.json({ ...account(false), configured: false });
-    if (url === "/api/polymarket/state") return Response.json(state);
-    return Response.json({ message: "International feed offline" }, { status: 503 });
+test("US account opens independently and does not request international data", async t => {
+  const dom = await page(), calls = [];
+  const controller = initializePolymarketUs(dom.window.document.querySelector("[data-poly-us]"), { fetchImpl: async url => {
+    calls.push(url);
+    return Response.json({ ...account(false), configured: false });
   } });
-  t.after(async () => { controller.dispose(); dom.window.close(); await service.close(); });
-  await controller.ready;
-  assert.equal(dom.window.document.querySelector('[data-poly-panel="account"]').hidden, false);
+  t.after(() => { controller.dispose(); dom.window.close(); });
+  await controller.load();
+  assert.deepEqual(calls, ["/api/polymarket/us/state"]);
   assert.equal(dom.window.document.querySelector("[data-poly-us-submit]").disabled, true);
-  assert.equal(dom.window.document.querySelector('[data-poly-action="start"]').disabled, false);
+  assert.equal(dom.window.document.querySelector('[data-poly-action="start"]'), null);
 });

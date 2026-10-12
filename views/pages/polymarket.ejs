@@ -1,13 +1,15 @@
-<section class="route poly-page" data-polymarket data-route-view data-route-key="polymarket" aria-label="Polymarket workspace">
-  <header class="poly-heading"><div><h1>Polymarket</h1><p>Prediction markets &amp; your US account</p></div><span class="poly-mode">PAPER BOT / US ACCOUNT SYNC</span></header>
+<% const paperOnly = page.route.key === "polymarket-paper"; %>
+<section class="route poly-page" data-polymarket data-poly-default-tab="<%= paperOnly ? 'paper' : 'markets' %>" data-route-view data-route-key="<%= page.route.key %>" aria-label="<%= paperOnly ? 'Prediction paper trading' : 'Polymarket research' %>">
+  <header class="poly-heading"><div><h1><%= paperOnly ? "Prediction paper trading" : "Prediction markets" %></h1><p><%= paperOnly ? "Virtual funds · international Polymarket observations" : "Discover outcomes, examine evidence, and follow public wallets" %></p></div><a class="btn" href="<%= paperOnly ? '/practice' : '/live/polymarket' %>" data-nav-link><%= paperOnly ? "All practice accounts" : "US account" %></a></header>
   <div class="workspace-tabs" role="tablist" aria-label="Polymarket workspace">
-    <% for (const [key, label] of [['markets','Markets'],['brain','Second Brain'],['paper','Paper Bot'],['radar','Wallet Radar'],['account','US Account']]) { %>
+    <% for (const [key, label] of (paperOnly ? [['paper','Paper Bot']] : [['markets','Markets'],['brain','Second Brain'],['radar','Wallet Radar']])) { %>
       <button type="button" id="poly-tab-<%= key %>" role="tab" aria-controls="poly-panel-<%= key %>" aria-selected="<%= key === 'markets' %>" tabindex="<%= key === 'markets' ? '0' : '-1' %>" data-poly-tab="<%= key %>"><%= label %></button>
     <% } %>
   </div>
   <p class="poly-feedback" role="status" data-poly-feedback>Loading your prediction market workspace...</p>
+  <% if (!paperOnly) { %>
   <section id="poly-panel-markets" role="tabpanel" aria-labelledby="poly-tab-markets" data-poly-panel="markets">
-    <p class="poly-model-note">Markets, Second Brain, Paper Bot, and Wallet Radar use international polymarket.com data. Open US Account to connect and view your separate Polymarket US account.</p>
+    <p class="poly-model-note">Public international market data for research. Simulated trading has its own Practice workspace; real US accounts are under Live trading.</p>
     <div class="poly-toolbar">
       <label class="field poly-search">Search markets<input type="search" maxlength="200" placeholder="Search the scanned markets" data-poly-search></label>
       <label class="poly-watch-filter"><input type="checkbox" data-poly-watch-filter> Watchlist only</label>
@@ -30,6 +32,8 @@
       </section>
     </div>
   </section>
+  <% } %>
+  <% if (paperOnly) { %>
   <section id="poly-panel-paper" role="tabpanel" aria-labelledby="poly-tab-paper" data-poly-panel="paper" hidden>
     <p class="poly-model-note">This bot simulates international polymarket.com markets. Its balance and trades are separate from your real Polymarket US account.</p>
     <div class="poly-section-heading"><h2>Paper Bot</h2><span data-poly-bot-status>CHECKING WORKER</span></div>
@@ -44,6 +48,8 @@
     <div class="poly-section-heading"><h3>Open positions</h3><span>SIMULATED</span></div><div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Market / outcome</th><th>Shares</th><th>Entry / mark</th><th>Unrealized P&amp;L</th><th></th></tr></thead><tbody data-poly-positions></tbody></table></div>
     <div class="poly-section-heading"><h3>Trade ledger</h3><span>LAST 50 FILLS</span></div><div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Trade</th><th>Shares / price</th><th>Fees</th><th>Realized P&amp;L</th><th>Time</th></tr></thead><tbody data-poly-trades></tbody></table></div>
   </section>
+  <% } %>
+  <% if (!paperOnly) { %>
   <section id="poly-panel-radar" role="tabpanel" aria-labelledby="poly-tab-radar" data-poly-panel="radar" hidden>
     <div class="poly-section-heading"><h2>Wallet Radar</h2><button type="button" class="btn" data-poly-action="radar">Refresh radar</button></div>
     <form class="poly-address-form" data-poly-address-form><label class="field">Public wallet address<input name="address" pattern="0x[0-9a-fA-F]{40}" maxlength="42" placeholder="0x..." required></label><button type="submit" class="btn">Follow wallet</button></form>
@@ -53,30 +59,5 @@
     <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Rank</th><th>Trader</th><th>Monthly P&amp;L</th><th>Volume (shares)</th><th>Follow</th></tr></thead><tbody data-poly-leaderboard></tbody></table></div>
     <div class="poly-section-heading"><h3>Followed wallet activity</h3><span>SAMPLED TAKER FILLS</span></div><div data-poly-activity></div>
   </section>
-  <section id="poly-panel-account" role="tabpanel" aria-labelledby="poly-tab-account" data-poly-panel="account" hidden>
-    <div data-poly-us>
-      <div class="poly-section-heading"><h2>Polymarket US account</h2><span data-poly-us-status>CHECKING CONNECTION</span></div>
-      <p class="poly-model-note">Connect your existing account to view balances, positions, and open orders. Account sync does not place trades; the trading bot remains in paper mode.</p>
-      <p data-poly-us-details class="poly-muted"></p>
-      <ol class="poly-us-steps"><li>Complete identity verification in Polymarket US.</li><li>Open <a href="https://polymarket.us/developer" target="_blank" rel="noopener noreferrer">the Polymarket US developer portal</a> and use the same Google, Apple, or email sign-in as your account.</li><li>Create an API key and enter its Key ID and Secret Key below. The secret is shown once in the portal.</li></ol>
-      <details data-poly-us-credentials open><summary>Connection credentials</summary>
-        <form data-poly-us-form class="poly-us-form" autocomplete="off">
-          <label class="field">Key ID<input name="keyId" type="text" maxlength="36" autocomplete="off" spellcheck="false" placeholder="Key ID from the developer portal" required disabled></label>
-          <label class="field">Secret Key<input name="secretKey" type="password" maxlength="88" autocomplete="new-password" spellcheck="false" placeholder="Secret Key from the developer portal" required disabled></label>
-          <button type="submit" class="btn primary" data-poly-us-submit disabled>Connect &amp; verify</button>
-        </form>
-      </details>
-      <div class="workspace-actions poly-us-actions"><button type="button" class="btn" data-poly-us-sync disabled>Sync account</button><button type="button" class="text-action" data-poly-us-disconnect disabled>Disconnect</button></div>
-      <p class="poly-feedback" role="status" data-poly-us-feedback></p>
-      <div data-poly-us-snapshot hidden>
-        <div class="poly-section-heading"><h3>Account balances</h3><span data-poly-us-balances-date></span></div>
-        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Currency</th><th>Balance</th><th>Buying power</th><th>Asset value</th><th>Updated</th></tr></thead><tbody data-poly-us-balances></tbody></table></div>
-        <div class="poly-section-heading"><h3>Positions</h3><span data-poly-us-positions-date></span></div>
-        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Market</th><th>Net contracts</th><th>Cost basis</th><th>Cash value</th><th>Realized P&amp;L</th></tr></thead><tbody data-poly-us-positions></tbody></table></div>
-        <div class="poly-section-heading"><h3>Open orders</h3><span data-poly-us-orders-date></span></div>
-        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Market</th><th>Side / outcome</th><th>Price</th><th>Quantity</th><th>Filled</th><th>Status</th></tr></thead><tbody data-poly-us-orders></tbody></table></div>
-        <p class="poly-model-note" role="status" data-poly-us-warnings></p>
-      </div>
-    </div>
-  </section>
+  <% } %>
 </section>

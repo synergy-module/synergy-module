@@ -3,6 +3,7 @@ import { buildBrainReadiness, summarizeOfflineEvaluation } from "../agent-brain/
 import { brainPage, readBrainPage } from "./brain-pagination.js";
 import { CAPABILITIES } from "../models/access.js";
 import { BRAIN_SECTIONS, BRAIN_TOOL_CATALOG } from "../agent-brain/brain-tool-policy.js";
+import { isVerifiedPlatformRequest } from "../platform-api/request-auth.js";
 
 let evaluating = false;
 
@@ -129,7 +130,9 @@ export function createBrainController({ brainService, brainKnowledge, brainTools
       return res.json({ run });
     }),
     start: handle(async (req, res, ownerId) => {
-      const run = await brainService.start(ownerId, req.body);
+      const run = await brainService.start(ownerId, req.body, {
+        allowBrokerProposals: !isVerifiedPlatformRequest(req) || req.platformIdentity?.scopes?.includes("live:trade") === true,
+      });
       return res.status(202).json({ run });
     }),
     decision: handle(async (req, res, ownerId) => {

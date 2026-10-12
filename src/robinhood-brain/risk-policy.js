@@ -76,8 +76,9 @@ export function planTrades({ snapshot, theses, policy, ledger = [], now = new Da
       else if (thesis?.direction === "exit_existing" && thesis.critic === "pass" && Date.parse(thesis.newFactAt) > Date.parse(pos.openedAt)
         && Date.parse(thesis.newFactAt) <= now.valueOf()) { quantity = pos.quantity; reason = "new_fact_exit"; }
     }
-    if (quantity > 0) { sold.add(pos.symbol); orders.push({ symbol: pos.symbol, side: "sell", quantity: Math.floor(quantity * 1e6) / 1e6,
-      limitPrice: market.bid, notional: round(quantity * market.bid), holdingId: pos.holdingId, tiers, reason, quoteAt: market.quoteAt }); }
+    const executableQuantity = Math.floor(quantity * 1e6) / 1e6;
+    if (executableQuantity > 0) { sold.add(pos.symbol); orders.push({ symbol: pos.symbol, side: "sell", quantity: executableQuantity,
+      limitPrice: market.bid, notional: round(executableQuantity * market.bid), holdingId: pos.holdingId, tiers, reason, quoteAt: market.quoteAt }); }
   }
   // Cash from proposed sells is never credited before a confirmed fill.
   const rank = { high: 0, medium: 1, low: 2 };

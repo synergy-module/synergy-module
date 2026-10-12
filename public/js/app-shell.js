@@ -18,6 +18,9 @@ import { initializePageInteractions } from "./page-interactions.js";
 import { initializeColorTheme } from "./redline-theme.js";
 import { initializePolymarket } from "./polymarket-controller.js";
 import { initializeRobinhoodBrain } from "./robinhood-brain-controller.js";
+import { initializeSetup } from "./setup-controller.js";
+import { initializePractice } from "./practice-controller.js";
+import { initializePolymarketUs } from "./polymarket-us-controller.js";
 
 const shellInstances = new WeakMap();
 
@@ -51,7 +54,7 @@ function hydrateJournalCount(root, service) {
 export function initializeAppShell({ documentRef = document, windowRef = window, fetchImpl = window.fetch.bind(window), initializePage = () => {}, journalService } = {}) {
   if (shellInstances.has(documentRef)) return shellInstances.get(documentRef);
   const stopTheme = initializeColorTheme({ documentRef, windowRef });
-  const reducedMotion = Boolean(windowRef.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  const reducedMotion = documentRef.documentElement.dataset.reducedMotion === "true" || Boolean(windowRef.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   const transition = createTransitionController({ documentRef, reducedMotion });
   const drawer = createDrawerController({ documentRef });
   const stopSpheres = startSphereRenderer({ documentRef, windowRef, reducedMotion });
@@ -65,7 +68,8 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     disposeActiveRoute();
     disposeActiveRoute = () => {};
     documentRef.querySelector("[data-app-shell]").dataset.activeRoute = route.key;
-    setActiveNavigation(documentRef, route.key === "market-news" ? "research" : route.key);
+    const navigationKey = ["robinhood-brain", "polymarket-account"].includes(route.key) ? "live" : ["polymarket-paper", "robinhood-paper"].includes(route.key) ? "practice" : route.key;
+    setActiveNavigation(documentRef, navigationKey);
     drawer.close();
     const journalCount = hydrateJournalCount(root, service);
     journalCount?.catch?.(() => showTerminalToast(documentRef, "JOURNAL DATA UNAVAILABLE"));
@@ -89,10 +93,13 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     if (route.key === "brain") disposeActiveRoute = initializeBrainCanvas(root, { fetchImpl, windowRef, navigate: (path) => navigator.navigate(path) }).dispose;
     if (route.key === "research") disposeActiveRoute = initializeBrainPage(root, { fetchImpl, windowRef }).dispose;
     if (route.key === "settings") disposeActiveRoute = initializeSettings(root, { fetchImpl, windowRef }).dispose;
+    if (route.key === "setup") disposeActiveRoute = initializeSetup(root, { fetchImpl, windowRef, navigate: path => navigator.navigate(path) }).dispose;
+    if (route.key === "practice") disposeActiveRoute = initializePractice(root, { fetchImpl, windowRef }).dispose;
     if (route.key === "accounts") disposeActiveRoute = initializeAccounts(root, { fetchImpl, windowRef, navigate: (path) => navigator.navigate(path) }).dispose;
     if (route.key === "home") disposeActiveRoute = initializeOverview(root, { fetchImpl }).dispose;
-    if (route.key === "polymarket") disposeActiveRoute = initializePolymarket(root, { fetchImpl, windowRef }).dispose;
-    if (route.key === "robinhood-brain") disposeActiveRoute = initializeRobinhoodBrain(root, { fetchImpl, windowRef }).dispose;
+    if (["polymarket", "polymarket-paper"].includes(route.key)) disposeActiveRoute = initializePolymarket(root, { fetchImpl, windowRef }).dispose;
+    if (route.key === "polymarket-account") { const account = initializePolymarketUs(root.querySelector("[data-poly-us]"), { fetchImpl }); disposeActiveRoute = account.dispose; void account.load(); }
+    if (["robinhood-brain", "robinhood-paper"].includes(route.key)) disposeActiveRoute = initializeRobinhoodBrain(root, { fetchImpl, windowRef }).dispose;
     if (route.key === "admin") {
       disposeActiveRoute = initializeAdminPage(root, {
         fetchImpl,

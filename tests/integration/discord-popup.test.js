@@ -38,7 +38,8 @@ test("popup completion is bound to the browser session and attempt, without disc
     .expect("Cache-Control", "no-store").expect({ status: "complete" });
   await agent.get("/auth/discord/status?attempt=another-attempt").expect({ status: "pending" });
   await request(app).get(`/auth/discord/status?attempt=${attempt}`).expect({ status: "pending" });
-  await agent.get("/home").expect(200);
+  await agent.get("/home").expect(302).expect("Location", "/setup");
+  await agent.get("/setup").expect(200);
   // A callback cannot be replayed to create another successful attempt.
   await agent.get("/auth/discord/callback?code=private-code&state=server-state")
     .expect(302).expect("Location", "/login?error=invalid_oauth_state");

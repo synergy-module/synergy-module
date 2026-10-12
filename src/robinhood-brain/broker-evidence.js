@@ -77,7 +77,7 @@ export async function fetchBrokerEvidence(broker, owner, policy, bindings, signa
       else { if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(normalized.symbol ?? "")) throw brainError("ADAPTER", "Market rows need verified symbols."); markets.set(normalized.symbol, { ...markets.get(normalized.symbol), ...normalized }); }
       sourceRows.push(normalized);
     }
-    sources.push({ id: snapshot.id, tool: snapshot.tool, fetchedAt: snapshot.fetchedAt,
+    sources.push({ id: snapshot.id, kind: binding.kind, tool: snapshot.tool, fetchedAt: snapshot.fetchedAt,
       excerpt: JSON.stringify(sourceRows).slice(0, 18000) });
   }
   if (!holdingsRead) throw brainError("ADAPTER", "A complete holdings read is required before execution.");

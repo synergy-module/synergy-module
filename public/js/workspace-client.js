@@ -1,9 +1,12 @@
+import { observeWorkspaceUpdate } from "./workspace-notifications.js";
+
 export function createWorkspaceRequest(root, fetchImpl) {
   const csrf = root.ownerDocument.querySelector('meta[name="csrf-token"]')?.content ?? "";
   return async (url, body, method = body === undefined ? "GET" : "POST", options = {}) => {
     const response = await fetchImpl(url, { method, credentials: "same-origin", headers: { Accept: "application/json", ...(method === "GET" ? {} : { "Content-Type": "application/json", "X-CSRF-Token": csrf }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), ...options });
     const value = await response.json().catch(() => null);
     if (!response.ok || !value) throw new Error(value?.message || "The workspace is unavailable. Your changes have not been saved.");
+    observeWorkspaceUpdate(root, url, value);
     return value;
   };
 }

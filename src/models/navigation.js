@@ -1,6 +1,9 @@
 import { CAPABILITIES } from "./access.js";
 
 const ROUTES = [
+  { key: "setup", title: "Set up your workspace", path: "/setup", uri: "setup", description: "A few simple steps to make Synergy yours.", view: "setup", capability: CAPABILITIES.BASE },
+  { key: "practice", title: "Practice lab", path: "/practice", uri: "practice", description: "Paper trade forward on live market prices with a separate virtual balance. Practice never places live orders.", view: "practice", capability: CAPABILITIES.BASE },
+  { key: "live", title: "Live trading", path: "/live", uri: "live", description: "Manage connected accounts and review real orders in your live workspace.", view: "live", capability: CAPABILITIES.BASE },
   { key: "research", title: "Research", path: "/research", uri: "research", description: "Give your agents an objective. Review the evidence, then decide what to keep.", view: "research", capability: CAPABILITIES.BASE },
   { key: "accounts", title: "Accounts", path: "/accounts", uri: "accounts", description: "Read your portfolio, prepare broker requests, and review every change.", view: "accounts", capability: CAPABILITIES.BASE },
   { key: "settings", title: "Settings", path: "/settings", uri: "settings", description: "Connect your providers and accounts. Set the defaults your agents work within.", view: "settings", capability: CAPABILITIES.BASE },
@@ -20,7 +23,18 @@ const ROUTES = [
   { key: "journal-public", title: "PUBLIC JOURNAL ENTRY", path: "/journal/:id", uri: "journal/public", description: "The shareable public record and webhook embed generated on submission.", view: "journal-public", capability: CAPABILITIES.JOURNAL },
 ];
 
-export const NAVIGATION = ["home", "brain", "research", "polymarket", "robinhood-brain", "accounts", "journal", "settings"].map((key) => ROUTES.find((route) => route.key === key));
+export const NAVIGATION = [
+  ["home", "Workspace", "Overview", "Your activity and next steps"],
+  ["research", "Research", "Research desk", "Ask questions, review evidence"],
+  ["brain", "Research", "Agent workspace", "Explore agents and memory"],
+  ["polymarket", "Research", "Prediction markets", "Discover markets and signals"],
+  ["market-news", "Research", "Economic calendar", "Upcoming market events"],
+  ["practice", "Practice", "Practice lab", "Live prices, virtual orders"],
+  ["live", "Live trading", "Live workspace", "Review and place real orders"],
+  ["accounts", "Live trading", "Connected accounts", "Balances and positions"],
+  ["journal", "Your workspace", "Trade journal", "Record trades and lessons"],
+  ["settings", "Your workspace", "Settings", "Profile, connections and AI access"],
+].map(([key, group, label, hint]) => ({ ...ROUTES.find((route) => route.key === key), group, label, hint }));
 
 export const ROUTE_BY_KEY = Object.fromEntries(ROUTES.map((route) => [route.key, route]));
 

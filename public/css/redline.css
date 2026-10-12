@@ -170,3 +170,5 @@ a:hover { color: var(--red-glow); }
   .route-xn-bar > span, .login-cursor { animation: none; }
 }
 @media (max-height: 850px) { .cortex-nav-note { display: none; } }
+.workspace-notification { position: fixed; bottom: 24px; right: 24px; z-index: 1000; max-width: min(400px, calc(100vw - 48px)); padding: 16px 20px; color: var(--ink); background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 8px 30px #0002; font: 14px/1.5 var(--font-sans); }
+.workspace-notification[hidden] { display: none; }

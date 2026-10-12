@@ -1,0 +1,24 @@
+    <div data-poly-us>
+      <div class="poly-section-heading"><h2>Polymarket US account</h2><span data-poly-us-status>CHECKING CONNECTION</span></div>
+      <p class="poly-model-note">Connect your existing account to view balances, positions, and open orders. Account sync does not place trades; the trading bot remains in paper mode.</p>
+      <p data-poly-us-details class="poly-muted"></p>
+      <ol class="poly-us-steps"><li>Complete identity verification in Polymarket US.</li><li>Open <a href="https://polymarket.us/developer" target="_blank" rel="noopener noreferrer">the Polymarket US developer portal</a> and use the same Google, Apple, or email sign-in as your account.</li><li>Create an API key and enter its Key ID and Secret Key below. The secret is shown once in the portal.</li></ol>
+      <details data-poly-us-credentials open><summary>Connection credentials</summary>
+        <form data-poly-us-form class="poly-us-form" autocomplete="off">
+          <label class="field">Key ID<input name="keyId" type="text" maxlength="36" autocomplete="off" spellcheck="false" placeholder="Key ID from the developer portal" required disabled></label>
+          <label class="field">Secret Key<input name="secretKey" type="password" maxlength="88" autocomplete="new-password" spellcheck="false" placeholder="Secret Key from the developer portal" required disabled></label>
+          <button type="submit" class="btn primary" data-poly-us-submit disabled>Connect &amp; verify</button>
+        </form>
+      </details>
+      <div class="workspace-actions poly-us-actions"><button type="button" class="btn" data-poly-us-sync disabled>Sync account</button><button type="button" class="text-action" data-poly-us-disconnect disabled>Disconnect</button></div>
+      <p class="poly-feedback" role="status" data-poly-us-feedback></p>
+      <div data-poly-us-snapshot hidden>
+        <div class="poly-section-heading"><h3>Account balances</h3><span data-poly-us-balances-date></span></div>
+        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Currency</th><th>Balance</th><th>Buying power</th><th>Asset value</th><th>Updated</th></tr></thead><tbody data-poly-us-balances></tbody></table></div>
+        <div class="poly-section-heading"><h3>Positions</h3><span data-poly-us-positions-date></span></div>
+        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Market</th><th>Net contracts</th><th>Cost basis</th><th>Cash value</th><th>Realized P&amp;L</th></tr></thead><tbody data-poly-us-positions></tbody></table></div>
+        <div class="poly-section-heading"><h3>Open orders</h3><span data-poly-us-orders-date></span></div>
+        <div class="poly-table-scroll"><table class="poly-table"><thead><tr><th>Market</th><th>Side / outcome</th><th>Price</th><th>Quantity</th><th>Filled</th><th>Status</th></tr></thead><tbody data-poly-us-orders></tbody></table></div>
+        <p class="poly-model-note" role="status" data-poly-us-warnings></p>
+      </div>
+    </div>

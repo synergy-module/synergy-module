@@ -53,6 +53,9 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
     // Complete current HTTP writes before closing their durable stores.
     await new Promise((resolve) => server.close(resolve));
     await app.locals.robinhoodBrainService?.close?.();
+    await app.locals.equityPaperService?.close?.();
+    await app.locals.practiceService?.close?.();
+    await app.locals.practiceFeedService?.close?.();
     await app.locals.polymarketService?.close?.();
     await app.locals.brainService?.close?.();
     await synergyResearch?.close();

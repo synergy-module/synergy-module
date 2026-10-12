@@ -1,6 +1,7 @@
 import { createBrainNetwork } from "./brain-network.js";
 import { initializeRobinhood } from "./robinhood-controller.js";
 import { createWorkspaceRequest, persistForm, waitForDrafts, queueDraft } from "../workspace-client.js";
+import { observeWorkspaceUpdate } from "../workspace-notifications.js";
 
 const instances = new WeakMap();
 const activeStatuses = new Set(["running"]);
@@ -69,6 +70,7 @@ export function initializeBrainPage(root, { fetchImpl = root.ownerDocument.defau
       const response = await fetchImpl(url, { method, signal: controller.signal, credentials: "same-origin", headers: { Accept: "application/json", ...(method === "GET" ? {} : { "Content-Type": "application/json", "X-CSRF-Token": csrf }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
       let result; try { result = await response.json(); } catch { throw new Error("The server response was unavailable. Refresh or sign in again."); }
       if (!response.ok) throw new Error(result.message || "The request could not be completed.");
+      if (!disposed) observeWorkspaceUpdate(root, url, result);
       return result;
     } finally { requests.delete(controller); }
   }

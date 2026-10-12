@@ -26,10 +26,10 @@ test("Discord login establishes, registers, and CSRF-protects the operator sessi
   assert.equal(registered.length, 1);
   assert.equal(registered[0][0], "discord:operator");
 
-  const csrfToken = await readCsrfToken(agent, "/home");
+  const csrfToken = await readCsrfToken(agent, "/setup");
   assert.match(csrfToken, /^[A-Za-z0-9_-]{43}$/);
   await agent.post("/auth/logout").expect(403).expect({ error: "CSRF_INVALID", message: "REQUEST REJECTED :: SESSION TOKEN INVALID" });
-  await agent.get("/home").expect(200);
+  await agent.get("/home").expect(302).expect("Location", "/setup");
   await agent.post("/auth/logout").set("X-CSRF-Token", csrfToken).expect(200);
   assert.equal(unregistered.length, 1);
   assert.deepEqual(unregistered[0], registered[0]);
@@ -299,8 +299,9 @@ test("successful Discord callback regenerates and registers the session then ren
   assert.equal(registered[0][0], "42");
   const completion = await agent.get("/auth/complete").expect(200).expect(/data-auth-complete/);
   assert.doesNotMatch(completion.text, /discord-access-token-42|discord-refresh-token-42|test-secret/);
-  const home = await agent.get("/home").expect(200).expect(/Omen/);
-  assert.doesNotMatch(home.text, /discord-access-token-42|discord-refresh-token-42|test-secret/);
+  await agent.get("/home").expect(302).expect("Location", "/setup");
+  const setup = await agent.get("/setup").expect(200).expect(/Omen/);
+  assert.doesNotMatch(setup.text, /discord-access-token-42|discord-refresh-token-42|test-secret/);
 });
 
 test("logout attempts Discord revocation but always destroys and unregisters the local session", async () => {
@@ -316,7 +317,7 @@ test("logout attempts Discord revocation but always destroys and unregisters the
   const agent = request.agent(createTestApp({ authMode: "discord", authService, sessionRegistry, logger: { error() {} } }));
   await agent.get("/auth/discord");
   await agent.get("/auth/discord/callback?code=code&state=correct").expect(302);
-  const csrfToken = await readCsrfToken(agent, "/home");
+  const csrfToken = await readCsrfToken(agent, "/setup");
   await agent.post("/auth/logout").send({ _csrf: csrfToken }).expect(200);
   assert.equal(revocations, 1);
   assert.deepEqual(unregistered, registered);
@@ -339,7 +340,7 @@ test("logout still revokes and destroys when session registry cleanup fails", as
   const agent = request.agent(app);
   await agent.get("/auth/discord");
   await agent.get("/auth/discord/callback?code=code&state=correct").expect(302).expect("Location", "/auth/complete");
-  const csrfToken = await readCsrfToken(agent, "/home");
+  const csrfToken = await readCsrfToken(agent, "/setup");
 
   await agent.post("/auth/logout").set("X-CSRF-Token", csrfToken).expect(200);
   assert.equal(revocations, 1);
@@ -354,7 +355,7 @@ test("logout destruction failure retains a revoked registry entry and clears the
   const agent = request.agent(app);
   const { callbackPath } = await beginTestDiscordLogin(app, { username: "retryable-logout", agent });
   const loginResponse = await agent.get(callbackPath).expect(302).expect("Location", "/auth/complete");
-  const csrfToken = await readCsrfToken(agent, "/home");
+  const csrfToken = await readCsrfToken(agent, "/setup");
   const [sessionId] = sessionRegistry.listSessionIds("discord:retryable-logout");
   const originalCookie = loginResponse.headers["set-cookie"][0].split(";", 1)[0];
   sessionStore.destroy = (candidate, callback) => {

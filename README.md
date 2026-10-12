@@ -40,13 +40,21 @@ Agentic Trader analysis requires a configured AI provider and explicit server ac
 
 ## Polymarket
 
-The `/polymarket` workspace adds public international market discovery, a rules-based Second Brain, public-wallet tracking, and an explicitly started paper bot. Paper fills use fresh order-book depth and fee schedules with cash, exposure, daily loss, and drawdown limits; these features need no Polymarket credentials. The separate **US Account** tab connects an existing Polymarket US account with its developer Key ID and Secret Key, encrypted in per-account persistent storage, and syncs balances, positions, and open orders. Settings links to this connection flow. No new migration or package is required. Live orders and paid AI forecasting are not enabled. See [Polymarket setup, capabilities, and simulation limits](docs/polymarket.md).
+`/polymarket` contains public international market discovery, a rules-based Second Brain and public-wallet tracking. Its paper bot lives at `/practice/polymarket`. The real US account connection lives at `/live/polymarket`, with encrypted per-account credentials and balance, position and open-order synchronization. Paper orders never call the US account client. See [Polymarket capabilities](docs/polymarket.md).
+
+## First sign-in, forward paper trading and agent access
+
+New users complete `/setup`: profile, optional connections, defaults and a review of the separate paper/live workspaces. Settings includes light/dark/system themes, density, reduced motion, timezone, profile name, notification preferences, encrypted connections and scoped AI access tokens.
+
+The **Practice lab** at `/practice` trades current market prices using virtual cash. Manual accounts support server-priced buy/sell orders; independent strategy accounts can observe current feeds automatically. Crypto models, complementary pairs, qualified wallet copying, resting bids, weather forecasts/ensembles, Solana research evidence and settled-result checks were assessed against `synergy-poly`. Historical replay is not exposed. See [forward paper setup](docs/forward-paper-trading.md) and [the source comparison and limits](docs/synergy-poly-comparison.md).
+
+External agents use `/api/v1`, with user-scoped, expiring, revocable tokens created in **Settings → AI access**. The generated OpenAPI document and operation catalog cover the actual application APIs. Paper permissions and live trading permissions are separate. See [agent API documentation](docs/platform-api.md).
 
 ## Robinhood Third Brain
 
 The `/robinhood-brain` workspace adapts FriesTrader's separate research and execution phases into Synergy: broker observations, universe/signal screening, provider-selected theses, independent critique, fixed risk gates, separate memory, paper fills, broker previews, and order reconciliation. Users can choose Claude, Gemini, Grok, or ChatGPT/Codex through the OpenAI API. Grok is also supported in shared Settings and research routing.
 
-The worker offers paper, per-order review, and policy-authorized autonomous equity execution. Paid AI and live/autonomous server switches remain off by default. Actual broker response mappings, a working Robinhood connection, ten verified paper days and explicit operator policy consent are required before autonomous trading. See [the repo assessment, setup and current limits](docs/robinhood-brain.md). This code has not been verified against a live brokerage account.
+Equity forward paper trading lives at `/practice/equities`, using its own policies, virtual balances and ledger through a broker adapter with no write authority. `/robinhood-brain` offers per-order review and policy-authorized live execution. Paid AI and live/autonomous server switches remain off by default. Verified broker response mappings, a working Robinhood connection, ten verified days from the separate paper workspace with the same policy and mappings, and explicit policy consent are required before autonomous trading. See [setup and current limits](docs/robinhood-brain.md). This code has not been verified against a live brokerage account.
 
 ## Technology
 
@@ -64,7 +72,7 @@ The application renders complete pages on direct requests. Internal navigation r
 
 ### Windows launcher
 
-Double-click `start-synergy-module.bat` from the project root. The launcher installs missing dependencies and opens the server at:
+Double-click `launch.bat` from the project root (`start-synergy-module.bat` remains available too). The launcher installs missing dependencies and opens the server at:
 
 ```text
 http://127.0.0.1:3000

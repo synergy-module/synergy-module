@@ -103,6 +103,13 @@ export async function beginTestDiscordLogin(app, { username = "operator", agent 
 export async function loginTestOperator(app, options = {}) {
   const { agent, callbackPath } = await beginTestDiscordLogin(app, options);
   await agent.get(callbackPath).expect(302).expect("Location", "/auth/complete");
+  if (options.onboarding !== false) {
+    // Most tests exercise an established account. Setup-specific tests opt out.
+    const username = options.username ?? "operator";
+    await app.locals.workspaceRepository.update(`discord:${username.trim().toLowerCase()}`, state => {
+      state.profile = { displayName: username }; state.onboarding = { version: 1, completedAt: new Date().toISOString(), acknowledgedPracticeIsolation: true };
+    });
+  }
   return agent;
 }
 

@@ -11,7 +11,7 @@ test("offline market failure leaves saved memory usable and disposes requests an
   const repository = createMemoryWorkspaceRepository(), service = createPolymarketService({ repository, client: polyFixture().client, now: () => POLY_NOW });
   await service.note("alice", { text: "Saved lesson survives an offline feed" });
   const state = await service.state("alice");
-  const html = await ejs.renderFile("views/pages/polymarket.ejs", {});
+  const html = await ejs.renderFile("views/pages/polymarket.ejs", { page: { route: { key: "polymarket" } } });
   const dom = new JSDOM(`<meta name="csrf-token" content="test-token">${html}`, { url: "http://localhost/polymarket?view=brain" });
   const signals = [], requests = [];
   const controller = initializePolymarket(dom.window.document.querySelector("[data-polymarket]"), { fetchImpl: async (url, options) => {
@@ -23,8 +23,10 @@ test("offline market failure leaves saved memory usable and disposes requests an
   assert.equal(dom.window.document.querySelector('[data-poly-panel="brain"]').hidden, false);
   assert.equal(dom.window.document.querySelector("[data-poly-feedback]").dataset.error, "true");
   dom.window.document.querySelector('[data-poly-tab="brain"]').dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
-  assert.equal(dom.window.document.querySelector('[data-poly-tab="paper"]').getAttribute("aria-selected"), "true");
+  assert.equal(dom.window.document.querySelector('[data-poly-tab="radar"]').getAttribute("aria-selected"), "true");
+  assert.equal(dom.window.document.querySelector('[data-poly-tab="paper"]'), null);
   controller.dispose(); assert.ok(signals.every(signal => signal.aborted));
-  dom.window.document.querySelector('[data-poly-action="refresh"]').click(); assert.equal(requests.length, 2);
+  const requestCount = requests.length;
+  dom.window.document.querySelector('[data-poly-action="refresh"]').click(); assert.equal(requests.length, requestCount);
   dom.window.close(); await service.close();
 });

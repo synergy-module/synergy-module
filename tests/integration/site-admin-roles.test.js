@@ -27,7 +27,11 @@ function fixture() {
     async login(identity, agent = request.agent(app)) {
       nextIdentity = identity;
       const { callbackPath } = await beginTestDiscordLogin(app, { agent });
-      return { agent, response: await agent.get(callbackPath) };
+      const response = await agent.get(callbackPath);
+      if (response.headers.location === "/auth/complete") await app.locals.workspaceRepository.update(identity, state => {
+        state.profile = { displayName: identity }; state.onboarding = { version: 1, completedAt: new Date().toISOString(), acknowledgedPracticeIsolation: true };
+      });
+      return { agent, response };
     },
     async expireRoles(identity, amend = () => {}) {
       const sessions = await storeCall(sessionStore, "all");

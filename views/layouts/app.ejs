@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en" data-theme="core">
+<% const experience = typeof workspaceExperience !== 'undefined' ? workspaceExperience : null; const theme = experience?.preferences?.theme || 'system'; %>
+<html lang="en" data-theme="<%= theme === 'light' ? 'daylight' : 'core' %>" data-theme-preference="<%= theme %>" data-density="<%= experience?.preferences?.density || 'comfortable' %>" data-reduced-motion="<%= experience?.preferences?.reducedMotion === true %>" data-timezone="<%= experience?.preferences?.timezone || 'America/Chicago' %>" data-currency="<%= experience?.preferences?.currency || 'USD' %>" data-notifications="<%= JSON.stringify(experience?.preferences?.notifications || {}) %>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,8 +8,10 @@
     <meta name="description" content="Synergy Module — agentic research, connected accounts, reviewed trading decisions, and a persistent trade journal.">
     <meta name="csrf-token" content="<%= csrfToken %>">
     <%- include("../partials/redline-head") %>
+    <link rel="stylesheet" href="<%= assetPath('/css/workspace-experience.css') %>">
   </head>
   <body>
+    <a class="skip-link" href="#workspace-content">Skip to content</a>
 
     <main id="app" aria-live="polite">
       <div class="shell" data-app-shell data-active-route="<%= page.route.key %>">
@@ -16,7 +19,7 @@
         <div class="body" data-shell-body>
           <%- include("../partials/sidebar", { page }) %>
           <button class="scrim" type="button" aria-label="Close navigation" data-nav-scrim></button>
-          <div class="main" data-main>
+          <div class="main" data-main id="workspace-content" tabindex="-1">
             <%- include(`../pages/${page.route.view}`, { page }) %>
           </div>
         </div>

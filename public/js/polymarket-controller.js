@@ -20,7 +20,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
   const empty = (target, columns, message) => { const row = el("tr"), cell = el("td", message, "poly-muted"); cell.colSpan = columns; row.append(cell); target.replaceChildren(row); };
   const pnl = (tag, value) => el(tag, usd(value), value >= 0 ? "poly-positive" : "poly-negative");
   const listeners = [];
-  const listen = (target, event, fn) => { target.addEventListener(event, fn); listeners.push(() => target.removeEventListener(event, fn)); };
+  const listen = (target, event, fn) => { target?.addEventListener(event, fn); listeners.push(() => target?.removeEventListener(event, fn)); };
   let disposed = false, state = null, markets = [], selectedId = null, selected = null, selectionVersion = 0, pending = 0, timer, radarLoaded = false, settingsDirty = false;
   const settingsForm = q("settings-form"), noteForm = q("note-form"), addressForm = q("address-form");
   function feedback(message, error = false) { if (!disposed) { q("feedback").textContent = message; q("feedback").dataset.error = String(error); } }
@@ -28,9 +28,10 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     if (disposed) return;
     for (const button of root.querySelectorAll("button:not([role='tab'])")) if (!button.closest("[data-poly-us]")) button.disabled = pending > 0;
     const running = state?.paper.bot.running === true;
-    root.querySelector('[data-poly-action="start"]').disabled = !state || running || pending > 0;
-    root.querySelector('[data-poly-action="pause"]').disabled = !state || !running || pending > 0;
-    for (const control of settingsForm.elements) control.disabled = !state || running || pending > 0;
+    const start = root.querySelector('[data-poly-action="start"]'), pause = root.querySelector('[data-poly-action="pause"]');
+    if (start) start.disabled = !state || running || pending > 0;
+    if (pause) pause.disabled = !state || !running || pending > 0;
+    for (const control of settingsForm?.elements ?? []) control.disabled = !state || running || pending > 0;
     for (const control of root.querySelectorAll('[data-poly-action="close"]')) control.disabled = running || pending > 0;
     if (!state) for (const control of root.querySelectorAll('[data-poly-action="watch"]')) control.disabled = true;
   }
@@ -42,7 +43,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
   }
   function setTab(key, { focus = false, updateUrl = true } = {}) {
     const tabs = [...root.querySelectorAll("[data-poly-tab]")];
-    if (!tabs.some(tab => tab.dataset.polyTab === key)) key = "markets";
+    if (!tabs.some(tab => tab.dataset.polyTab === key)) key = tabs[0]?.dataset.polyTab ?? "markets";
     for (const tab of tabs) { const active = tab.dataset.polyTab === key; tab.setAttribute("aria-selected", String(active)); tab.tabIndex = active ? 0 : -1; if (focus && active) tab.focus(); }
     for (const panel of root.querySelectorAll("[data-poly-panel]")) panel.hidden = panel.dataset.polyPanel !== key;
     if (updateUrl) { const url = new URL(windowRef.location.href); if (key === "markets") url.searchParams.delete("view"); else url.searchParams.set("view", key); windowRef.history.replaceState(windowRef.history.state, "", url); }
@@ -55,6 +56,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     return list;
   }
   function renderMarkets() {
+    if (!q("markets")) return;
     const target = q("markets"), query = q("search").value.trim().toLowerCase(), onlyWatched = q("watch-filter").checked;
     const filtered = markets.filter(market => market.question.toLowerCase().includes(query) && (!onlyWatched || state?.watchlist.includes(market.id)));
     target.replaceChildren(); q("market-count").textContent = `${filtered.length} / ${markets.length} scanned markets`;
@@ -76,6 +78,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
   }
   function renderInspector() {
     const target = q("inspector");
+    if (!target) return;
     if (!selected) { target.replaceChildren(el("h2", "Market evidence"), el("p", selectedId ? "Loading market evidence..." : "No market selected.", "poly-muted")); return; }
     const { market, analysis, warnings } = selected;
     target.replaceChildren(el("h2", market.question));
@@ -103,6 +106,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     } catch (error) { if (!disposed && version === selectionVersion) { q("inspector").replaceChildren(el("h2", "Market evidence"), el("p", error.message, "poly-negative"), command("Retry", "select", id)); } }
   }
   function renderMemory() {
+    if (!q("research")) return;
     q("research-count").textContent = `${state.research.length} / 10 saved`;
     q("storage").textContent = state.storage.persistent ? `${state.storage.kind.toUpperCase()} SAVED` : "TEMPORARY MEMORY";
     q("research").replaceChildren();
@@ -122,6 +126,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     }
   }
   function renderPaper() {
+    if (!q("stats")) return;
     const { paper } = state;
     q("bot-status").textContent = paper.bot.running ? "RUNNING / PAPER" : "PAUSED / PAPER";
     q("stats").replaceChildren();
@@ -145,6 +150,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     if (!paper.trades.length) empty(q("trades"), 5, "No simulated fills recorded.");
   }
   function renderFollowed() {
+    if (!q("followed")) return;
     q("followed").replaceChildren();
     for (const address of state.addresses) { const item = el("div"); item.append(link(shortAddress(address), `https://polymarket.com/profile/${address}`), icon("Unfollow wallet", "unfollow", address, true)); q("followed").append(item); }
   }
@@ -154,6 +160,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     state = value; if (changed) renderMemory(); renderPaper(); renderFollowed(); controls();
   }
   async function loadMarkets() {
+    if (!q("markets")) return;
     const value = await call("/api/polymarket/markets"); if (disposed) return;
     markets = value.markets; q("source").textContent = `Gamma / top 100 by 24h volume / ${date(value.fetchedAt)}`; renderMarkets();
   }
@@ -214,7 +221,7 @@ export function initializePolymarket(root, { fetchImpl, windowRef = root.ownerDo
     if (!disposed) timer = windowRef.setTimeout(poll, 10_000);
   }
   const ready = (async () => {
-    const initialView = new URL(windowRef.location.href).searchParams.get("view") ?? "markets";
+    const initialView = new URL(windowRef.location.href).searchParams.get("view") ?? root.dataset.polyDefaultTab ?? "markets";
     const accountReady = initialView === "account" ? setTab("account", { updateUrl: false }) : undefined;
     const results = await Promise.allSettled([refreshState(), loadMarkets(), accountReady]); if (disposed) return;
     const errors = results.filter(result => result.status === "rejected");

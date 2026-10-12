@@ -28,10 +28,24 @@ export function authorizeRobinhoodBrain(workspace, action, at, enabled = false) 
 }
 
 export function createRobinhoodBrainService({ broker, ai, now = () => new Date(), autonomousEnabled = false,
-  canOperate = async () => true, setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
+  canOperate = async () => true, setTimer = setTimeout, clearTimer = clearTimeout,
+  environment = "combined", paperQualification } = {}) {
   const timers = new Map(), jobs = new Map(), instanceId = randomUUID();
   let closing = false;
-  const read = async owner => (await broker.readBrainWorkspace(owner)) ?? empty();
+  const read = async owner => {
+    const state = (await broker.readBrainWorkspace(owner)) ?? empty();
+    if (environment === "live") {
+      if (state.mode === "paper") state.mode = "review";
+      const paper = await paperQualification?.(owner);
+      state.dryDays = paper && isDeepStrictEqual(paper.policy, state.policy) && isDeepStrictEqual(paper.bindings, state.bindings)
+        ? [...paper.dryDays] : [];
+      // Older mixed workspaces may contain a paper ledger. It is never counted
+      // as live trading history or execution evidence.
+      state.ledger = state.ledger.filter(row => row.mode !== "paper");
+      state.runs = state.runs.filter(row => !["paper", "demo"].includes(row.mode));
+    }
+    return state;
+  };
   const update = (owner, change) => broker.updateBrainWorkspace(owner, workspace => {
     workspace.agentic ??= empty(); return change(workspace.agentic);
   });
@@ -54,7 +68,7 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
   }
   function paperSnapshot(state, snapshot) {
     const account = structuredClone(state.paper);
-    if (!account.initialized) { account.cash = snapshot.account.cash; account.initialized = true; }
+    if (!account.initialized) { if (environment !== "paper") account.cash = snapshot.account.cash; account.initialized = true; }
     for (const pos of account.positions) {
       const market = snapshot.markets.find(row => row.symbol === pos.symbol);
       if (market && fresh(market.quoteAt, now())) { pos.value = pos.quantity * market.bid; pos.markPrice = market.bid; }
@@ -65,8 +79,15 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
     const monday = new Date(`${today}T12:00:00Z`); monday.setUTCDate(monday.getUTCDate() - (currentDay + 6) % 7);
     const week = monday.toISOString().slice(0, 10);
     if (account.weekly?.date !== week) account.weekly = { date: week, equity: value };
-    return { paper: account, snapshot: { ...snapshot, positions: account.positions, account: { ...snapshot.account, cash: account.cash,
-      equity: value, dailyPnl: value - account.daily.equity, weeklyPnl: value - account.weekly.equity } } };
+    const paperAccount = { ...snapshot.account, cash: account.cash, equity: value, dailyPnl: value - account.daily.equity, weeklyPnl: value - account.weekly.equity, ordersClear: true };
+    const virtualRows = { account: [{ cash: paperAccount.cash, equity: paperAccount.equity, dailyPnl: paperAccount.dailyPnl, weeklyPnl: paperAccount.weeklyPnl,
+      marketOpen: paperAccount.marketOpen, observedAt: paperAccount.observedAt, simulated: true }], positions: account.positions, orders: [] };
+    // Models may cite actual market observations, but account, holding and order
+    // evidence must describe this virtual account rather than the live broker.
+    const sources = snapshot.sources.filter(source => source.kind === "markets");
+    for (const [kind, rows] of Object.entries(virtualRows)) sources.push({ id: `paper-${kind}-${snapshot.account.observedAt}`, kind,
+      tool: `virtual.paper.${kind}`, fetchedAt: now().toISOString(), excerpt: JSON.stringify(rows).slice(0, 18000) });
+    return { paper: account, snapshot: { ...snapshot, positions: account.positions, orders: [], ordersRead: true, account: paperAccount, sources } };
   }
   function fillPaper(paper, order, runId) {
     const pos = paper.positions.find(row => row.symbol === order.symbol);
@@ -78,7 +99,7 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
       if (!pos || order.quantity > pos.quantity) throw brainError("RISK", "A paper sell exceeds available shares.");
       paper.cash = round(paper.cash + order.notional); paper.realizedPnl = round(paper.realizedPnl + order.quantity * (order.limitPrice - pos.averageCost));
       pos.quantity = round(pos.quantity - order.quantity); pos.value = round(pos.quantity * order.limitPrice);
-      paper.positions = paper.positions.filter(row => row.quantity > 0.000001);
+      paper.positions = paper.positions.filter(row => row.quantity > 0);
     }
     return { ...order, id: randomUUID(), runId, mode: "paper", status: "filled", at: now().toISOString() };
   }
@@ -110,7 +131,7 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
   const api = {
     async state(owner) {
       const state = await read(owner), brokerState = await broker.state(owner), providerState = await ai.getOwnerStatus(owner);
-      return { ...state, proofs: undefined, worker: { running: running(state, now()), mode: state.mode },
+      return { ...state, environment: environment.toUpperCase(), proofs: undefined, worker: { running: running(state, now()) && state.worker.id === instanceId, mode: state.mode },
         storage: broker.getStorageStatus(), providers: providerState.providers, paidCallsEnabled: providerState.paidCallsEnabled,
         broker: { configured: brokerState.configured, connected: brokerState.connected, liveEnabled: brokerState.liveEnabled, paused: brokerState.paused },
         autonomousEnabled, readiness: [
@@ -128,12 +149,14 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
       const policy = validatePolicy(body.policy), bindings = validateBindings(body.bindings ?? []);
       await update(owner, state => {
         if (!Number.isInteger(body.version) || body.version !== state.version || running(state, now()) || jobs.has(owner) || state.ledger.some(pendingOrder)) throw brainError("CONFLICT", "Pause the worker, reconcile pending orders, and reload its policy before saving.", 409);
-        state.policy = policy; state.bindings = bindings; state.version++; state.consent = null; state.mode = "paper"; state.verifiedAt = null; state.dryDays = [];
+        if (environment !== "live" && state.paper.positions.some(position => !policy.symbols.includes(position.symbol))) throw brainError("CONFLICT", "Close a paper holding before removing its symbol from the policy.", 409);
+        state.policy = policy; state.bindings = bindings; state.version++; state.consent = null; state.mode = environment === "live" ? "review" : "paper"; state.verifiedAt = null; state.dryDays = [];
       });
       return api.state(owner);
     },
     async verify(owner) {
-      const state = await read(owner), snapshot = await fetchBrokerEvidence(broker, owner, state.policy, state.bindings);
+      const state = await read(owner), observed = await fetchBrokerEvidence(broker, owner, state.policy, state.bindings);
+      const snapshot = environment === "paper" ? paperSnapshot(state, observed).snapshot : observed;
       const check = planTrades({ snapshot, theses: [], policy: state.policy, now: now() });
       if (check.blocked.length) throw brainError("ADAPTER", check.blocked.join("; "), 409);
       await update(owner, current => { if (current.version !== state.version) throw brainError("CONFLICT", "The policy changed during verification.", 409); current.verifiedAt = now().toISOString(); });
@@ -155,6 +178,7 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
     async start(owner, body) {
       keys(body, ["version", "mode", "authorizeAutonomous"]);
       if (!["paper", "review", "autonomous"].includes(body.mode)) throw brainError("INPUT", "Choose paper, reviewed broker orders, or autonomous execution.");
+      if (environment === "paper" && body.mode !== "paper" || environment === "live" && body.mode === "paper") throw brainError("AUTHORITY", "Paper and live execution use separate workspaces. Choose the mode available in this workspace.", 423);
       const status = await api.state(owner);
       if (!await canOperate(owner) || !status.broker.connected || !status.verifiedAt || !status.paidCallsEnabled
         || !status.providers.some(row => row.id === status.policy.provider && row.configured)
@@ -177,6 +201,8 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
     async run(owner, body, { scheduled = false, onStarted } = {}) {
       keys(body, ["mode"]);
       if (!["demo", "cycle"].includes(body.mode)) throw brainError("INPUT", "Choose a demo or broker-data cycle.");
+      if (environment === "paper" && body.mode === "demo") throw brainError("INPUT", "Forward paper trading requires current broker market data.");
+      if (environment === "live" && !scheduled) throw brainError("AUTHORITY", "Use the live worker for broker execution, or Practice for a paper cycle.", 423);
       if (closing || jobs.has(owner) || !await canOperate(owner)) throw brainError("BUSY", "A cycle is already running or operator access is unavailable.", 409);
       if (jobs.has(owner)) throw brainError("BUSY", "A cycle is already running.", 409);
       const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 180000), runId = randomUUID();
@@ -199,7 +225,8 @@ export function createRobinhoodBrainService({ broker, ai, now = () => new Date()
         admitted = true; onStarted?.({ id: runId, status: "running" });
         const saved = await checked(owner, controller, initial.version), demo = body.mode === "demo";
         const policy = demo ? { ...saved.policy, accountNumber: "DEMO_ACCOUNT", symbols: ["DEMO"] } : saved.policy;
-        const source = demo ? demoEvidence(now(), policy) : await fetchBrokerEvidence(broker, owner, policy, saved.bindings, controller.signal);
+        const observed = demo ? demoEvidence(now(), policy) : await fetchBrokerEvidence(broker, owner, policy, saved.bindings, controller.signal);
+        const source = !demo && saved.mode === "paper" ? paperSnapshot(saved, observed).snapshot : observed;
         if (!demo && source.account.marketOpen !== true && scheduled) { event(run, "observe", "Market session is closed or unverified; no model call or order."); run.status = "waiting"; return run; }
         event(run, "research", "Phase A: universe and signal screening, sourced theses, independent critique.");
         await update(owner, state => { Object.assign(state.runs.find(row => row.id === runId), run); });

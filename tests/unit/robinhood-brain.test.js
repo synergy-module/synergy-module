@@ -49,6 +49,18 @@ test("tiered profits cascade against the remaining quantity and do not refire fo
     ledger: [{ symbol: "DEMO", holdingId: "holding", status: "filled", tiers: [0, 1, 2] }] }).orders.length, 0);
 });
 
+test("equity exits credit the final six-decimal share quantity and omit zero-share profit tiers", () => {
+  const snapshot = rhSnapshot(); snapshot.markets[0].bid = 700000; snapshot.markets[0].ask = 700001;
+  snapshot.positions = [{ symbol: "DEMO", quantity: 1.000003, averageCost: 600000, value: 700002.1, holdingId: "holding", openedAt: "2026-10-01T15:30:00Z" }];
+  const order = planTrades({ snapshot, theses: [], policy: RH_POLICY, now: RH_BRAIN_NOW }).orders[0];
+  assert.equal(order.quantity, 0.25); assert.equal(order.notional, 175000); assert.equal(order.notional, order.quantity * order.limitPrice);
+  snapshot.positions[0].quantity = 0.000001;
+  assert.equal(planTrades({ snapshot, theses: [], policy: RH_POLICY, now: RH_BRAIN_NOW }).orders.length, 0);
+  snapshot.positions[0].averageCost = 800000;
+  const stop = planTrades({ snapshot, theses: [], policy: RH_POLICY, now: RH_BRAIN_NOW }).orders[0];
+  assert.equal(stop.quantity, 0.000001); assert.equal(stop.notional, 0.7);
+});
+
 test("missing account, tax-history, earnings or quote evidence never becomes permission to buy", () => {
   const thesis = { symbol: "DEMO", direction: "long", conviction: "high", critic: "pass", riskFlags: [], thesisPrice: 50 };
   for (const key of ["lossHistoryComplete", "earningsKnown", "quoteAt", "isLeveraged", "tradable"]) {

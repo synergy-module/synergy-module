@@ -117,7 +117,8 @@ export function createBrainTools({ knowledge, journalRepository, marketNewsServi
       return structuredClone([...DEFINITIONS, ...(synergyResearch ? SYNERGY_DEFINITIONS : []),
         ...(robinhoodService ? BROKER_DEFINITIONS : [])].filter(definition => policyAllows(policy, role, definition.name)));
     },
-    async execute({ name, arguments: args = {}, ownerId, role, input, signal } = {}) {
+    async execute({ name, arguments: args = {}, ownerId, role, input, signal, allowBrokerProposals = true } = {}) {
+      if (name === "robinhood.propose" && allowBrokerProposals !== true) throw fail("BRAIN_TOOL_DENIED", "Broker proposals require live trading permission.", 403);
       if (!Object.hasOwn(ROLE_TOOLS, role) || !(await this.definitions(role)).some((tool) => tool.name === name)) throw fail("BRAIN_TOOL_DENIED", "This agent cannot use that tool.", 403);
       if (typeof ownerId !== "string" || !ownerId.trim()) throw fail("BRAIN_AUTH_REQUIRED", "Sign in to use tools.", 401);
       validateArguments(name, args);

@@ -211,6 +211,9 @@ test("failed ban invalidation retains a fail-closed SID that cannot unban or loa
   const banningAdmin = await loginTestOperator(harness.app, { username: "root-admin" });
   const { agent: bannedAdmin, callbackPath } = await beginTestDiscordLogin(harness.app, { username: "failed-admin" });
   const bannedLogin = await bannedAdmin.get(callbackPath).expect(302).expect("Location", "/auth/complete");
+  await harness.app.locals.workspaceRepository.update("discord:failed-admin", state => {
+    state.profile = { displayName: "failed-admin" }; state.onboarding = { version: 1, completedAt: new Date().toISOString(), acknowledgedPracticeIsolation: true };
+  });
   const banningCsrf = await readCsrfToken(banningAdmin, "/admin");
   const bannedCsrf = await readCsrfToken(bannedAdmin, "/admin");
   const [bannedSessionId] = harness.sessionRegistry.listSessionIds("discord:failed-admin");

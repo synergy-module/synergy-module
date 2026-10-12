@@ -52,7 +52,7 @@ test("home quick-access links opt into fragment navigation", async () => {
 
   const response = await agent.get("/home").expect(200);
   const dom = new JSDOM(response.text);
-  for (const path of ["/brain", "/research", "/settings", "/accounts", "/journal"]) {
+  for (const path of ["/practice", "/live", "/research", "/settings", "/journal"]) {
     assert.ok(dom.window.document.querySelector(`[data-route-view] a[href="${path}"][data-nav-link]`), `${path} uses fragment navigation`);
   }
   dom.window.close();
@@ -77,7 +77,10 @@ test("server-rendered Cortex shell exposes semantic navigation, page heading, an
   assert.ok(styleIndex("brain") >= 0);
   assert.ok(styleIndex("redline") > styleIndex("brain"));
   assert.ok(styleIndex("redline-surfaces") > styleIndex("redline"));
-  assert.equal(document.querySelectorAll('[data-color-theme]').length, 2);
+  assert.deepEqual([...document.querySelectorAll('[data-color-theme]')].map((control) => control.dataset.colorTheme), ["dark", "light", "system"]);
+  assert.ok(navigation.querySelector('[data-nav-key="practice"]'));
+  assert.ok(navigation.querySelector('[data-nav-key="live"]'));
+  assert.ok(styleIndex("workspace-experience") > styleIndex("workspace"));
   dom.window.close();
 });
 

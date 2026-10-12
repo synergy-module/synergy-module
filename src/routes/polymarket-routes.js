@@ -15,7 +15,13 @@ export function createPolymarketRoutes({ service, logger = console }) {
       res.status(known ? error.status : 500).json({ error: known ? error.code : "POLY_UNAVAILABLE", message: known ? error.message : "The Polymarket workspace is unavailable. Retry shortly." });
     }
   };
-  router.get("/polymarket", access, createPageController().show(ROUTE_BY_KEY.polymarket));
+  router.get("/polymarket", access, (req, res, next) => {
+    if (req.query.view === "paper") return res.redirect("/practice/polymarket");
+    if (req.query.view === "account") return res.redirect("/live/polymarket");
+    next();
+  }, createPageController().show(ROUTE_BY_KEY.polymarket));
+  router.get("/practice/polymarket", access, createPageController().show({ ...ROUTE_BY_KEY.polymarket, key: "polymarket-paper", title: "Prediction paper trading", path: "/practice/polymarket" }));
+  router.get("/live/polymarket", access, createPageController().show({ ...ROUTE_BY_KEY.polymarket, key: "polymarket-account", title: "Polymarket US account", path: "/live/polymarket", view: "polymarket-account" }));
   router.use("/api/polymarket", access, (req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
   router.get("/api/polymarket/state", handle(owner => service.state(owner)));
   router.get("/api/polymarket/markets", handle(() => service.markets()));

@@ -13,6 +13,8 @@ const CREDENTIAL_CONTEXTS = Object.freeze({
 const DEVELOPMENT_SECRETS = new Set(["synergy-module-local-development-secret", "omensite-local-development-secret"]);
 const DEFAULTS = Object.freeze({
   provider: "gemini", symbol: "SPY", timeframe: "15m", accountSize: 50000, riskPercent: 0.5, pointValue: 1, minRewardRisk: 2,
+  theme: "system", density: "comfortable", reducedMotion: false, defaultLanding: "/home", timezone: "America/Chicago", currency: "USD",
+  notifications: { researchCompleted: true, orderUpdates: true, practiceResults: true },
   routes: {}, limits: { maxSteps: 12, maxModelCalls: 10, maxTokens: 64000, maxDurationMs: 120000, maxCostUsd: null },
 });
 const DRAFT_FIELDS = Object.freeze({
@@ -41,6 +43,18 @@ function validatePreferences(value) {
   if (value.provider !== undefined && !Object.hasOwn(PROVIDERS, value.provider)) throw failure();
   if (value.symbol !== undefined && (typeof value.symbol !== "string" || !/^[A-Za-z0-9./:_-]{1,24}$/.test(value.symbol))) throw failure();
   if (value.timeframe !== undefined && !TIMEFRAMES.includes(value.timeframe)) throw failure();
+  for (const [key, choices] of Object.entries({ theme: ["light", "dark", "system"], density: ["comfortable", "compact"], defaultLanding: ["/home", "/research", "/practice", "/live"], currency: ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"] })) {
+    if (value[key] !== undefined && !choices.includes(value[key])) throw failure();
+  }
+  if (value.reducedMotion !== undefined && typeof value.reducedMotion !== "boolean") throw failure();
+  if (value.timezone !== undefined) {
+    if (typeof value.timezone !== "string" || value.timezone.length > 80) throw failure();
+    try { new Intl.DateTimeFormat("en", { timeZone: value.timezone }); } catch { throw failure(); }
+  }
+  if (value.notifications !== undefined) {
+    objectKeys(value.notifications, Object.keys(DEFAULTS.notifications));
+    if (Object.values(value.notifications).some((enabled) => typeof enabled !== "boolean")) throw failure();
+  }
   for (const [key, minimum, maximum] of [["accountSize", 0.01, 1e9], ["riskPercent", 0.01, 5], ["pointValue", 0.000001, 1e6], ["minRewardRisk", 1, 20]]) {
     if (value[key] !== undefined) bounded(value[key], minimum, maximum);
   }
@@ -95,9 +109,15 @@ export function createWorkspaceSettingsService({ repository = createMemoryWorksp
     } catch { throw failure("SETTINGS_CREDENTIAL_UNAVAILABLE", 503, "A saved API credential could not be read. Restore the integration encryption key or replace this credential."); }
   };
   const preferences = (state) => ({ ...structuredClone(DEFAULTS), provider: baseStatus().defaultProvider || "gemini", ...state.preferences,
-    routes: { ...(state.preferences?.routes ?? {}) }, limits: { ...DEFAULTS.limits, ...state.preferences?.limits } });
+    routes: { ...(state.preferences?.routes ?? {}) }, limits: { ...DEFAULTS.limits, ...state.preferences?.limits },
+    notifications: { ...DEFAULTS.notifications, ...state.preferences?.notifications } });
+  const experience = (state) => ({
+    profile: { displayName: "", ...state.profile }, preferences: preferences(state),
+    onboarding: { version: 1, step: "welcome", interests: ["research", "practice"], completedAt: null, acknowledgedPracticeIsolation: false, ...state.onboarding },
+  });
 
   const api = {
+    async getExperience(owner) { return experience(await repository.read(validOwner(owner))); },
     async getState(owner) {
       const state = await repository.read(validOwner(owner));
       const status = baseStatus();
@@ -112,7 +132,7 @@ export function createWorkspaceSettingsService({ repository = createMemoryWorksp
             source: saved ? "account" : server?.configured ? "server" : "none", updatedAt: saved?.updatedAt ?? null,
             needsReplacement: Boolean(saved && !available) };
         }),
-        preferences: preferences(state), drafts: Object.fromEntries(Object.keys(DRAFT_FIELDS).map((name) => [name, state.drafts[name] ?? null])),
+        ...experience(state), drafts: Object.fromEntries(Object.keys(DRAFT_FIELDS).map((name) => [name, state.drafts[name] ?? null])),
         updatedAt: state.updatedAt,
       };
     },
@@ -140,9 +160,36 @@ export function createWorkspaceSettingsService({ repository = createMemoryWorksp
       const patch = validatePreferences(value);
       await repository.update(owner, (state) => {
         const before = preferences(state);
-        state.preferences = { ...before, ...patch, routes: { ...before.routes, ...patch.routes }, limits: { ...before.limits, ...patch.limits } };
+        state.preferences = { ...before, ...patch, routes: { ...before.routes, ...patch.routes }, limits: { ...before.limits, ...patch.limits }, notifications: { ...before.notifications, ...patch.notifications } };
         for (const role of ROLES) if (state.preferences.routes[role] === "") delete state.preferences.routes[role];
         state.updatedAt = now().toISOString();
+      });
+      return api.getState(owner);
+    },
+    async saveProfile(owner, value) {
+      validOwner(owner); objectKeys(value, ["displayName"]);
+      if (typeof value.displayName !== "string" || !value.displayName.trim() || value.displayName.trim().length > 80 || /[\u0000-\u001f\u007f]/.test(value.displayName)) throw failure();
+      await repository.update(owner, (state) => { state.profile = { displayName: value.displayName.trim() }; state.updatedAt = now().toISOString(); });
+      return api.getState(owner);
+    },
+    async saveOnboarding(owner, value) {
+      validOwner(owner); objectKeys(value, ["step", "interests", "acknowledgedPracticeIsolation"]);
+      if (value.step !== undefined && !["welcome", "connections", "preferences", "review"].includes(value.step)) throw failure();
+      if (value.interests !== undefined && (!Array.isArray(value.interests) || value.interests.length > 5 || value.interests.some((item) => !["research", "prediction-markets", "stocks", "practice", "automation"].includes(item)))) throw failure();
+      if (value.acknowledgedPracticeIsolation !== undefined && typeof value.acknowledgedPracticeIsolation !== "boolean") throw failure();
+      await repository.update(owner, (state) => {
+        state.onboarding = { ...experience(state).onboarding, ...structuredClone(value), ...(value.interests ? { interests: [...new Set(value.interests)] } : {}) };
+        state.updatedAt = now().toISOString();
+      });
+      return api.getState(owner);
+    },
+    async completeOnboarding(owner, value = {}) {
+      validOwner(owner); objectKeys(value, ["acknowledgedPracticeIsolation"]);
+      if (value.acknowledgedPracticeIsolation !== true) throw failure("SETUP_REVIEW_REQUIRED", 422, "Confirm that you understand practice and live trading are separate.");
+      await repository.update(owner, (state) => {
+        if (!state.profile?.displayName) throw failure("SETUP_PROFILE_REQUIRED", 422, "Add your display name before finishing setup.");
+        state.updatedAt = now().toISOString();
+        state.onboarding = { ...experience(state).onboarding, version: 1, step: "review", acknowledgedPracticeIsolation: true, completedAt: state.onboarding?.completedAt ?? state.updatedAt };
       });
       return api.getState(owner);
     },

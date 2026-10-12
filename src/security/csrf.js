@@ -1,4 +1,5 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
+import { isVerifiedPlatformRequest } from "../platform-api/request-auth.js";
 
 const INVALID_CSRF_RESPONSE = Object.freeze({
   error: "CSRF_INVALID",
@@ -20,6 +21,7 @@ function matchesToken(expected, supplied) {
 }
 
 export function requireCsrf(req, res, next) {
+  if (isVerifiedPlatformRequest(req)) return next();
   const supplied = req.body?._csrf ?? req.get?.("X-CSRF-Token");
   if (matchesToken(req.session?.csrfToken, supplied)) return next();
   return res.status(403).json(INVALID_CSRF_RESPONSE);

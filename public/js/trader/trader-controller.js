@@ -1,3 +1,5 @@
+import { notifyWorkspace } from "../workspace-notifications.js";
+
 const instances = new WeakMap();
 const paidLockMessage = "Paid AI calls locked. Offline demo and checks are available.";
 const PROVIDERS = [
@@ -286,6 +288,7 @@ export function initializeTraderPage(root, {
       if (!response.ok || !responsePayload.run?.id) throw new Error(typeof responsePayload.message === "string" ? responsePayload.message : "Analysis could not be completed. Try again.");
       runs = [responsePayload.run, ...runs.filter((run) => run.id !== responsePayload.run.id)].slice(0, 10);
       renderRun(responsePayload.run);
+      if (mode !== "demo") notifyWorkspace(root, "researchCompleted", "Analysis is ready. Review the proposed plan and risk checks.");
       report(mode === "demo" ? "Demo loaded. All prices and reasoning are illustrative." : responsePayload.run.status === "ready" ? "Analysis complete. Review the proposed plan and risk checks." : "Analysis complete. The agent recommends waiting; review the gaps and risk checks.");
     } catch (error) {
       if (disposed || error?.name === "AbortError") return;

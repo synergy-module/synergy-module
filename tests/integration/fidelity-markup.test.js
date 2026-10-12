@@ -4,7 +4,7 @@ import request from "supertest";
 import { JSDOM } from "jsdom";
 import { createTestApp, loginTestOperator } from "../helpers/auth-test-helpers.js";
 
-test("the overview guides setup, research and account review while preserving the economic calendar", async () => {
+test("the overview separates research, forward practice and live accounts while preserving the economic calendar", async () => {
   const agent = await loginTestOperator(createTestApp({
     sessionSecret: "test-secret",
     marketNewsService: {
@@ -29,8 +29,8 @@ test("the overview guides setup, research and account review while preserving th
   const home = await agent.get("/home").expect(200);
   const homeDom = new JSDOM(home.text);
   assert.equal(homeDom.window.document.querySelectorAll(".setup-steps > li").length, 3);
-  assert.ok(homeDom.window.document.querySelector('[data-route-view] a[href="/brain"][data-nav-link]'));
-  for (const route of ["/settings", "/research", "/accounts"]) {
+  assert.ok(homeDom.window.document.querySelector('[data-route-view] a[href="/settings"][data-nav-link]'));
+  for (const route of ["/research", "/practice", "/live"]) {
     assert.ok(homeDom.window.document.querySelector(`.setup-steps a[href="${route}"][data-nav-link]`));
   }
   homeDom.window.close();

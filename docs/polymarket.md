@@ -1,13 +1,13 @@
 # Polymarket Workspace
 
-The `/polymarket` workspace has separate market research, lessons, watchlists, public-wallet tracking, and a paper trading worker using international polymarket.com data. Those features require no Polymarket credentials or AI provider. The **US Account** tab separately connects an existing Polymarket US account for read-only balances, positions, and open orders. Both use the site's existing Discord admission, base capability, CSRF protection, and account storage.
+The `/polymarket` workspace contains research, lessons, watchlists and public-wallet tracking. The existing international paper worker is on `/practice/polymarket`; the new independent forward paper accounts are on `/practice`. Public research and paper fills require no trading-account credentials. The separate `/live/polymarket` page connects a Polymarket US account for balances, positions and open orders. All use existing Discord admission, capability checks, CSRF protection and account storage.
 
 ## Connect a Polymarket US account
 
 1. Complete identity verification in your existing Polymarket US account.
 2. Open [polymarket.us/developer](https://polymarket.us/developer). Use the same sign-in method and identity as the account: if you signed up with Google, choose Google again rather than the email option.
 3. Create an API key and retain its **Key ID** and **Secret Key**. The portal shows the secret once.
-4. In Synergy, open **Settings → Connections → Manage Polymarket US connection**, or **Polymarket → US Account** (`/polymarket?view=account`). Enter the two credentials and click **Connect & verify**.
+4. In Synergy, open **Settings → Connections → Manage Polymarket US connection**, or **Live workspace → Polymarket US** (`/live/polymarket`). Enter the two credentials and click **Connect & verify**.
 5. Use **Sync account** to refresh the account snapshot. Each section shows its retrieval date. **Disconnect** removes the saved credentials and snapshots from Synergy; revoke the key in Polymarket US if you also want to invalidate it there.
 
 The account's Google password, email session, crypto wallet keys, and any AI provider key are not required by this connector. Signing in to Google alone does not authorize Synergy: the documented Polymarket US retail integration uses developer credentials. See [official US authentication](https://docs.polymarket.us/api-reference/authentication).

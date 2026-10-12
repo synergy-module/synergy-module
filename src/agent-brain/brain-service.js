@@ -329,9 +329,13 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
     return response?.data;
   }
 
+  async function availableTools(control, role) {
+    return (await tools.definitions(role)).filter(tool => control.allowBrokerProposals || tool.name !== "robinhood.propose");
+  }
+
   async function executeTool(control, role, name, args) {
     assertRunning(control);
-    const definition = (await tools.definitions(role)).find((tool) => tool.name === name);
+    const definition = (await availableTools(control, role)).find((tool) => tool.name === name);
     if (!definition || !validateArguments(args, definition.inputSchema)) throw problem("BRAIN_TOOL_REJECTED", 422, "The requested tool or its arguments are not allowed for this agent role.");
     await write(control, (run) => {
       run.metrics.toolCalls += 1;
@@ -341,7 +345,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
     let observation;
     try {
       observation = await abortable(() => tools.execute({ name, arguments: args, ownerId: control.owner, role,
-        input: control.run.input, signal: control.controller.signal }), control.controller.signal, () => control.abortError);
+        input: control.run.input, allowBrokerProposals: control.allowBrokerProposals, signal: control.controller.signal }), control.controller.signal, () => control.abortError);
     } catch {
       if (control.controller.signal.aborted) throw control.abortError;
       observation = { ok: false, data: null, error: { code: "BRAIN_TOOL_FAILED", message: "The tool did not complete. A corrected or alternate permitted action may be attempted within the remaining budget." }, citations: [] };
@@ -392,7 +396,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
       const value = control.run.input.mode === "demo" ? scriptedAction(control, role) : await modelCall(control, role, {
         task: role === "researcher" ? "Gather snapshot and calendar context plus relevant knowledge, memory and journal evidence using only your currently assigned tools. Choose sources relevant to the objective; no external library is mandatory. Then hand off to strategist. Report unavailable or missing sources; tool failures are observations." : "Develop a source-cited thesis. Use currently assigned tools or request more research as needed, then finish with the full thesis. Do not fabricate tool results.",
         objective: control.run.input.objective, context: getBrainRoleContext(control.run.context, role),
-        tools: await tools.definitions(role), actionRules: "Use kind tool with a registered name and JSON-object argumentsJson; kind handoff with a role; or kind finish with a thesis. Set unused tool/handoffRole to empty strings, unused argumentsJson to '{}', and unused thesis to null.",
+        tools: await availableTools(control, role), actionRules: "Use kind tool with a registered name and JSON-object argumentsJson; kind handoff with a role; or kind finish with a thesis. Set unused tool/handoffRole to empty strings, unused argumentsJson to '{}', and unused thesis to null.",
         revisionInstruction, priorProposal: revisionInstruction ? control.run.result?.thesis ?? null : null,
       }, ACTION_SCHEMA);
       const action = validateAction(value);
@@ -440,7 +444,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
     await step(control, "strategist", "Apply deterministic source and risk gates to the current proposal.");
     // The registry call is observed and traced; the local trusted calculation
     // remains authoritative even if a tool observation is malformed or fails.
-    const checked = (await tools.definitions("strategist")).some(tool => tool.name === "risk.check")
+    const checked = (await availableTools(control, "strategist")).some(tool => tool.name === "risk.check")
       ? await executeTool(control, "strategist", "risk.check", { thesis: result }) : { ok: false };
     if (!checked.ok) result.missingData = [...result.missingData, "The risk-check tool failed; the proposal requires another verified check."].slice(0, 20);
     const risk = evaluateTraderRisk(control.run.input, result);
@@ -469,7 +473,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
     } };
     while (true) {
       const value = await modelCall(control, role, { ...promptData,
-        context: getBrainRoleContext(control.run.context, role), tools: await tools.definitions(role),
+        context: getBrainRoleContext(control.run.context, role), tools: await availableTools(control, role),
         toolRules: "You may call an assigned tool first: set tool to its name and argumentsJson to its JSON object, with tasks empty (planner) or verdict/reason/revisionInstruction empty (critic). To finish, return the requested plan/review with tool empty and argumentsJson '{}'. Missing tool access must be reported, never bypassed.",
       }, stageSchema, maxOutputTokens);
       if (!value || typeof value !== "object") return value;
@@ -590,7 +594,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
       return (await recover(key, [await load(key, id)]))[0];
     },
 
-    async start(owner, rawInput) {
+    async start(owner, rawInput, { allowBrokerProposals = true } = {}) {
       const key = ownerKey(owner);
       if (closed) throw problem("BRAIN_CLOSED", 503, "The research workflow service is shutting down.");
       if (starting.has(key) || [...active.values()].some((control) => control.owner === key)) throw problem("BRAIN_RUN_IN_PROGRESS", 409, "A research run is already active for this account.");
@@ -611,7 +615,7 @@ export function createBrainService({ repository, knowledge, modelGateway, tools,
             estimatedCostUsd: 0, elapsedMs: 0, cacheHits: 0, compactions: 0, tokensCharged: 0, costChargedUsd: 0, usageUnknownCalls: 0 },
           context: createBrainContext(input), result: null, error: null, approval: null, proposalHash: null, proposalVersion: null,
         });
-        const control = { owner: key, run: initial, startedAt: Date.now(), controller: new AbortController(),
+        const control = { owner: key, run: initial, allowBrokerProposals: allowBrokerProposals === true, startedAt: Date.now(), controller: new AbortController(),
           abortError: problem("BRAIN_CANCELLED", 409, "The research workflow was cancelled."), writes: Promise.resolve(),
           citations: new Map(), observedTools: new Set(), calendar: null, demoActions: 0, promise: null };
         active.set(initial.id, control);

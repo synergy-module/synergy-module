@@ -4,7 +4,7 @@ import request from "supertest";
 import { createTestApp, loginTestOperator, readCsrfToken } from "../helpers/auth-test-helpers.js";
 
 test("third brain routes are authenticated, CSRF protected, fragment ready, and scoped to the operator", async t => {
-  const app = createTestApp({ logger: { error() {} } }); t.after(() => app.locals.robinhoodBrainService.close());
+  const app = createTestApp({ logger: { error() {} } }); t.after(async () => { await app.locals.robinhoodBrainService.close(); await app.locals.equityPaperService.close(); });
   await request(app).get("/robinhood-brain").expect(302);
   await request(app).get("/api/robinhood-brain/state").expect(401);
   const alice = await loginTestOperator(app, { username: "rh-alice" }), bob = await loginTestOperator(app, { username: "rh-bob" });
@@ -15,11 +15,17 @@ test("third brain routes are authenticated, CSRF protected, fragment ready, and 
   const csrf = await readCsrfToken(alice, "/robinhood-brain");
   await alice.post("/api/robinhood-brain/notes").set("X-CSRF-Token", csrf).send({ text: "Alice's third brain lesson" }).expect(200);
   assert.equal((await bob.get("/api/robinhood-brain/state").expect(200)).body.notes.length, 0);
-  const started = await alice.post("/api/robinhood-brain/cycles").set("X-CSRF-Token", csrf).send({ mode: "demo" }).expect(202);
-  assert.equal(started.body.status, "running");
+  await alice.post("/api/robinhood-brain/cycles").set("X-CSRF-Token", csrf).send({ mode: "demo" }).expect(423);
+  await alice.post("/api/robinhood-brain/start").set("X-CSRF-Token", csrf).send({ mode: "paper", version: 1 }).expect(423);
+  await alice.post("/api/practice/equities/start").set("X-CSRF-Token", csrf).send({ mode: "review", version: 1 }).expect(423);
+  await alice.post("/api/practice/equities/cycles").set("X-CSRF-Token", csrf).send({ mode: "demo" }).expect(422);
+  await alice.post("/api/practice/equities/notes").set("X-CSRF-Token", csrf).send({ text: "Independent paper note" }).expect(200);
+  const paper = await alice.get("/api/practice/equities/state").expect(200);
+  assert.equal(paper.body.environment, "PAPER"); assert.equal(paper.body.notes.length, 1); assert.equal(paper.body.notes[0].text, "Independent paper note");
   await app.locals.robinhoodBrainService.close();
   const own = await alice.get("/api/robinhood-brain/state").expect(200).expect("Cache-Control", "no-store");
-  assert.equal(own.body.runs.length, 1); assert.equal(own.body.dryDays.length, 0); assert.equal(own.body.proofs, undefined);
+  assert.equal(own.body.environment, "LIVE"); assert.equal(own.body.runs.length, 0); assert.equal(own.body.dryDays.length, 0); assert.equal(own.body.proofs, undefined);
+  assert.equal(own.body.notes.length, 1); assert.equal(own.body.notes[0].text, "Alice's third brain lesson");
   assert.deepEqual(own.body.providers.map(row => row.id), ["gemini", "openai", "claude", "grok"]);
   await alice.post("/api/robinhood-brain/cycles").set("X-CSRF-Token", csrf).send({ mode: "demo", owner: "rh-bob" }).expect(422);
 });

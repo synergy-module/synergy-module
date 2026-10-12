@@ -55,6 +55,13 @@ test("unknown tools, inherited roles and unauthorized role/tool combinations are
   assert.deepEqual(f.calls, []);
 });
 
+test("a research-only run cannot request broker proposals even with forged input permissions", async t => {
+  let proposals = 0;
+  const f = harness(t, { robinhoodService: { propose: async () => { proposals++; return {}; } } });
+  await assert.rejects(f.execute("robinhood.propose", {}, { allowBrokerProposals: false, input: { ...INPUT, allowBrokerProposals: true } }), { code: "BRAIN_TOOL_DENIED", status: 403 });
+  assert.equal(proposals, 0);
+});
+
 test("owner spoofing and unexpected argument fields cannot reach retrieval or change immutable risk settings", async (t) => {
   const f = harness(t);
   for (const [name, args] of [

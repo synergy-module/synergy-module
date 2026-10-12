@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import session from "express-session";
 import request from "supertest";
-import { beginTestDiscordLogin, createDiscordAuthConfig, createTestApp } from "../helpers/auth-test-helpers.js";
+import { beginTestDiscordLogin, createDiscordAuthConfig, createTestApp, readCsrfToken } from "../helpers/auth-test-helpers.js";
 
 const guildId = "1554634103997861889", requiredRoleId = "1554903899343814857";
 const storeCall = (store, method, ...args) => new Promise((resolve, reject) => store[method](...args, (error, value) => error ? reject(error) : resolve(value)));
@@ -45,6 +45,10 @@ test("a member with the exact role enters the existing workspace and stores a gu
   const { agent, response } = await login(app);
   assert.equal(response.headers.location, "/auth/complete");
   await agent.get("/auth/complete").expect(200);
+  await agent.get("/home").expect(302).expect("Location", "/setup");
+  const csrf = await readCsrfToken(agent, "/setup");
+  await agent.patch("/api/settings/profile").set("X-CSRF-Token", csrf).send({ displayName: "Operator" }).expect(200);
+  await agent.post("/api/settings/onboarding/complete").set("X-CSRF-Token", csrf).send({ acknowledgedPracticeIsolation: true }).expect(200);
   await agent.get("/home").expect(200);
   await agent.get("/brain").expect(200);
   await agent.get("/api/brain/state").expect(200);

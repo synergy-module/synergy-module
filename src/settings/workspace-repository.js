@@ -7,9 +7,12 @@ const ownerKey = (owner) => {
   if (typeof owner !== "string" || !owner.trim() || owner.length > 200) throw new Error("Workspace owner is required");
   return owner;
 };
-const encode = (state) => {
+const encode = (state, owner = "") => {
   const json = JSON.stringify(state);
-  if (Buffer.byteLength(json) > 250_000) throw new Error("Workspace storage limit reached");
+  // Practice records are separate owner-scoped rows; keep complete bounded
+  // ledgers without consuming the account's configuration/credential budget.
+  const maximum = owner.startsWith("practice:") ? 2_000_000 : 250_000;
+  if (Buffer.byteLength(json) > maximum) throw new Error("Workspace storage limit reached");
   return json;
 };
 const changeState = (state, change) => {
@@ -26,7 +29,7 @@ export function createMemoryWorkspaceRepository() {
     async update(owner, change) {
       const state = structuredClone(owners.get(ownerKey(owner)) ?? empty());
       const result = changeState(state, change);
-      owners.set(owner, JSON.parse(encode(state)));
+      owners.set(owner, JSON.parse(encode(state, owner)));
       return structuredClone(result);
     },
     async close() {},
@@ -47,7 +50,7 @@ export function createSqliteWorkspaceRepository(filename) {
       try {
         const state = read(owner);
         const result = changeState(state, change);
-        db.prepare("INSERT INTO user_workspaces(owner_id,payload) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET payload=excluded.payload").run(owner, encode(state));
+        db.prepare("INSERT INTO user_workspaces(owner_id,payload) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET payload=excluded.payload").run(owner, encode(state, owner));
         db.exec("COMMIT");
         return structuredClone(result);
       } catch (error) { db.exec("ROLLBACK"); throw error; }
@@ -69,7 +72,7 @@ export function createPostgresWorkspaceRepository(pool) {
         await client.query("INSERT INTO user_workspaces(owner_id,payload) VALUES($1,$2) ON CONFLICT DO NOTHING", [owner, JSON.stringify(empty())]);
         const state = (await client.query("SELECT payload FROM user_workspaces WHERE owner_id=$1 FOR UPDATE", [owner])).rows[0].payload;
         const result = changeState(state, change);
-        await client.query("UPDATE user_workspaces SET payload=$2,updated_at=now() WHERE owner_id=$1", [owner, encode(state)]);
+        await client.query("UPDATE user_workspaces SET payload=$2,updated_at=now() WHERE owner_id=$1", [owner, encode(state, owner)]);
         await client.query("COMMIT");
         return structuredClone(result);
       } catch (error) { await client.query("ROLLBACK").catch(() => {}); throw error; }

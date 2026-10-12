@@ -1,4 +1,5 @@
 import { createWorkspaceRequest } from "./workspace-client.js";
+import { initializeExperienceSettings } from "./settings-experience-controller.js";
 
 const roles = ["planner", "researcher", "strategist", "critic"];
 export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocument.defaultView }) {
@@ -6,23 +7,26 @@ export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocu
   const find = (name) => root.querySelector(`[data-${name}]`);
   const listeners = [], defaults = find("settings-defaults");
   let disposed = false, state, connection, defaultsDirty = false, defaultsRevision = 0, connectionBusy = false;
-  const on = (element, event, handler) => { element?.addEventListener(event, handler); listeners.push(() => element?.removeEventListener(event, handler)); };
+  const experience = initializeExperienceSettings(root, { request, windowRef, onState: (value) => renderSettings(value) });
+  const on = (element, event, handler) => { element?.addEventListener?.(event, handler); listeners.push(() => element?.removeEventListener?.(event, handler)); };
   const say = (name, text) => { if (!disposed && find(name)) find(name).textContent = text; };
   const field = (name) => defaults.elements.namedItem(name);
   const tabs = [...root.querySelectorAll("[data-settings-tab]")];
   function select(id, focus = false) {
-    if (!tabs.some((tab) => tab.dataset.settingsTab === id)) id = "connections";
+    if (!tabs.some((tab) => tab.dataset.settingsTab === id)) id = "profile";
     for (const panel of root.querySelectorAll("[data-settings-panel]")) panel.hidden = panel.dataset.settingsPanel !== id;
-    for (const tab of tabs) { const active = tab.dataset.settingsTab === id; tab.setAttribute("aria-selected", String(active)); tab.tabIndex = active ? 0 : -1; if (active && focus) tab.focus(); }
+    for (const tab of tabs) { const active = tab.dataset.settingsTab === id; tab.setAttribute("aria-selected", String(active)); tab.tabIndex = active ? 0 : -1; if (active && focus) tab.focus(); if (active) tab.scrollIntoView?.({ block: "nearest", inline: "nearest" }); }
   }
   tabs.forEach((tab, index) => {
     on(tab, "click", () => select(tab.dataset.settingsTab));
     on(tab, "keydown", (event) => { const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1; if (next >= 0) { event.preventDefault(); select(tabs[next].dataset.settingsTab, true); } });
   });
   select(new URLSearchParams(windowRef.location.search).get("section"));
+  on(windowRef, "resize", () => root.querySelector('[data-settings-tab][aria-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" }));
 
   function renderSettings(value) {
     if (disposed) return; state = value;
+    experience.render(value);
     say("settings-paid", value.paidCallsEnabled ? "PAID ACCESS ENABLED" : "PAID CALLS LOCKED");
     say("settings-storage", value.storage.persistent ? `Persistent ${value.storage.kind.toUpperCase()} storage. Saved defaults, drafts, and credentials survive server restarts.` : "Temporary storage. This server must be configured with durable storage before relying on saved data.");
     for (const form of root.querySelectorAll("[data-provider-form]")) {
@@ -120,5 +124,5 @@ export function initializeSettings(root, { fetchImpl, windowRef = root.ownerDocu
   void request("/api/settings").then((value) => { renderSettings(value); say("settings-status", "Settings are saved to your account. Saving a key uses no AI tokens."); }).catch((error) => say("settings-status", error.message));
   void request("/api/robinhood/state").then(renderConnection).catch((error) => say("connection-detail", error.message));
   void request("/api/brain/state").then((value) => renderChecks(value.readiness)).catch(() => say("brain-readiness-time", "Setup checks unavailable. Refresh to retry."));
-  return { dispose() { disposed = true; for (const remove of listeners) remove(); } };
+  return { dispose() { disposed = true; experience.dispose(); for (const remove of listeners) remove(); } };
 }

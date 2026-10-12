@@ -1,4 +1,5 @@
 import { createWorkspaceRequest } from "./workspace-client.js";
+import { initializeBrokerBindingEditor } from "./broker-binding-editor.js";
 
 const money = value => Number.isFinite(value) ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value) : "--";
 const date = value => Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)) + " CT" : "--";
@@ -6,7 +7,8 @@ const LABELS = { claude: "Claude", gemini: "Gemini", grok: "Grok", openai: "Chat
 
 export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.ownerDocument.defaultView } = {}) {
   const document = root.ownerDocument, request = createWorkspaceRequest(root, fetchImpl), abort = new AbortController();
-  const call = (url, body, method) => request(`/api/robinhood-brain/${url}`, body, method, { signal: abort.signal });
+  const paperWorkspace = root.dataset.rhEnvironment === "paper", apiBase = paperWorkspace ? "/api/practice/equities" : "/api/robinhood-brain";
+  const call = (url, body, method) => request(`${apiBase}/${url}`, body, method, { signal: abort.signal });
   const q = key => root.querySelector(`[data-rh-${key}]`);
   const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
   const button = (text, action, id, className = "btn") => { const node = el("button", text, className); node.type = "button"; node.dataset.rhAction = action; if (id) node.dataset.id = id; return node; };
@@ -14,13 +16,13 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
   let state, selectedRunId, disposed = false, busy = false, dirty = false, timer;
   const on = (target, event, fn) => { target.addEventListener(event, fn); listeners.push(() => target.removeEventListener(event, fn)); };
   const say = (text, error = false) => { if (!disposed) { q("feedback").textContent = text; q("feedback").dataset.error = String(error); } };
+  const bindingEditor = initializeBrokerBindingEditor(root, { changed: () => { dirty = true; }, feedback: message => say(message) });
   function controls() {
     if (disposed) return;
     const active = state?.worker.running || state?.runs[0]?.status === "running";
     for (const control of root.querySelectorAll('[data-rh-action],button[type="submit"]')) control.disabled = !state || busy;
     root.querySelector('[data-rh-action="pause"]').disabled = !state || !active;
-    root.querySelector('[data-rh-action="demo"]').disabled = !state || busy || active;
-    root.querySelector('[data-rh-action="cycle"]').disabled = !state || busy || active || !state.broker.connected || !state.paidCallsEnabled || !state.verifiedAt;
+    root.querySelector('[data-rh-action="cycle"]').disabled = !paperWorkspace || !state || busy || active || !state.broker.connected || !state.paidCallsEnabled || !state.verifiedAt;
     root.querySelector('[data-rh-action="start"]').disabled = !state || busy || active || !state.broker.connected || !state.paidCallsEnabled || !state.verifiedAt;
     for (const control of form.elements) control.disabled = !state || busy || active;
     const mode = root.querySelector('input[name="rh-mode"]:checked')?.value;
@@ -53,7 +55,7 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
   function render(value) {
     if (disposed) return;
     const memoryChanged = !state || JSON.stringify([state.notes, state.memories]) !== JSON.stringify([value.notes, value.memories]);
-    state = value; q("mode").textContent = value.mode.toUpperCase();
+    state = value; q("mode").textContent = paperWorkspace ? "VIRTUAL FUNDS / LIVE DATA" : "REAL ACCOUNTS / LIVE";
     q("routing").textContent = `${LABELS[value.policy.provider]} research / ${LABELS[value.policy.criticProvider]} review / ${value.paidCallsEnabled ? "AI ENABLED" : "PAID AI LOCKED"}`;
     q("worker").textContent = value.worker.running ? "WORKER RUNNING" : "WORKER PAUSED";
     q("policy-version").textContent = `VERSION ${value.version} / ${value.dryDays.length} VERIFIED DAYS`;
@@ -62,15 +64,16 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
     q("readiness").replaceChildren();
     for (const check of value.readiness) { const row = el("li"); row.dataset.pass = String(check.pass); row.append(el("b", check.pass ? "+" : "-"), el("span", check.name)); q("readiness").append(row); }
     if (!dirty) {
-      for (const [key, field] of Object.entries(value.policy)) form.elements[key].value = key === "symbols" ? field.join(", ") : field;
+      for (const [key, field] of Object.entries(value.policy)) if (form.elements[key]) form.elements[key].value = key === "symbols" ? field.join(", ") : field;
       form.elements.bindings.value = JSON.stringify(value.bindings, null, 2);
+      bindingEditor.render(value.bindings);
     }
     q("history").replaceChildren();
     for (const run of value.runs) { const entry = button(`${date(run.startedAt)} / ${run.mode}`, "history", run.id, "rh-history-item"); entry.append(el("small", run.status)); q("history").append(entry); }
     renderRun();
     q("stats").replaceChildren();
-    const paper = value.paper, equity = paper.cash + paper.positions.reduce((sum, pos) => sum + pos.value, 0);
-    for (const [label, text] of [["Paper cash", paper.initialized ? money(paper.cash) : "Not initialized"], ["Paper equity", paper.initialized ? money(equity) : "Not initialized"], ["Realized paper P&L", money(paper.realizedPnl)], ["Open paper positions", String(paper.positions.length)]]) {
+    const paper = value.paper, equity = paper ? paper.cash + paper.positions.reduce((sum, pos) => sum + pos.value, 0) : null;
+    for (const [label, text] of paperWorkspace && paper ? [["Virtual cash", paper.initialized ? money(paper.cash) : "Not initialized"], ["Virtual equity", paper.initialized ? money(equity) : "Not initialized"], ["Realized virtual P&L", money(paper.realizedPnl)], ["Open virtual positions", String(paper.positions.length)]] : []) {
       const group = el("div"); group.append(el("dt", label), el("dd", text)); q("stats").append(group);
     }
     q("ledger").replaceChildren();
@@ -100,11 +103,11 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
     if (action === "history") { selectedRunId = control.dataset.id; renderRun(); return; }
     if (action === "pause") { void call("pause", {}).then(value => { render(value); say("Worker paused; new actions blocked. In-flight broker orders still require reconciliation."); }).catch(error => say(error.message, true)); return; }
     void act(async () => {
-      if (action === "demo" || action === "cycle") { const result = await call("cycles", { mode: action === "demo" ? "demo" : "cycle" }); selectedRunId = result.id; await refresh(); say("Cycle started."); }
+      if (action === "cycle" && paperWorkspace) { const result = await call("cycles", { mode: "cycle" }); selectedRunId = result.id; await refresh(); say("Paper observation cycle started using current broker data."); }
       if (action === "start") { render(await call("start", { version: state.version, mode: root.querySelector('input[name="rh-mode"]:checked').value, authorizeAutonomous: q("consent").checked })); q("consent").checked = false; say("Worker started under the saved policy."); }
       if (action === "reconcile") { render(await call("reconcile", {})); say("Order history checked. Unconfirmed outcomes remain reserved."); }
       if (action === "verify") { const result = await call("verify", {}); q("evidence").textContent = JSON.stringify(result.snapshot, null, 2); await refresh(); say("Broker financial evidence verified."); }
-      if (action === "catalog") { const result = await call("catalog/sync", {}); q("catalog").textContent = JSON.stringify(result.tools, null, 2); say("Authenticated tool schemas refreshed."); }
+      if (action === "catalog") { const result = await call("catalog/sync", {}); q("catalog").textContent = JSON.stringify(result.tools, null, 2); bindingEditor.setCatalog(result.tools); say("Broker tools refreshed. Choose them in the data-source editor."); }
       if (action === "remove-note") render(await call(`notes/${encodeURIComponent(control.dataset.id)}`, undefined, "DELETE"));
     });
   });
@@ -116,13 +119,13 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
   on(root, "change", event => { if (event.target.name === "rh-mode") controls(); });
   on(form, "input", () => { dirty = true; });
   on(form, "submit", event => {
-    event.preventDefault(); if (!state || busy) return;
+    event.preventDefault(); if (!state || busy || !form.reportValidity()) return;
     void act(async () => {
       const policy = Object.fromEntries(Object.keys(state.policy).map(key => [key, ["provider", "criticProvider", "accountNumber"].includes(key)
         ? form.elements[key].value : key === "symbols" ? form.elements[key].value.split(",").map(symbol => symbol.trim().toUpperCase()).filter(Boolean) : Number(form.elements[key].value)]));
-      let bindings; try { bindings = JSON.parse(form.elements.bindings.value); } catch { throw new Error("Broker bindings must be valid JSON."); }
+      const bindings = bindingEditor.read();
       const value = await call("policy", { version: state.version, policy, bindings }, "PUT"); dirty = false; render(value); q("consent").checked = false;
-    }, "Policy saved. Previous autonomous authorization revoked.");
+    }, paperWorkspace ? "Paper workspace settings saved." : "Policy saved. Previous autonomous authorization revoked.");
   });
   on(noteForm, "submit", event => { event.preventDefault(); const text = noteForm.elements.text.value; void act(async () => { const value = await call("notes", { text }); if (!disposed && noteForm.elements.text.value === text) noteForm.reset(); render(value); }, "Lesson saved to Robinhood Brain."); });
   async function poll() {
@@ -131,6 +134,6 @@ export function initializeRobinhoodBrain(root, { fetchImpl, windowRef = root.own
   }
   tab(new URL(windowRef.location.href).searchParams.get("view"), false, false);
   const ready = refresh().then(() => { if (!disposed) { say("Robinhood Brain ready."); timer = windowRef.setTimeout(poll, 1500); } }).catch(error => say(error.message, true));
-  void call("catalog").then(value => { if (!disposed) q("catalog").textContent = JSON.stringify(value.tools, null, 2); }).catch(() => {});
-  return { ready, dispose() { disposed = true; abort.abort(); windowRef.clearTimeout(timer); for (const remove of listeners) remove(); } };
+  void call("catalog").then(value => { if (!disposed) { q("catalog").textContent = JSON.stringify(value.tools, null, 2); bindingEditor.setCatalog(value.tools); } }).catch(() => {});
+  return { ready, dispose() { disposed = true; bindingEditor.dispose(); abort.abort(); windowRef.clearTimeout(timer); for (const remove of listeners) remove(); } };
 }
