@@ -37,7 +37,7 @@ test("the former trader page redirects to the unified Research workspace and its
   assert.doesNotMatch(fragment.text, /data-app-shell/);
   const state = await client.get("/api/trader/state").expect(200).expect("Cache-Control", "no-store");
   assert.equal(state.body.defaultProvider, "gemini");
-  assert.deepEqual(state.body.providers.map((p) => p.id), ["gemini", "openai", "claude"]);
+  assert.deepEqual(state.body.providers.map((p) => p.id), ["gemini", "openai", "claude", "grok"]);
   assert.deepEqual(state.body.runs, []);
 });
 

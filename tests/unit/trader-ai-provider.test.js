@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readTraderConfig } from "../../src/config/trader-config.js";
 import { createTraderAIProvider, TraderProviderError } from "../../src/providers/trader-ai-provider.js";
 
-const KEYS = { GEMINI_API_KEY: "gemini-private-test-key", OPENAI_API_KEY: "openai-private-test-key", ANTHROPIC_API_KEY: "claude-private-test-key" };
+const KEYS = { GEMINI_API_KEY: "gemini-private-test-key", OPENAI_API_KEY: "openai-private-test-key", ANTHROPIC_API_KEY: "claude-private-test-key", XAI_API_KEY: "grok-private-test-key" };
 const ENABLED_ENV = { ...KEYS, TRADER_PAID_AI_ENABLED: "true" };
 const schema = {
   type: "object",
@@ -43,7 +43,7 @@ test("trader configuration defaults to Gemini and reads optional provider creden
   const blank = readTraderConfig({});
   assert.equal(blank.defaultProvider, "gemini");
   assert.equal(blank.paidCallsEnabled, false);
-  assert.deepEqual(Object.keys(blank.providers), ["gemini", "openai", "claude"]);
+  assert.deepEqual(Object.keys(blank.providers), ["gemini", "openai", "claude", "grok"]);
   assert.equal(blank.providers.gemini.model, "gemini-3.8-flash");
   assert.equal(blank.providers.openai.model, "gpt-5.4-mini");
   assert.equal(blank.providers.claude.model, "claude-sonnet-5");
@@ -71,7 +71,7 @@ test("keys alone cannot trigger paid requests through either provider generation
   const provider = createTraderAIProvider({ config, fetchImpl() { calls += 1; assert.fail("Locked calls must never reach a provider"); } });
   assert.equal(provider.getStatus().paidCallsEnabled, false);
   assert.ok(provider.getStatus().providers.every((item) => item.configured));
-  for (const selected of ["gemini", "openai", "claude"]) {
+  for (const selected of ["gemini", "openai", "claude", "grok"]) {
     for (const method of ["generate", "generateDetailed"]) {
       await assert.rejects(provider[method]({ ...request, provider: selected, paidCallsEnabled: true }),
         (error) => errorIsSafe(error, "TRADER_PAID_AI_LOCKED", 423));
@@ -118,7 +118,7 @@ test("provider status lists all options and configuration state without exposing
   const status = provider.getStatus();
   assert.equal(status.defaultProvider, "gemini");
   assert.equal(status.paidCallsEnabled, false);
-  assert.deepEqual(status.providers.map((item) => [item.id, item.configured]), [["gemini", true], ["openai", false], ["claude", false]]);
+  assert.deepEqual(status.providers.map((item) => [item.id, item.configured]), [["gemini", true], ["openai", false], ["claude", false], ["grok", false]]);
   assert.ok(!JSON.stringify(status).includes(KEYS.GEMINI_API_KEY));
   for (const item of status.providers) assert.deepEqual(Object.keys(item), ["id", "label", "model", "configured"]);
   status.providers[0].model = "mutated";

@@ -37,12 +37,15 @@ ROBINHOOD_REDIRECT_URI=
 # Optional public client supplied or approved by Robinhood for this exact callback.
 ROBINHOOD_CLIENT_ID=
 ROBINHOOD_LIVE_TRADING_ENABLED=false
+ROBINHOOD_AUTONOMOUS_TRADING_ENABLED=false
 GEMINI_API_KEY=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
+XAI_API_KEY=
 GEMINI_MODEL=
 OPENAI_MODEL=
 ANTHROPIC_MODEL=
+XAI_MODEL=
 
 # Agent Brain pricing: optional USD per million tokens for the configured models.
 # Needed for dollar caps; unknown prices remain unknown in the UI.

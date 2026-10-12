@@ -38,6 +38,16 @@ This release establishes Synergy Module's application architecture and core user
 
 Agentic Trader analysis requires a configured AI provider and explicit server activation. Brain now includes a Robinhood workspace for stocks, options, and crypto: OAuth connection, authenticated tool discovery, dated research, order previews, separate operator confirmations, and durable activity. Live submissions and paid AI remain disabled by default. See [Robinhood setup and current limits](docs/robinhood.md). Execution-data imports, unattended trading, AI journal review, automated TradingView access grants, and editorial content pipelines remain planned capabilities.
 
+## Polymarket
+
+The `/polymarket` workspace adds public international market discovery, a rules-based Second Brain, public-wallet tracking, and an explicitly started paper bot. Paper fills use fresh order-book depth and fee schedules with cash, exposure, daily loss, and drawdown limits; these features need no Polymarket credentials. The separate **US Account** tab connects an existing Polymarket US account with its developer Key ID and Secret Key, encrypted in per-account persistent storage, and syncs balances, positions, and open orders. Settings links to this connection flow. No new migration or package is required. Live orders and paid AI forecasting are not enabled. See [Polymarket setup, capabilities, and simulation limits](docs/polymarket.md).
+
+## Robinhood Third Brain
+
+The `/robinhood-brain` workspace adapts FriesTrader's separate research and execution phases into Synergy: broker observations, universe/signal screening, provider-selected theses, independent critique, fixed risk gates, separate memory, paper fills, broker previews, and order reconciliation. Users can choose Claude, Gemini, Grok, or ChatGPT/Codex through the OpenAI API. Grok is also supported in shared Settings and research routing.
+
+The worker offers paper, per-order review, and policy-authorized autonomous equity execution. Paid AI and live/autonomous server switches remain off by default. Actual broker response mappings, a working Robinhood connection, ten verified paper days and explicit operator policy consent are required before autonomous trading. See [the repo assessment, setup and current limits](docs/robinhood-brain.md). This code has not been verified against a live brokerage account.
+
 ## Technology
 
 - Node.js 24+
@@ -173,6 +183,10 @@ Synergy Module records a request for all active invite-only indicators, includin
 - `/home` — Operations dashboard
 - `/trader` — Agentic Trader analysis, risk review, and demo workspace
 - `/brain` — Agent Brain mission control, workflow traces, human review, knowledge, memory and evaluations
+- `/polymarket` — Live prediction markets, a separate Second Brain, wallet radar, and paper bot
+- `/robinhood-brain` — Third Brain research, provider routing, risk policy, worker execution, memory and order reconciliation
+- `/api/robinhood-brain/*` — Authenticated third-brain state and policy, cycle, worker, mapping and memory controls; writes require CSRF
+- `/api/polymarket/*` — Authenticated market evidence and per-account research, lessons, watchlists, and paper worker controls; writes require CSRF
 - `/api/brain/*` — Authenticated brain runs, decisions, cancellation, documents and offline evaluations; mutations require CSRF
 - `/api/trader/state` — Provider readiness and the authenticated operator's recent runs
 - `/api/trader/runs` — Create an analysis or demo run (authenticated POST with CSRF)

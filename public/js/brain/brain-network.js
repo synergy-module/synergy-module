@@ -94,6 +94,11 @@ export function createBrainNetwork(host, { onNavigate = () => {}, onManageTools 
     group.append(el('h2', name)); groups.set(kind, group); rail.append(group);
   }
   const manageTools = button('Tools · Admin', 'brain-network-overview', 'Manage brain tools'); manageTools.hidden = true; rail.append(manageTools);
+  const polymarketBrain = el('a', 'Polymarket Second Brain', 'brain-network-overview');
+  polymarketBrain.href = '/polymarket?view=brain'; polymarketBrain.dataset.navLink = '';
+  groups.get('module').append(polymarketBrain);
+  const robinhoodBrain = el('a', 'Robinhood Third Brain', 'brain-network-overview');
+  robinhoodBrain.href = '/robinhood-brain'; robinhoodBrain.dataset.navLink = ''; groups.get('module').append(robinhoodBrain);
   listen(manageTools, 'click', () => { if (canManageTools) onManageTools(selectedId ?? 'agent:researcher'); });
   const stage = el('div', undefined, 'brain-network-stage'); stage.tabIndex = 0;
   stage.setAttribute('aria-label', 'Neural network. Drag to rotate freely in any direction. Scroll to zoom. Shift-drag to move. Arrow keys rotate, Shift-arrow keys move, plus and minus zoom.');

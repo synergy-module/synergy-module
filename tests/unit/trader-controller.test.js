@@ -70,7 +70,7 @@ test("loads provider readiness with Gemini selected and no credential fields or 
   assert.equal(app.find("[data-trader-model]").textContent, "gemini-test");
   assert.equal(app.find("[data-trader-submit]").disabled, false);
   assert.match(app.find("[data-trader-provider-status]").textContent, /configured on server/);
-  assert.equal(app.root.querySelectorAll('input[type="radio"][name="provider"]').length, 3);
+  assert.equal(app.root.querySelectorAll('input[type="radio"][name="provider"]').length, 4);
   assert.equal(app.root.querySelector('input[type="password"]'), null);
   assert.equal(app.dom.window.localStorage.length, 0);
   assert.equal(app.dom.window.sessionStorage.length, 0);

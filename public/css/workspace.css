@@ -41,7 +41,7 @@
 .setup-steps small { color: var(--ink-faint); font: 10px var(--font-mono); }
 .workspace-overview-foot { display: flex; align-items: center; justify-content: space-between; gap: 25px; margin-top: 28px; font-size: 12px; color: var(--ink-muted); }
 .workspace-overview-foot a { white-space: nowrap; }
-.provider-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .provider-card { min-width: 0; padding: 22px; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; }
 .provider-card-heading, .connection-card-heading { display: flex; align-items: center; gap: 12px; }
 .provider-card h3, .connection-card h3 { margin: 0; font: 600 20px var(--font-display); }

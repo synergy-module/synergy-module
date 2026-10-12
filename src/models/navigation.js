@@ -8,6 +8,8 @@ const ROUTES = [
   { key: "home", title: "Overview", path: "/home", uri: "home", description: "Your command center for research, market evidence, and trade review.", view: "home", capability: CAPABILITIES.BASE },
   { key: "trader", title: "AGENTIC TRADER", path: "/trader", uri: "trader", description: "AI market analysis, independent risk checks, and reviewed trade plans with Gemini, OpenAI, or Claude.", view: "trader", capability: CAPABILITIES.BASE },
   { key: "brain", title: "Brain", path: "/brain", uri: "brain", description: "Plan, research, verify, and remember. An observable agent system with human review.", view: "brain", capability: CAPABILITIES.BASE },
+  { key: "polymarket", title: "Polymarket", path: "/polymarket", uri: "polymarket", description: "Prediction market intelligence and paper trading.", view: "polymarket", capability: CAPABILITIES.BASE },
+  { key: "robinhood-brain", title: "Robinhood Brain", path: "/robinhood-brain", uri: "robinhood-brain", description: "Equity research, risk enforcement, and broker execution.", view: "robinhood-brain", capability: CAPABILITIES.BASE },
   { key: "indicators", title: "INDICATORS", path: "/indicators", uri: "indicators", description: "TradingView indicator access, entitlement status, instructions, and related resources.", view: "indicators", capability: CAPABILITIES.INDICATORS },
   { key: "market-news", title: "MARKET NEWS", path: "/market-news", uri: "market-news", description: "Scheduled economic releases, filtered by market and expected impact.", view: "market-news", capability: CAPABILITIES.BASE },
   { key: "alerts-ict", title: "ALERTS :: ICT", path: "/alerts/ict", uri: "alerts/ict", description: "Alerts for ICT-based conditions, concepts, and future strategy-specific signals.", view: "alerts-ict", capability: CAPABILITIES.BASE },
@@ -18,7 +20,7 @@ const ROUTES = [
   { key: "journal-public", title: "PUBLIC JOURNAL ENTRY", path: "/journal/:id", uri: "journal/public", description: "The shareable public record and webhook embed generated on submission.", view: "journal-public", capability: CAPABILITIES.JOURNAL },
 ];
 
-export const NAVIGATION = ["home", "brain", "research", "accounts", "journal", "settings"].map((key) => ROUTES.find((route) => route.key === key));
+export const NAVIGATION = ["home", "brain", "research", "polymarket", "robinhood-brain", "accounts", "journal", "settings"].map((key) => ROUTES.find((route) => route.key === key));
 
 export const ROUTE_BY_KEY = Object.fromEntries(ROUTES.map((route) => [route.key, route]));
 

@@ -33,7 +33,7 @@ function findTool(tools, name) {
   if (!tool) throw brokerError("ROBINHOOD_TOOL_UNAVAILABLE", "This tool is unavailable for your Robinhood connection. Refresh the connection.", 422);
   return tool;
 }
-export function createRobinhoodService({ repository = createMemoryBrokerRepository(), config = readRobinhoodConfig(), client = createRobinhoodClient(), now = () => Date.now() } = {}) {
+export function createRobinhoodService({ repository = createMemoryBrokerRepository(), config = readRobinhoodConfig(), client = createRobinhoodClient(), now = () => Date.now(), agenticAuthorizer, agenticEnabled = false } = {}) {
   const cipher = config.configured ? createBrokerCipher(config.encryptionKey) : null;
   const active = new Map();
   const audit = (state, event, detail = {}) => {
@@ -87,11 +87,14 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
       const actions = state.actions.map((action) => ({ ...action,
         status: action.status === "awaiting_approval" && action.expiresAt <= now() ? "expired"
           : action.status === "submitting" && action.submittedAt + 30000 < now() ? "unknown" : action.status }));
+      const policyActive = agenticEnabled === true && config.liveEnabled === true && !state.paused
+        && state.agentic?.mode === "autonomous" && state.agentic.consent?.version === state.agentic.version
+        && state.agentic.worker?.enabled && Date.parse(state.agentic.worker.leaseUntil) > now();
       return { broker: "robinhood", configured: config.configured && repository.getStorageStatus().persistent,
         missing: config.missing ?? [], connected: Boolean(state.connection), connectedAt: state.connection?.connectedAt ?? null,
         storage: repository.getStorageStatus(), liveEnabled: config.liveEnabled === true, paused: state.paused,
         tools: state.tools, snapshots: state.snapshots, actions, events: state.events, discoveryAt: state.discoveryAt ?? null,
-        groups: Object.keys(ROBINHOOD_GROUPS), approvalMode: "every_action", unattendedTrading: false };
+        groups: Object.keys(ROBINHOOD_GROUPS), approvalMode: policyActive ? "operator_policy" : "every_action", unattendedTrading: Boolean(policyActive) };
     },
     async begin(owner) {
       configured();
@@ -202,7 +205,7 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
         });
       });
     },
-    async decide(owner, id, { decision, version }) {
+    async decide(owner, id, { decision, version }, { agentic = false } = {}) {
       if (!["approve", "reject"].includes(decision) || !Number.isInteger(version)) throw brokerError("ROBINHOOD_INPUT", "Choose a decision for the current request version.", 422);
       if (decision === "reject") return repository.update(owner, (state) => {
         const action = state.actions.find((item) => item.id === id);
@@ -220,6 +223,12 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
           if (state.paused) throw brokerError("ROBINHOOD_PAUSED", "Broker submissions are paused.", 423);
           if (current.connectionId !== auth.id || current.expiresAt <= now()) throw brokerError("ROBINHOOD_EXPIRED", "Preview expired or the account connection changed. Prepare a new request.");
           if (state.actions.some((item) => ["submitting", "unknown"].includes(item.status))) throw brokerError("ROBINHOOD_UNRESOLVED", "Check the unresolved request in Robinhood before submitting another.");
+          if (agentic) {
+            if (typeof agenticAuthorizer !== "function") throw brokerError("ROBINHOOD_LIVE_LOCKED", "Policy-authorized execution is unavailable.", 423);
+            agenticAuthorizer(state, current, now());
+            current.authority = "operator_policy";
+            audit(state, "policy_authorized", { actionId: id });
+          }
           current.status = "submitting"; current.version++; current.submittedAt = now(); audit(state, "submission_claimed", { actionId: id, tool: current.tool });
           return structuredClone(current);
         });
@@ -231,6 +240,7 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
             validate(tool.inputSchema, action.arguments);
             const state = await repository.read(owner);
             if (state.paused || state.connection?.id !== auth.id) throw brokerError("ROBINHOOD_PAUSED", "The connection was paused or removed before submission.", 423);
+            if (agentic) agenticAuthorizer(state, action, now());
             dispatched = true;
             // Exactly one dispatch. A timeout is an unknown outcome and is never automatically retried.
             return remote.call(action.tool, action.arguments);
@@ -253,6 +263,10 @@ export function createRobinhoodService({ repository = createMemoryBrokerReposito
         }
       });
     },
+    async submitAgentic(owner, id, version) { return service.decide(owner, id, { decision: "approve", version }, { agentic: true }); },
+    async readBrainWorkspace(owner) { return (await repository.read(owner)).agentic ?? null; },
+    async updateBrainWorkspace(owner, change) { return repository.update(owner, state => change(state)); },
+    getStorageStatus: () => repository.getStorageStatus(),
     async close() { await repository.close(); },
   };
   return service;

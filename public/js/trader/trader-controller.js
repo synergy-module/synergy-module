@@ -4,6 +4,7 @@ const PROVIDERS = [
   { id: "gemini", label: "Gemini", keyName: "GEMINI_API_KEY" },
   { id: "openai", label: "OpenAI", keyName: "OPENAI_API_KEY" },
   { id: "claude", label: "Claude", keyName: "ANTHROPIC_API_KEY" },
+  { id: "grok", label: "Grok", keyName: "XAI_API_KEY" },
 ];
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 });
 const moneyFormat = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });

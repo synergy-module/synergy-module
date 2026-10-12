@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { isTraderOutputValid, isTraderSchemaValid, TraderProviderError } from "../providers/trader-ai-provider.js";
 
-const LABELS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude" });
+const LABELS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude", grok: "Grok" });
 const MAX_CACHE_TTL_MS = 60_000;
 const USAGE_FIELDS = ["inputTokens", "outputTokens", "cachedInputTokens", "cacheCreationInputTokens", "totalTokens"];
 const ZERO_USAGE = Object.freeze(Object.fromEntries(USAGE_FIELDS.map((field) => [field, 0])));
@@ -100,7 +100,7 @@ function containsCredentials(value, secrets, depth = 0) {
  */
 export function createBrainModelGateway({ aiProvider, repository, now = () => new Date(), pricing } = {}) {
   const configuredPricing = pricing ?? readPricing();
-  const secrets = ["GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+  const secrets = ["GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY"]
     .map((name) => process.env[name]).filter((value) => typeof value === "string" && value.length > 0);
 
   function sanitizeStatus(status) {

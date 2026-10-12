@@ -43,6 +43,12 @@ import { createMemoryWorkspaceRepository } from "./settings/workspace-repository
 import { createWorkspaceSettingsService } from "./settings/workspace-settings-service.js";
 import { createWorkspaceAIProvider } from "./providers/workspace-ai-provider.js";
 import { createSettingsRoutes } from "./routes/settings-routes.js";
+import { createPolymarketService } from "./polymarket/polymarket-service.js";
+import { createPolymarketRoutes } from "./routes/polymarket-routes.js";
+import { createPolymarketUsService } from "./polymarket/polymarket-us-service.js";
+import { createPolymarketUsRoutes } from "./routes/polymarket-us-routes.js";
+import { createRobinhoodBrainService, authorizeRobinhoodBrain } from "./robinhood-brain/brain-service.js";
+import { createRobinhoodBrainRoutes } from "./routes/robinhood-brain-routes.js";
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const publicDirectory = path.join(sourceDirectory, "..", "public");
@@ -83,6 +89,12 @@ export function createApp({
   workspaceRepository = createMemoryWorkspaceRepository(),
   workspaceSettingsService,
   integrationsEncryptionKey,
+  polymarketService,
+  polymarketClient,
+  polymarketUsService,
+  polymarketUsClient,
+  robinhoodBrainService,
+  robinhoodAutonomousEnabled = process.env.ROBINHOOD_AUTONOMOUS_TRADING_ENABLED?.trim() === "true",
   readinessCheck = async () => true,
   configureRoutes,
   logger = console,
@@ -142,7 +154,10 @@ export function createApp({
     encryptionSecret: credentialSecret,
   });
   const resolvedAIProvider = createWorkspaceAIProvider({ settingsService: resolvedSettingsService, fallbackProvider: baseAIProvider });
-  const resolvedRobinhoodService = robinhoodService ?? createRobinhoodService({ repository: brokerRepository });
+  const resolvedRobinhoodService = robinhoodService ?? createRobinhoodService({ repository: brokerRepository,
+    agenticEnabled: robinhoodAutonomousEnabled === true,
+    agenticAuthorizer: (state, action, at) => authorizeRobinhoodBrain(state, action, at, robinhoodAutonomousEnabled === true),
+  });
   const resolvedBrainKnowledge = brainKnowledge ?? createBrainKnowledge({ repository: brainRepository });
   const resolvedBrainGateway = brainModelGateway ?? createBrainModelGateway({ aiProvider: resolvedAIProvider, repository: brainRepository });
   const canReadBrainJournal = async (ownerId) => {
@@ -171,6 +186,33 @@ export function createApp({
     repository: brainRepository, knowledge: resolvedBrainKnowledge,
     modelGateway: resolvedBrainGateway, tools: resolvedBrainTools,
   });
+  const resolvedPolymarketUsService = polymarketUsService ?? createPolymarketUsService({
+    repository: workspaceRepository, client: polymarketUsClient, encryptionSecret: credentialSecret,
+  });
+  const resolvedPolymarketService = polymarketService ?? createPolymarketService({
+    repository: workspaceRepository, client: polymarketClient,
+    canOperate: async (owner) => {
+      try {
+        const operator = await userRepository.findById(owner);
+        if (!operator?.capabilities?.includes(CAPABILITIES.BASE) || await banRepository.isBanned?.(owner)) return false;
+        await resolvedAuthService.assertOperatorAdmission?.(operator);
+        const age = Date.now() - new Date(operator.rolesSyncedAt).valueOf();
+        return Number.isFinite(age) && age >= 0 && age <= MAX_ROLE_SNAPSHOT_AGE_MS;
+      } catch { return false; }
+    },
+  });
+  const resolvedRobinhoodBrainService = robinhoodBrainService ?? createRobinhoodBrainService({
+    broker: resolvedRobinhoodService, ai: resolvedAIProvider, autonomousEnabled: robinhoodAutonomousEnabled === true,
+    canOperate: async (owner) => {
+      try {
+        const operator = await userRepository.findById(owner);
+        if (!operator?.capabilities?.includes(CAPABILITIES.BASE) || await banRepository.isBanned?.(owner)) return false;
+        await resolvedAuthService.assertOperatorAdmission?.(operator);
+        const age = Date.now() - new Date(operator.rolesSyncedAt).valueOf();
+        return Number.isFinite(age) && age >= 0 && age <= MAX_ROLE_SNAPSHOT_AGE_MS;
+      } catch { return false; }
+    },
+  });
 
   const app = express();
   app.locals.assetPath = assetManifest.assetPath;
@@ -192,10 +234,13 @@ export function createApp({
   app.locals.robinhoodService = resolvedRobinhoodService;
   app.locals.workspaceSettingsService = resolvedSettingsService;
   app.locals.workspaceRepository = workspaceRepository;
+  app.locals.polymarketService = resolvedPolymarketService;
+  app.locals.polymarketUsService = resolvedPolymarketUsService;
+  app.locals.robinhoodBrainService = resolvedRobinhoodBrainService;
   app.set("trust proxy", trustProxy ?? (environment === "production" ? 1 : false));
   app.set("view engine", "ejs");
   app.set("views", path.join(sourceDirectory, "..", "views"));
-  app.use(["/brain", "/research", "/settings", "/accounts", "/api/settings", "/api/brain", "/api/robinhood", "/auth/robinhood"], (req, res, next) => {
+  app.use(["/brain", "/research", "/polymarket", "/robinhood-brain", "/settings", "/accounts", "/api/settings", "/api/brain", "/api/polymarket", "/api/robinhood-brain", "/api/robinhood", "/auth/robinhood"], (req, res, next) => {
     res.set("Cache-Control", "no-store");
     next();
   });
@@ -282,6 +327,9 @@ export function createApp({
   app.use(createAdminRoutes({ adminService: resolvedAdminService }));
   app.use(createRobinhoodRoutes({ robinhoodService: resolvedRobinhoodService }));
   app.use(createSettingsRoutes({ settingsService: resolvedSettingsService, logger }));
+  app.use(createPolymarketUsRoutes({ service: resolvedPolymarketUsService, logger }));
+  app.use(createPolymarketRoutes({ service: resolvedPolymarketService, logger }));
+  app.use(createRobinhoodBrainRoutes({ service: resolvedRobinhoodBrainService, broker: resolvedRobinhoodService, logger }));
   app.use(createPageRoutes({ marketNewsService, logger }));
   app.use(createTraderRoutes({
     traderService: traderService ?? createTraderService({
@@ -303,6 +351,14 @@ export function createApp({
   app.use((error, req, res, next) => {
     logger.error?.("Unhandled application error");
     if (res.headersSent) return next(error);
+    if (req.path.startsWith("/api/robinhood-brain/")) {
+      const status = error?.type === "entity.parse.failed" ? 400 : error?.type === "entity.too.large" ? 413 : 500;
+      return res.status(status).json({ error: "RH_BRAIN_UNAVAILABLE", message: status === 500 ? "Robinhood Brain is unavailable." : "Check the request body and size." });
+    }
+    if (req.path.startsWith("/api/polymarket/")) {
+      const status = error?.type === "entity.parse.failed" ? 400 : error?.type === "entity.too.large" ? 413 : 500;
+      return res.status(status).json({ error: "POLY_UNAVAILABLE", message: status === 500 ? "The Polymarket workspace is unavailable." : "Check the request body and size." });
+    }
     if (req.path.startsWith("/api/brain/")) {
       if (error?.type === "entity.parse.failed") return res.status(400).json({ error: "BRAIN_INVALID_INPUT", message: "The request body must be valid JSON." });
       if (error?.type === "entity.too.large") return res.status(413).json({ error: "BRAIN_INVALID_INPUT", message: "The request body exceeds the size limit." });

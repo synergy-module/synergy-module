@@ -28,6 +28,8 @@ test("protected clean routes render full documents and fragments", async () => {
     ["/home", "home"],
     ["/brain", "brain"],
     ["/research", "research"],
+    ["/polymarket", "polymarket"],
+    ["/robinhood-brain", "robinhood-brain"],
     ["/accounts", "accounts"],
     ["/settings", "settings"],
     ["/market-news", "market-news"],

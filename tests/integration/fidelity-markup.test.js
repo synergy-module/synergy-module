@@ -57,7 +57,7 @@ test("Brain stays a focused canvas while Research, Settings and Accounts contain
   assert.equal(research.window.document.querySelector('select[name="provider"]'), null);
   research.window.close();
   const settings = new JSDOM((await agent.get("/settings").expect(200)).text);
-  assert.equal(settings.window.document.querySelectorAll('[data-provider-form] input[type="password"]').length, 3);
+  assert.equal(settings.window.document.querySelectorAll('[data-provider-form] input[type="password"]').length, 4);
   assert.ok(settings.window.document.querySelector("[data-connection-connect]"));
   assert.ok(settings.window.document.querySelector("[data-settings-defaults]"));
   settings.window.close();

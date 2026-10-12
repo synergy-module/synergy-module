@@ -9,7 +9,7 @@ import { createMemoryBrainRepository, createSqliteBrainRepository } from "../../
 import { CAPABILITIES, MAX_ROLE_SNAPSHOT_AGE_MS } from "../../src/models/access.js";
 
 const noKeys = {
-  getStatus: () => ({ defaultProvider: "gemini", paidCallsEnabled: true, providers: ["gemini", "openai", "claude"].map((id) => ({
+  getStatus: () => ({ defaultProvider: "gemini", paidCallsEnabled: true, providers: ["gemini", "openai", "claude", "grok"].map((id) => ({
     id, label: id, model: "test-model", configured: false,
   })) }),
   generate: () => { throw new Error("An unconfigured provider must not be invoked"); },
@@ -93,7 +93,7 @@ test("base members receive full and fragment brain pages and sanitized provider 
   assert.doesNotMatch(fragment.text, /data-app-shell/);
   const state = await client.get("/api/brain/state").expect(200).expect("Cache-Control", "no-store");
   assert.equal(state.body.defaultProvider, "gemini");
-  assert.deepEqual(state.body.providers.map((provider) => provider.id), ["gemini", "openai", "claude"]);
+  assert.deepEqual(state.body.providers.map((provider) => provider.id), ["gemini", "openai", "claude", "grok"]);
   assert.deepEqual(state.body.runs, []);
   assert.deepEqual(state.body.documents, []);
   assert.ok(state.body.toolDefinitions.some((definition) => definition.name === "risk.check"));

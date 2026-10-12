@@ -8,7 +8,7 @@ export {
   cleanCalendar as normalizeBrainCalendar,
 };
 
-const PROVIDERS = new Set(["gemini", "openai", "claude"]);
+const PROVIDERS = new Set(["gemini", "openai", "claude", "grok"]);
 const TIMEFRAMES = new Set(["1m", "5m", "15m", "1h", "4h", "1d"]);
 const MAX_OPERATORS = 100;
 const MAX_RUNS = 10;
@@ -82,7 +82,7 @@ function normalizeInput(input, defaultProvider) {
   const mode = input.mode ?? "analysis";
   const provider = input.provider ?? defaultProvider;
   if (!["analysis", "demo"].includes(mode)) throw inputFailure("Choose analysis or demo mode.");
-  if (!PROVIDERS.has(provider)) throw inputFailure("Choose Gemini, OpenAI, or Claude.");
+  if (!PROVIDERS.has(provider)) throw inputFailure("Choose Gemini, OpenAI, Claude, or Grok.");
   const symbol = typeof input.symbol === "string" ? input.symbol.trim().toUpperCase() : "";
   if (!/^[A-Z0-9^/][A-Z0-9._:/=^-]{0,23}$/.test(symbol)) throw inputFailure("Enter a ticker using 1 to 24 standard ticker characters.");
   if (!TIMEFRAMES.has(input.timeframe)) throw inputFailure("Choose a supported timeframe.");

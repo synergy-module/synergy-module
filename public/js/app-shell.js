@@ -16,6 +16,8 @@ import { createTransitionController } from "./transition-controller.js";
 import { createDrawerController, setActiveNavigation, startStatusUpdates } from "./ui-utils.js";
 import { initializePageInteractions } from "./page-interactions.js";
 import { initializeColorTheme } from "./redline-theme.js";
+import { initializePolymarket } from "./polymarket-controller.js";
+import { initializeRobinhoodBrain } from "./robinhood-brain-controller.js";
 
 const shellInstances = new WeakMap();
 
@@ -89,6 +91,8 @@ export function initializeAppShell({ documentRef = document, windowRef = window,
     if (route.key === "settings") disposeActiveRoute = initializeSettings(root, { fetchImpl, windowRef }).dispose;
     if (route.key === "accounts") disposeActiveRoute = initializeAccounts(root, { fetchImpl, windowRef, navigate: (path) => navigator.navigate(path) }).dispose;
     if (route.key === "home") disposeActiveRoute = initializeOverview(root, { fetchImpl }).dispose;
+    if (route.key === "polymarket") disposeActiveRoute = initializePolymarket(root, { fetchImpl, windowRef }).dispose;
+    if (route.key === "robinhood-brain") disposeActiveRoute = initializeRobinhoodBrain(root, { fetchImpl, windowRef }).dispose;
     if (route.key === "admin") {
       disposeActiveRoute = initializeAdminPage(root, {
         fetchImpl,

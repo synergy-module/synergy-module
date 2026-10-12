@@ -1,7 +1,7 @@
 import { isTraderModelValid, readTraderConfig } from "../config/trader-config.js";
 import { createHash } from "node:crypto";
 
-const PROVIDER_LABELS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude" });
+const PROVIDER_LABELS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude", grok: "Grok" });
 const DEFAULT_TIMEOUT_MS = 45_000;
 const MAX_TIMEOUT_MS = 60_000;
 const MAX_BODY_BYTES = 1_048_576;
@@ -31,7 +31,7 @@ function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-// Use the common strict schema subset supported by all three APIs. Business
+// Use the common strict schema subset supported by the provider APIs. Business
 // constraints (price bounds, text lengths, etc.) belong in the trading service.
 function isSchemaValid(schema, depth = 0) {
   if (depth > 12 || !isObject(schema) || Object.keys(schema).some((key) => !SCHEMA_KEYS.has(key))) return false;
@@ -111,7 +111,7 @@ function extractUsage(provider, body) {
     cacheCreationInputTokens = 0; // This adapter never creates explicit Gemini cache resources.
     if ([usage.candidatesTokenCount, usage.thoughtsTokenCount].some((value) => value !== undefined
       && (tokenCount(value) === null || outputTokens === null || value > outputTokens))) return null;
-  } else if (provider === "openai") {
+  } else if (provider === "openai" || provider === "grok") {
     const usage = body?.usage;
     if (!usage) return null;
     inputTokens = tokenCount(usage.input_tokens);
@@ -179,9 +179,9 @@ function makeRequest(provider, { model, apiKey }, { system, prompt, schema, maxO
       },
     };
   }
-  if (provider === "openai") {
+  if (provider === "openai" || provider === "grok") {
     return {
-      url: "https://api.openai.com/v1/responses",
+      url: provider === "grok" ? "https://api.x.ai/v1/responses" : "https://api.openai.com/v1/responses",
       headers: { ...headers, Authorization: `Bearer ${apiKey}` },
       body: {
         model,
@@ -190,7 +190,7 @@ function makeRequest(provider, { model, apiKey }, { system, prompt, schema, maxO
         store: false,
         max_output_tokens: maxOutputTokens,
         // Hash routing hints so a caller-supplied identifier never leaves the server.
-        ...(cacheKey ? { prompt_cache_key: createHash("sha256").update(cacheKey).digest("hex") } : {}),
+        ...(cacheKey && provider === "openai" ? { prompt_cache_key: createHash("sha256").update(cacheKey).digest("hex") } : {}),
         text: { format: { type: "json_schema", name: "trader_analysis", strict: true, schema } },
       },
     };
@@ -216,7 +216,7 @@ function extractOutput(provider, body) {
     return candidate.content.parts.filter((part) => !part.thought && typeof part.text === "string")
       .map((part) => part.text).join("");
   }
-  if (provider === "openai") {
+  if (provider === "openai" || provider === "grok") {
     if (body?.status !== "completed" || body.error || body.incomplete_details || !Array.isArray(body.output)) {
       throw new TraderProviderError();
     }

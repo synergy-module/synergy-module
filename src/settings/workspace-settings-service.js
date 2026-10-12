@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:crypto";
 import { createMemoryWorkspaceRepository } from "./workspace-repository.js";
 
-const PROVIDERS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude" });
+const PROVIDERS = Object.freeze({ gemini: "Gemini", openai: "OpenAI", claude: "Claude", grok: "Grok" });
 const ROLES = ["planner", "researcher", "strategist", "critic"];
 const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"];
 const CREDENTIAL_VERSION = 2;

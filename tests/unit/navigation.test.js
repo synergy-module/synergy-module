@@ -18,12 +18,12 @@ test("unknown paths return undefined", () => {
   assert.equal(getRouteByPath("/missing"), undefined);
 });
 
-test("visible navigation contains six trading destinations with setup grouped in Settings", () => {
+test("visible navigation includes the separate Polymarket workspace with setup grouped in Settings", () => {
   assert.deepEqual(NAVIGATION.map((route) => route.key), [
-    "home", "brain", "research", "accounts", "journal", "settings",
+    "home", "brain", "research", "polymarket", "robinhood-brain", "accounts", "journal", "settings",
   ]);
   assert.deepEqual(NAVIGATION.map((route) => route.capability), [
-    "base", "base", "base", "base", "journal", "base",
+    "base", "base", "base", "base", "base", "base", "journal", "base",
   ]);
   assert.equal(ROUTE_BY_KEY["journal-new"].view, "journal-new");
   assert.equal(ROUTE_BY_KEY["journal-public"].view, "journal-public");

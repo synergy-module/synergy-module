@@ -3,7 +3,7 @@ import { normalizeTraderInput, validateTraderThesis, evaluateTraderRisk, traderT
 import { createBrainContext, appendBrainObservation, getBrainRoleContext, verifyBrainCitations } from "./brain-context.js";
 
 const ROLES = ["planner", "researcher", "strategist", "critic"];
-const PROVIDERS = ["gemini", "openai", "claude"];
+const PROVIDERS = ["gemini", "openai", "claude", "grok"];
 const TERMINAL = new Set(["completed", "rejected", "cancelled", "failed"]);
 const DEFAULT_LIMITS = { maxSteps: 12, maxModelCalls: 10, maxTokens: 64000, maxDurationMs: 120000, maxCostUsd: null };
 const SAFE_ERRORS = new WeakSet();
@@ -79,7 +79,7 @@ function normalizeInput(raw, gateway) {
   if (!textValid(objective, 1200) || objective.trim().length < 10) throw problem("BRAIN_INPUT_INVALID", 422, "The objective must contain 10 to 1200 characters.");
   if (raw.routes !== undefined && (!raw.routes || typeof raw.routes !== "object" || Array.isArray(raw.routes) || Object.keys(raw.routes).some((key) => !ROLES.includes(key)))) throw problem("BRAIN_INPUT_INVALID", 422, "Choose valid provider routes for the four agent roles.");
   const routes = Object.fromEntries(ROLES.map((role) => [role, raw.routes?.[role] ?? trader.provider]));
-  if (Object.values(routes).some((provider) => !PROVIDERS.includes(provider))) throw problem("BRAIN_INPUT_INVALID", 422, "Choose Gemini, OpenAI or Claude for each agent role.");
+  if (Object.values(routes).some((provider) => !PROVIDERS.includes(provider))) throw problem("BRAIN_INPUT_INVALID", 422, "Choose Gemini, OpenAI, Claude or Grok for each agent role.");
   if (raw.limits !== undefined && (!raw.limits || typeof raw.limits !== "object" || Array.isArray(raw.limits) || Object.keys(raw.limits).some((key) => !Object.hasOwn(DEFAULT_LIMITS, key)))) throw problem("BRAIN_INPUT_INVALID", 422, "Provide valid workflow limits.");
   const limits = { ...DEFAULT_LIMITS, ...raw.limits };
   for (const [key, maximum, minimum] of [["maxSteps", 24, 1], ["maxModelCalls", 16, 1], ["maxTokens", 128000, 1], ["maxDurationMs", 180000, 10]]) {

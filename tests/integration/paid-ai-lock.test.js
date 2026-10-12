@@ -18,6 +18,7 @@ test("configured API keys cannot bypass the default paid lock through either HTT
     GEMINI_API_KEY: "fixture-gemini-credential",
     OPENAI_API_KEY: "fixture-openai-credential",
     ANTHROPIC_API_KEY: "fixture-claude-credential",
+    XAI_API_KEY: "fixture-grok-credential",
   };
   const provider = createTraderAIProvider({
     config: readTraderConfig(keys),
@@ -44,10 +45,10 @@ test("configured API keys cannot bypass the default paid lock through either HTT
   for (const workflow of ["trader", "brain"]) {
     const state = await client.get(`/api/${workflow}/state`).expect(200).expect("Cache-Control", "no-store");
     assert.equal(state.body.paidCallsEnabled, false);
-    assert.equal(state.body.providers.length, 3);
+    assert.equal(state.body.providers.length, 4);
     assert.ok(state.body.providers.every((item) => item.configured));
     for (const key of Object.values(keys)) assert.ok(!JSON.stringify(state.body).includes(key));
-    for (const selectedProvider of ["gemini", "openai", "claude"]) {
+    for (const selectedProvider of ["gemini", "openai", "claude", "grok"]) {
       const rejected = await client.post(`/api/${workflow}/runs?paidCallsEnabled=true`)
         .set("X-CSRF-Token", csrf)
         .send({ ...INPUT, provider: selectedProvider, paidCallsEnabled: true, TRADER_PAID_AI_ENABLED: "true" })
